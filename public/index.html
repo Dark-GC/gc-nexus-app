@@ -1,0 +1,114 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="theme-color" content="#0a1120">
+  <meta name="description" content="GC GRAPHICS — Inventario de compras, maquinaria y suministros.">
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+  <link rel="stylesheet" href="/styles.css">
+  <title>GC GRAPHICS · Inventario</title>
+</head>
+<body>
+  <div class="shell">
+    <aside class="sidebar">
+      <div class="brand"><div class="brand-mark">GC<span>.</span></div><div class="brand-meta"><strong>GRAPHICS</strong><small>Inventory OS <b>01</b></small></div></div>
+      <div class="side-label">GESTIÓN</div>
+      <nav aria-label="Menú de inventario" class="side-nav">
+        <button class="side-item is-active" data-view="all" type="button"><span class="side-icon">▦</span> Inventario <span id="sideCount" class="side-count">14</span></button>
+        <button class="side-item" data-view="pending" type="button"><span class="side-icon">◇</span> Por comprar</button>
+        <button class="side-item" data-view="bought" type="button"><span class="side-icon">✓</span> Comprados</button>
+        <button class="side-item" data-view="received" type="button"><span class="side-icon">⬡</span> Recibidos</button>
+      </nav>
+      <div class="side-label second-label">HERRAMIENTAS</div>
+      <nav class="side-nav" aria-label="Herramientas">
+        <button class="side-item" id="refreshAll" type="button"><span class="side-icon">↻</span> Consultar tiendas</button>
+        <button class="side-item" id="exportBtn" type="button"><span class="side-icon">↥</span> Exportar respaldo</button>
+        <button class="side-item" id="importBtn" type="button"><span class="side-icon">↧</span> Importar respaldo</button>
+      </nav>
+      <div class="sidebar-bottom">
+        <div class="signal"><span class="signal-dot"></span> DATOS LOCALES <span class="signal-pill">MVP</span></div>
+        <p>Tu inventario se guarda en este navegador. Exporta un respaldo para protegerlo.</p>
+        <a href="https://app.notion.com/p/e7368f9fc6fc4567b095154e70135f10" target="_blank" rel="noopener noreferrer">Abrir inventario Notion ↗</a>
+      </div>
+    </aside>
+
+    <main class="main">
+      <header class="topbar"><div class="breadcrumbs">GC GRAPHICS <span>/</span> CENTRO DE COMPRAS</div><div class="topbar-right"><span class="today" id="today"></span><span class="avatar">GC</span></div></header>
+
+      <div class="content">
+        <div class="page-hero">
+          <div><div class="eyebrow"><span class="eyebrow-mark"></span> CONTROL DE EQUIPOS Y SUMINISTROS</div>
+            <h1>Inventario <span>inteligente.</span></h1>
+            <p>Controla cada compra, verifica disponibilidad y organiza los próximos equipos de tu negocio.</p>
+          </div>
+          <button class="btn btn-primary add-top" id="addBtn" type="button"><span aria-hidden="true" class="btn-plus">＋</span> Nuevo artículo</button>
+        </div>
+
+        <div class="stats" aria-label="Indicadores">
+          <article class="stat-card"><div class="stat-top"><span>Total de referencias</span><span class="stat-icon purple">▦</span></div><strong id="statTotal">—</strong><small>Artículos en seguimiento</small></article>
+          <article class="stat-card"><div class="stat-top"><span>Comprados</span><span class="stat-icon green">✓</span></div><strong id="statBought">—</strong><small id="statBoughtSub">Compras registradas</small></article>
+          <article class="stat-card"><div class="stat-top"><span>Por comprar</span><span class="stat-icon amber">◇</span></div><strong id="statPending">—</strong><small>Próximas adquisiciones</small></article>
+          <article class="stat-card"><div class="stat-top"><span>Con precio registrado</span><span class="stat-icon blue">$</span></div><strong id="statPriced">—</strong><small>No se inventan precios</small></article>
+        </div>
+
+        <div class="section-header"><div><h2>Listado de compras <span id="listCount" class="heading-count">0</span></h2><p>Fuentes oficiales cuando estén disponibles · datos no verificados marcados como tales</p></div><div class="last-sync" id="syncStatus"><i></i> Sin consulta reciente</div></div>
+        <div class="toolbar">
+          <label class="search-field"><span aria-hidden="true">⌕</span><input id="searchInput" autocomplete="off" type="search" placeholder="Buscar máquina, marca o material..." aria-label="Buscar artículos"></label>
+          <select id="categorySelect" aria-label="Filtrar categoría"><option value="all">Todas las categorías</option></select>
+          <select id="sortSelect" aria-label="Ordenar"><option value="default">Orden original</option><option value="name">Nombre A–Z</option><option value="status">Pendientes primero</option><option value="recent">Último cambio</option></select>
+          <button class="btn btn-secondary" id="refreshVisible" type="button" title="Consultar tiendas compatibles">↻ <span class="refresh-label">Actualizar</span></button>
+        </div>
+        <div id="filterChips" class="filter-chips" aria-label="Filtros rápidos">
+          <button class="chip selected" data-filter="all" type="button">Todos</button>
+          <button class="chip" data-filter="Máquina" type="button">Maquinaria</button>
+          <button class="chip" data-filter="Accesorio" type="button">Accesorios</button>
+          <button class="chip" data-filter="Consumible" type="button">Consumibles</button>
+        </div>
+        <div class="table-head"><div>PRODUCTO / REFERENCIA</div><div>PRECIO</div><div>DISPONIBILIDAD</div><div>ESTADO DE COMPRA</div><div>ACCIONES</div></div>
+        <section id="productList" class="product-list" aria-live="polite"></section>
+        <div class="footer-note">GC GRAPHICS Inventory v0.1 · Precios únicamente verificados o introducidos manualmente. Las compras no equivalen a recepción.</div>
+      </div>
+    </main>
+  </div>
+
+  <div class="overlay" id="editorOverlay" hidden>
+    <section class="drawer" role="dialog" aria-modal="true" aria-labelledby="drawerTitle">
+      <div class="drawer-head"><div><span class="eyebrow">GESTIÓN DE INVENTARIO</span><h2 id="drawerTitle">Nuevo artículo</h2></div><button class="icon-btn close-editor" type="button" aria-label="Cerrar">✕</button></div>
+      <form id="editorForm" class="drawer-form">
+        <input type="hidden" name="id" id="fieldId">
+        <label class="field">Nombre del artículo <span>*</span><input name="title" id="fieldTitle" required maxlength="160" placeholder="Ej. Prensa térmica para tazas"></label>
+        <div class="fields-two">
+          <label class="field">Marca<input name="brand" id="fieldBrand" maxlength="70" placeholder="Ej. Epson"></label>
+          <label class="field">Tipo<select name="kind" id="fieldKind"><option>Máquina</option><option>Accesorio</option><option>Consumible</option></select></label>
+        </div>
+        <label class="field">Categoría<input name="category" id="fieldCategory" maxlength="60" placeholder="Ej. Sublimación"></label>
+        <label class="field">URL del producto<input name="url" id="fieldUrl" type="url" placeholder="https://..."></label>
+        <div class="fields-two">
+          <label class="field">Cantidad requerida<input name="quantity" id="fieldQuantity" min="1" max="100000" step="1" type="number" value="1"></label>
+          <label class="field">Código interno<input name="code" id="fieldCode" maxlength="40" placeholder="EQ-008"></label>
+        </div>
+        <div class="fields-two">
+          <label class="field">Precio de referencia<input name="price" id="fieldPrice" min="0" step="0.01" type="number" placeholder="Sin precio"></label>
+          <label class="field">Moneda<select name="currency" id="fieldCurrency"><option value="USD">USD</option><option value="DOP">DOP</option><option value="EUR">EUR</option></select></label>
+        </div>
+        <label class="field">URL de miniatura<input name="image" id="fieldImage" type="url" placeholder="https://... imagen del artículo"></label>
+        <label class="file-upload"><span>▧ Subir foto del artículo</span><small>JPG, PNG o WEBP · máximo 1 MB</small><input id="imageFile" type="file" accept="image/jpeg,image/png,image/webp" hidden></label>
+        <div id="imagePreview" class="image-preview" hidden></div>
+        <label class="field">Notas<textarea name="notes" id="fieldNotes" rows="3" maxlength="1200" placeholder="Modelo, compatibilidad, proveedor, observaciones..."></textarea></label>
+        <div class="form-checks"><label class="check-label"><input id="fieldBought" type="checkbox"> Comprado</label><label class="check-label"><input id="fieldReceived" type="checkbox"> Recibido</label></div>
+        <p class="help-text">El precio que escribas se registrará como <b>manual</b>, no como precio en tiempo real. La recepción solo se marca cuando realmente se recibe.</p>
+        <div class="drawer-actions"><button type="button" class="btn btn-secondary close-editor">Cancelar</button><button type="submit" class="btn btn-primary">Guardar artículo</button></div>
+      </form>
+    </section>
+  </div>
+
+  <div class="overlay confirm-overlay" id="confirmOverlay" hidden>
+    <div class="confirm-box" role="alertdialog" aria-modal="true" aria-labelledby="confirmTitle"><div id="confirmGlyph" class="confirm-glyph">✓</div><h2 id="confirmTitle">Confirmar acción</h2><p id="confirmMessage"></p><div class="confirm-actions"><button id="confirmCancel" class="btn btn-secondary" type="button">Cancelar</button><button id="confirmAccept" class="btn btn-primary" type="button">Confirmar</button></div></div>
+  </div>
+
+  <input type="file" id="importFile" accept=".json,application/json" hidden>
+  <div class="toast-region" id="toastRegion" role="status" aria-live="polite"></div>
+  <script src="/app.js" type="module"></script>
+</body>
+</html>
