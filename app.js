@@ -142,15 +142,17 @@
   }
   function productCard(p) {
     const s = productStock(p), f = flag(p), price = productPrice(p), image = productImage(p);
-    const thumb = image ? '<img loading="lazy" data-product-id="'+ esc(p.id) +'" data-image-attempt="0" referrerpolicy="no-referrer" src="' + esc(image) + '" alt="Imagen del producto '+ esc(p.name) +'">' : '<div class="product-symbol">' + esc(titleInitials(p.brand || p.name)) + '</div>';
+    const thumb = image ? '<img loading="lazy" data-product-id="'+ esc(p.id) +'" referrerpolicy="no-referrer" src="' + esc(image) + '" alt="Imagen del producto '+ esc(p.name) +'">' : '<div class="product-symbol">' + esc(titleInitials(p.brand || p.name)) + '</div>';
+    const dealBadge=price.discountPercent?'<span class="deal-flag">-'+price.discountPercent+'% OFERTA</span>':"";
+    const offerMeta=price.originalPrice!==null?'<div class="old-price-row"><del>'+esc(priceText(price.originalPrice,price.currency))+'</del><span>Ahorras '+esc(priceText(price.originalPrice-price.value,price.currency))+'</span></div>':"";
     const name = esc(p.name), encoded = esc(p.id), notes = esc(p.notes || "Sin descripción adicional.");
     const link = p.url ? '<a class="open-link" href="'+esc(p.url)+'" target="_blank" rel="noreferrer noopener" aria-label="Visitar tienda de '+name+'" title="Ver en tienda">↗</a>' : "";
     const buy = p.status !== "Comprada" ? '<button type="button" class="btn btn-bought" data-action="buy" data-id="' + encoded + '">✓ Confirmar compra</button>' : (p.received ? '<button class="btn btn-secondary" disabled>✓ Recibido</button>' : '<button class="btn btn-bought" data-action="receive" data-id="'+encoded+'">✓ Marcar recibido</button>');
     return '<article class="product-card">' +
-      '<div class="product-image">' + thumb + '<span class="product-flag '+ f.css +'">'+esc(f.text)+'</span><div class="product-menu"><button data-action="edit" data-id="'+encoded+'" title="Editar" aria-label="Editar '+name+'">✎</button><button data-action="delete" data-id="'+encoded+'" title="Eliminar" aria-label="Eliminar '+name+'">×</button></div></div>' +
+      '<div class="product-image">' + thumb + '<span class="product-flag '+ f.css +'">'+esc(f.text)+'</span>'+dealBadge+'<div class="product-menu"><button data-action="edit" data-id="'+encoded+'" title="Editar" aria-label="Editar '+name+'">✎</button><button data-action="delete" data-id="'+encoded+'" title="Eliminar" aria-label="Eliminar '+name+'">×</button></div></div>' +
       '<div class="product-body"><div class="product-meta">'+ esc(p.type) + (p.code ? " · " + esc(p.code) : "") + '</div>' +
       '<h3 class="product-name" title="'+name+'">'+name+'</h3><p class="product-desc">'+notes+'</p>'+
-      '<div class="product-price-row"><div><div class="price-num '+(price.value==null?'unknown':'')+'">'+(price.value==null?'Consultar precio':esc(priceText(price.value,price.currency)))+'</div><span class="price-detail">'+esc(price.label)+'</span></div>'+
+      '<div class="product-price-row"><div><div class="price-num '+(price.value==null?'unknown':'')+'">'+(price.value==null?'Consultar precio':esc(priceText(price.value,price.currency)))+'</div>'+offerMeta+'<span class="price-detail">'+esc(price.label)+'</span></div>'+
       '<span class="stock-pill '+s.kind+'">'+esc(s.text)+'</span></div>'+
       '<div class="product-bottom">'+buy+link+'</div></div></article>';
   }
@@ -165,10 +167,10 @@
     $("productGrid").innerHTML=current.map(productCard).join("");
     $("emptyState").classList.toggle("hidden",current.length > 0);
     $("productGrid").querySelectorAll("img").forEach(img => img.addEventListener("error", () => {
+      S.brokenImages.add(img.getAttribute("src"));
       const item=S.items.find(p=>p.id===img.dataset.productId);
       const options=item?productImageCandidates(item):[];
-      const next=Number(img.dataset.imageAttempt||"0")+1;
-      if(next<options.length){img.dataset.imageAttempt=String(next);img.src=options[next];}
+      if(options.length)img.src=options[0];
       else img.outerHTML='<div class="product-symbol">◎</div>';
     }));
     $("feedLine").textContent = S.feed.generatedAt ? "Última revisión automática: " + dateText(S.feed.generatedAt) + ". Algunos proveedores restringen precios, imágenes y stock." : "Aún no hay capturas verificadas de las tiendas; precios no disponibles no se inventan.";
