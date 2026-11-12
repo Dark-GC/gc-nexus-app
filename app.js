@@ -109,7 +109,7 @@
   function counts() {
     const data = S.items; const purchase = data.filter(i => i.status === "Comprada");
     return {all:data.length,purchased:purchase.length,received:purchase.filter(p => p.received).length,pending:data.filter(i => i.status === "Pendiente").length,
-      out:data.filter(i => productStock(i).kind === "out").length,review:data.filter(i => i.status === "Revisar").length,
+      out:data.filter(i => productStock(i).kind === "out").length,deals:data.filter(i=>productPrice(i).discountPercent>0).length,review:data.filter(i => i.status === "Revisar").length,
       spent: data.reduce((n,p) => n + (p.status === "Comprada" && p.paidAmount != null ? p.paidAmount : 0),0)};
   }
   function statCard(label, value, caption, symbol, css) {
@@ -121,14 +121,14 @@
       statCard("Comprados",k.purchased,k.received + " recibidos físicamente","✓","purchased") +
       statCard("Por comprar",k.pending,"Artículos pendientes de adquirir","◷","pending") +
       statCard("Existencias agotadas",k.out,"Solo proveedores con dato confirmado","⊘","stock");
-    [["navAll",k.all],["navPending",k.pending],["navPurchased",k.purchased],["navOut",k.out]].forEach(x => $(x[0]).textContent = x[1]);
+    [["navAll",k.all],["navPending",k.pending],["navPurchased",k.purchased],["navOut",k.out],["navDeals",k.deals]].forEach(x => $(x[0]).textContent = x[1]);
   }
   function renderCategories() {
     const root = $("filterChips");
     root.innerHTML = CATEGORIES.map(cat => '<button type="button" class="chip ' + (S.category===cat?"selected":"") + '" data-category="' + cat + '">' + cat + (cat === "Todas" ? "" : " (" + S.items.filter(p=>p.type===cat).length + ")") + '</button>').join("");
   }
   function visibleItems() {
-    let data = S.items.filter(p => (S.view === "pending" ? p.status === "Pendiente" : S.view === "purchased" ? p.status === "Comprada" : S.view === "out" ? productStock(p).kind === "out" : true));
+    let data = S.items.filter(p => (S.view === "pending" ? p.status === "Pendiente" : S.view === "purchased" ? p.status === "Comprada" : S.view === "out" ? productStock(p).kind === "out" : S.view==="deals" ? productPrice(p).discountPercent>0 : true));
     if(S.category !== "Todas") data = data.filter(p => p.type === S.category);
     const query = S.query.trim().toLocaleLowerCase("es");
     if(query) data = data.filter(p => [p.name,p.brand,p.code,p.notes,p.type].join(" ").toLocaleLowerCase("es").includes(query));
@@ -158,8 +158,11 @@
   }
   function render() {
     renderStats(); renderCategories();
-    $("sideNav").querySelectorAll("[data-view]").forEach(b => b.classList.toggle("active",b.dataset.view === S.view));
-    const names = {all:["Todos los artículos","Equipos, materiales y accesorios en un solo lugar."],pending:["Pendientes de compra","Artículos que todavía necesitamos adquirir."],purchased:["Comprados","Compras confirmadas y productos recibidos."],out:["Sin existencias","Artículos con agotamiento confirmado o cantidad manual igual a cero."]};
+    document.querySelectorAll("[data-view]").forEach(b => {
+      b.classList.toggle("active",b.dataset.view === S.view);
+      if(b.classList.contains("mobile-tab"))b.setAttribute("aria-current",b.dataset.view===S.view?"page":"false");
+    });
+    const names = {all:["Todos los artículos","Equipos, materiales y accesorios en un solo lugar."],pending:["Pendientes de compra","Artículos que todavía necesitamos adquirir."],purchased:["Comprados","Compras confirmadas y productos recibidos."],out:["Sin existencias","Artículos con agotamiento confirmado o cantidad manual igual a cero."],deals:["Ofertas verificadas","Promociones con precio anterior y ahorro comprobables en el proveedor."]};
     $("sectionTitle").firstChild.textContent = names[S.view][0] + " ";
     $("sectionSubtitle").textContent=names[S.view][1];
     const current = visibleItems();
@@ -173,7 +176,8 @@
       if(options.length)img.src=options[0];
       else img.outerHTML='<div class="product-symbol">◎</div>';
     }));
-    $("feedLine").textContent = S.feed.generatedAt ? "Última revisión automática: " + dateText(S.feed.generatedAt) + ". Algunos proveedores restringen precios, imágenes y stock." : "Aún no hay capturas verificadas de las tiendas; precios no disponibles no se inventan.";
+    const amazonCount=Object.values(S.amazonFeed.items||{}).filter(x=>x.priceStatus==="verified").length;
+    $("feedLine").textContent = "VEVOR/Creality: consultas automáticas al abrir y cada 5 min. Amazon: "+amazonCount+" precios observados en consulta puntual, con fecha; verifica el valor actual antes de comprar.";
   }
   function setView(v) {S.view=v;S.category="Todas";$("searchInput").value="";S.query="";render();}
   function showOverlay(id) {$(id).classList.remove("hidden"); document.body.style.overflow="hidden";}
@@ -324,7 +328,7 @@
     $("uploadPhoto").addEventListener("change",async e=>{if(!e.target.files?.length)return;try{S.pendingPhoto=await shrinkImage(e.target.files[0]);toast("Foto optimizada y lista para guardar.");}catch(err){toast(err.message,true);}});
     ["sideExport","exportJson"].forEach(id=>$(id).addEventListener("click",exportJSON));
     $("exportCsv").addEventListener("click",exportCSV);
-    $("sideImport").addEventListener("click",()=>$("importFile").click());
+    ["sideImport","mobileImport"].forEach(id=>$(id)?.addEventListener("click",()=>$("importFile").click()));
     $("importFile").addEventListener("change",e=>importJSON(e.target.files[0]));
     $("refreshFeed").addEventListener("click",()=>refreshFeed());
     $("learnFeed").addEventListener("click",()=>showDecision("info"));
