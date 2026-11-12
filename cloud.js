@@ -144,7 +144,7 @@
     $("authSignUp")?.addEventListener("click",signUp);
     $("authSignOut")?.addEventListener("click",signOut);
     try{
-      const res=await fetch("./cloud-config.json",{cache:"no-store"});
+      const res=await fetch("./data/cloud-config.json",{cache:"no-store"});
       if(!res.ok)throw new Error("Falta configuración.");
       const config=await res.json();
       if(!/^https:\/\/[a-z0-9-]+\.supabase\.co$/.test(config.url||"")||!/^sb_publishable_/.test(config.publishableKey||""))throw new Error("La base de datos privada todavía no está activada.");
