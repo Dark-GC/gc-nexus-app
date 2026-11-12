@@ -14,7 +14,7 @@ test("cloud backend uses owner-scoped RLS and emits events",()=>{
  const ddl=read("database/schema.sql"),cloud=read("cloud.js");
  assert.match(ddl,/enable row level security/);
  assert.match(ddl,/auth\.uid\(\)/);
- assert.match(ddl,/onConflict:"user_id,id"/);
+ assert.match(cloud,/onConflict:"user_id,id"/);
  assert.ok(!cloud.includes("service_role"));
  assert.match(cloud,/inventory_events/);
  assert.match(cloud,/postgres_changes/);
