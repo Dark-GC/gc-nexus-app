@@ -1,0 +1,15 @@
+{
+  "schemaVersion": 1,
+  "checkedAt": "2026-11-12T21:55:00.000Z",
+  "notes": "Ofertas vistas en listado oficial; solo se activan si el precio del producto sigue coincidiendo y antes de la expiración prudente. No reemplaza consulta a tienda.",
+  "items": {
+    "gc-vevor": {
+      "sourceUrl": "https://www.vevor.com/vinyl-cutter-c_11151/vevor-cutting-machine-vinyl-cutter-machine-automatic-edge-detection-2-blade-type-p_010610190808",
+      "listingUrl": "https://www.vevor.com/s/vinyl-supplies-for-vinyl-cutter",
+      "observedPrice": 254.93,
+      "originalPrice": 339.9,
+      "currency": "USD",
+      "validUntil": "2026-11-14T00:00:00.000Z"
+    }
+  }
+}
