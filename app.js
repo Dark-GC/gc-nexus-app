@@ -3,7 +3,7 @@
   const KEY = "gc_graphics_inventory_v1";
   const CATEGORIES = ["Todas", "Maquinaria", "Accesorio", "Consumible"];
   const $ = id => document.getElementById(id);
-  const S = {items: [], feed: {items: {}}, liveQuotes:{}, view: "all", category: "Todas", query: "", sort: "order", editing: null, pendingPhoto: null, decision: null, incoming: null};
+  const S = {items: [], feed: {items: {}}, liveQuotes:{}, verifiedImages:{}, view: "all", category: "Todas", query: "", sort: "order", editing: null, pendingPhoto: null, decision: null, incoming: null};
   const safeText = v => String(v == null ? "" : v);
   const esc = v => safeText(v).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#39;");
   const urlOK = v => /^https:\/\/[^\s]+$/i.test(safeText(v)) || /^http:\/\/[^\s]+$/i.test(safeText(v));
@@ -78,11 +78,13 @@
     if (p.stockQty != null && Number.isInteger(p.stockQty)) return p.stockQty === 0 ? {text: "0 unid. publicadas", kind: "out"} : {text: p.stockQty + " unid. indicadas", kind: ""};
     return {text: "Stock sin verificar", kind: "unknown"};
   }
-  function productImage(p) {
+  function productImageCandidates(p) {
     const f = feedOf(p);
-    const u = p.imageUrl || S.liveQuotes[p.id]?.imageUrl || (f && f.imageUrl) || "";
-    return imageOK(u) ? u : "";
+    const choices=[p.imageUrl,S.liveQuotes[p.id]?.imageUrl,f?.imageUrl,S.verifiedImages[p.id]?.url];
+    return [...new Set(choices.filter(imageOK))];
   }
+  function productImage(p) {return productImageCandidates(p)[0] || "";}
+
   function flag(p) {
     if (p.status === "Comprada") return {text: p.received ? "✓ COMPRADA Y RECIBIDA" : "✓ COMPRADA", css: "bought"};
     if (p.status === "Revisar") return {text:"⚑ REVISAR",css:"review"};
@@ -125,7 +127,7 @@
   }
   function productCard(p) {
     const s = productStock(p), f = flag(p), price = productPrice(p), image = productImage(p);
-    const thumb = image ? '<img loading="lazy" referrerpolicy="no-referrer" src="' + esc(image) + '" alt="Imagen del producto '+ esc(p.name) +'">' : '<div class="product-symbol">' + esc(titleInitials(p.brand || p.name)) + '</div>';
+    const thumb = image ? '<img loading="lazy" data-product-id="'+ esc(p.id) +'" data-image-attempt="0" referrerpolicy="no-referrer" src="' + esc(image) + '" alt="Imagen del producto '+ esc(p.name) +'">' : '<div class="product-symbol">' + esc(titleInitials(p.brand || p.name)) + '</div>';
     const name = esc(p.name), encoded = esc(p.id), notes = esc(p.notes || "Sin descripción adicional.");
     const link = p.url ? '<a class="open-link" href="'+esc(p.url)+'" target="_blank" rel="noreferrer noopener" aria-label="Visitar tienda de '+name+'" title="Ver en tienda">↗</a>' : "";
     const buy = p.status !== "Comprada" ? '<button type="button" class="btn btn-bought" data-action="buy" data-id="' + encoded + '">✓ Confirmar compra</button>' : (p.received ? '<button class="btn btn-secondary" disabled>✓ Recibido</button>' : '<button class="btn btn-bought" data-action="receive" data-id="'+encoded+'">✓ Marcar recibido</button>');
@@ -147,7 +149,13 @@
     $("resultTotal").textContent=current.length;
     $("productGrid").innerHTML=current.map(productCard).join("");
     $("emptyState").classList.toggle("hidden",current.length > 0);
-    $("productGrid").querySelectorAll("img").forEach(img => img.addEventListener("error", () => {img.outerHTML='<div class="product-symbol">◎</div>';}));
+    $("productGrid").querySelectorAll("img").forEach(img => img.addEventListener("error", () => {
+      const item=S.items.find(p=>p.id===img.dataset.productId);
+      const options=item?productImageCandidates(item):[];
+      const next=Number(img.dataset.imageAttempt||"0")+1;
+      if(next<options.length){img.dataset.imageAttempt=String(next);img.src=options[next];}
+      else img.outerHTML='<div class="product-symbol">◎</div>';
+    }));
     $("feedLine").textContent = S.feed.generatedAt ? "Última revisión automática: " + dateText(S.feed.generatedAt) + ". Algunos proveedores restringen precios, imágenes y stock." : "Aún no hay capturas verificadas de las tiendas; precios no disponibles no se inventan.";
   }
   function setView(v) {S.view=v;S.category="Todas";$("searchInput").value="";S.query="";render();}
@@ -313,7 +321,12 @@
       try{const r=await fetch("./data/items.json",{cache:"no-store"});if(!r.ok)throw Error("No se cargó el catálogo inicial");const data=await r.json();S.items=data.items.map(safeItem);save();}
       catch(e){S.items=[];toast("No se pudo cargar el catálogo inicial. Prueba recargar.",true);}
     }
-    render();await refreshFeed(true);scheduleLiveQuotes();
+    render();await refreshFeed(true);
+    try {
+      const response=await fetch("./data/verified-images.json",{cache:"no-store"});
+      if(response.ok){const extra=await response.json();S.verifiedImages=extra.items||{};render();}
+    }catch{}
+    scheduleLiveQuotes();
   }
   window.GCInventory = {
     getItems: () => S.items.map(p => ({...p})),
