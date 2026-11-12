@@ -11,3 +11,12 @@
 .auth-form .btn{width:100%}
 .cloud-footnote{padding:4px 28px 22px;color:#8d9bb0;font-size:11px;line-height:1.6}
 @media(max-width:600px){.cloud-button{padding:8px 9px;font-size:10px}.auth-form{padding:5px 18px 17px}.cloud-footnote{padding:0 18px 17px}}
+
+.receipt-field{border:0;margin:0;padding:0}
+.receipt-field legend{font-size:11px;font-weight:800;color:#c5cdde;margin-bottom:11px}
+.receipt-choices{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.receipt-choices label{display:block;cursor:pointer}
+.receipt-choices input{position:absolute;opacity:0;width:1px;height:1px}
+.receipt-choices span{display:block;text-align:center;padding:11px 8px;background:#151b28;border:1px solid #394356;border-radius:10px;font-size:12px;font-weight:800;color:#aab5c7}
+.receipt-choices input:checked+span{background:#2c2949;border-color:#9775ef;color:#e1d6ff;box-shadow:0 0 0 2px #9877ef25}
+.receipt-choices input:focus-visible+span{outline:2px solid #b69cff;outline-offset:3px}
