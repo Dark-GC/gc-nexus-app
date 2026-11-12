@@ -68,6 +68,17 @@ function cleanImage(value) {
   }
 }
 
+// VEVOR shows its original list price in a separate market-price DOM element.
+// Only trust the explicitly labeled amount on the SAME product page.
+export function vevorListPrice(html, current) {
+  if (!Number.isFinite(current) || current <= 0) return null;
+  const match = html.match(/<div\b(?=[^>]*class=["'][^"']*\bDM_dp-marketPrice\b)(?=[^>]*data-currency=["']([\d.]+)["'])[^>]*>/i);
+  if (!match) return null;
+  const number = Number(match[1]);
+  return Number.isFinite(number) && number > current && number <= current * 10
+    ? Math.round(number * 100) / 100 : null;
+}
+
 export function parseProduct(html, pageUrl) {
   let product = null;
   const scripts = html.matchAll(/<script\b([^>]*)>([\s\S]*?)<\/script>/gi);
@@ -103,6 +114,7 @@ export function parseProduct(html, pageUrl) {
     title: title ? title.slice(0, 280) : null,
     image,
     price: verifiedPrice,
+    originalPrice: pageUrl.includes('vevor.com') ? vevorListPrice(html, verifiedPrice) : null,
     currency: currency ? String(currency).toUpperCase().slice(0, 5) : null,
     availability,
     stockQty: Number.isSafeInteger(stockQty) ? stockQty : null,
@@ -164,9 +176,13 @@ async function getShopifyQuote(input){
   const body=await response.text();if(body.length>2_000_000)throw Error("storefront_response_too_large");
   const p=JSON.parse(body), all=Array.isArray(p.variants)?p.variants:[],available=all.filter(v=>v.available===true);
   const prices=[...new Set(available.map(v=>v.price).filter(v=>Number.isFinite(v)&&v>0))];
+  const availableCompare=available.filter(v=>prices.length===1 && v.price===prices[0]);
+  const compareValues=[...new Set(availableCompare.map(v=>v.compare_at_price).filter(v=>Number.isFinite(v)&&v>prices[0]))];
+  const originalPrice=compareValues.length===1?compareValues[0]/100:null;
   const img=typeof p.featured_image==="string"?p.featured_image:(p.featured_image?.src||p.images?.[0]||"");
   const normalized=img.startsWith("//")?"https:"+img:img;
   return {title:p.title||null,image:cleanImage(normalized),price:prices.length===1?prices[0]/100:null,
+    originalPrice,
     currency:prices.length===1?"USD":null,
     availability:all.length>0&&available.length===0?"out_of_stock":available.length?"in_stock":"unknown",
     stockQty:null,checkedAt:new Date().toISOString(),source:"shopify-storefront-json",
