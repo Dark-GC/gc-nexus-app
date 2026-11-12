@@ -61,7 +61,9 @@
   }
   function statusCaption(f) {
     if (!f || !f.checkedAt) return "Precio no verificado";
-    return "Captura " + dateText(f.checkedAt);
+    let hour = "";
+    try {hour = new Intl.DateTimeFormat("es-DO",{timeZone:"America/Santo_Domingo",hour:"2-digit",minute:"2-digit"}).format(new Date(f.checkedAt));}catch{}
+    return (f.provider==="official"?"Consulta automática":"Última captura")+" · "+dateText(f.checkedAt)+(hour?" "+hour:"");
   }
   function productPrice(p) {
     const f = feedOf(p);
