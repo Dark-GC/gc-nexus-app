@@ -3,14 +3,14 @@
   "checkedAt": "2026-11-12",
   "items": {
     "gc-epson": {
-      "url": "https://90a1c75758623581b3f8-5c119c3de181c9857fcb2784776b17ef.ssl.cf2.rackcdn.com/640173_307157_01_front_zoom.jpg",
-      "model": "Epson ET-2800",
-      "source": "Micro Center exact model"
+      "url": "https://m.media-amazon.com/images/I/81gg+wUtSmL._AC_SL1500_.jpg",
+      "model": "Epson EcoTank ET-2800 B096N8DN2H",
+      "source": "Manual exact ASIN B096N8DN2H"
     },
     "gc-buyounger": {
-      "url": "https://images-na.ssl-images-amazon.com/images/I/71-SOs-3lWL.jpg",
-      "model": "Buyounger 4-in-1 B09471X83K",
-      "source": "ASIN mirror exact model"
+      "url": "https://m.media-amazon.com/images/I/61-4Wy39L3L._AC_SL1500_.jpg",
+      "model": "Buyounger laminator B09471X83K",
+      "source": "Manual exact ASIN B09471X83K; fallback to known photo"
     },
     "gc-falcon10": {
       "url": "https://www.creality.store/cdn/shop/files/10W_CR-Laser_Falcon_Engraver-13.png?v=1754647362&width=1080",
@@ -21,6 +21,26 @@
       "url": "https://i5.walmartimages.com/seo/4-Pack-PTFE-Teflon-Sheets-Size-L16-x-20-for-Auto-Heat-Press-Heat-Transfer-Paper-and-Sublimation-Paper-Reusable-Heat-Resistant-Non-stick_2baac3c2-3439-46ba-9c62-0b3294a149e9.2213d1d2c70daf61dd418b57e486a4cf.jpeg",
       "model": "TransOurDream four 16x20 PTFE",
       "source": "Walmart photo matched brand dimensions and pack"
+    },
+    "gc-bettersub": {
+      "url": "https://m.media-amazon.com/images/I/71RpLrQ9MgL._AC_SL1500_.jpg",
+      "model": "BetterSub tumbler press B09NRDXYP3",
+      "source": "Manual exact ASIN B09NRDXYP3"
+    },
+    "gc-topdeep": {
+      "url": "https://m.media-amazon.com/images/I/71NL5zGJVYL._AC_SL1500_.jpg",
+      "model": "Topdeep 15x15 8-in-1 B0BFPDKN6R",
+      "source": "Manual exact ASIN B0BFPDKN6R"
+    },
+    "gc-colemoly": {
+      "url": "https://m.media-amazon.com/images/I/71clkw8X6dL._AC_US500_.jpg",
+      "model": "Colemoly paper 8.5x11 300 sheets B0D62QWN6M",
+      "source": "Retail product photo and ASIN confirmed"
+    },
+    "gc-caja": {
+      "url": "https://images-na.ssl-images-amazon.com/images/I/71AKIxMLjzL.jpg",
+      "model": "Creality laser enclosure 2.0 B0CMXGG8XX",
+      "source": "Retail reference Creality enclosure 2.0; check precise variation"
     }
   }
 }
