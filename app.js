@@ -23,9 +23,11 @@
     if (toastTimeout) clearTimeout(toastTimeout);
     toastTimeout = setTimeout(() => el.classList.add("hidden"), 3400);
   }
+  let suppressCloudSave = false;
   function save() {
     try {
       localStorage.setItem(KEY, JSON.stringify({schemaVersion: 1, savedAt: now(), items: S.items}));
+      if (!suppressCloudSave) window.GCCloud?.notify?.();
       return true;
     } catch {
       toast("No se pudo guardar: espacio local agotado. Exporta un respaldo JSON.", true);
@@ -269,5 +271,13 @@
     }
     render();await refreshFeed(true);
   }
+  window.GCInventory = {
+    getItems: () => S.items.map(p => ({...p})),
+    setItemsFromCloud: items => {
+      suppressCloudSave = true;
+      S.items = Array.isArray(items) ? items.map(safeItem) : S.items;
+      save(); render(); suppressCloudSave = false;
+    }
+  };
   document.addEventListener("DOMContentLoaded",init);
 })();
