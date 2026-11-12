@@ -29,7 +29,7 @@ test("VEVOR actualizado (enlace nuevo), nunca el viejo",()=>{
 });
 test("html enlaza archivos y formularios de compra",()=>{
   const html=read("index.html");
-  for(const name of ['id="productGrid"','id="itemForm"','id="confirmDecision"','id="purchaseReceived"','id="importFile"','src="./app.js"'])assert.ok(html.includes(name),name);
+  for(const name of ['id="productGrid"','id="itemForm"','id="confirmDecision"','name="purchaseReceivedChoice"','id="importFile"','src="./app.js"'])assert.ok(html.includes(name),name);
 });
 test("precios sin inventar en caché inicial",()=>{
   const data=JSON.parse(read("data/price-cache.json"));
