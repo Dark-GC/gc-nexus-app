@@ -131,4 +131,4 @@ for(const p of data.items){
   await sleep(350);
 }
 await fs.writeFile(file("data/price-cache.json"),JSON.stringify(feed,null,2)+"\n","utf8");
-console.log("Registros revisados: "+Object.keys(feed.items).length);
+console.log("Captura UTC: "+checked+" | registros revisados: "+Object.keys(feed.items).length);
