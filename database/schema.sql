@@ -16,6 +16,7 @@ create table if not exists public.inventory_items (
  notes text not null default '',
  notion_url text not null default '',
  manual_price numeric(12,2) check (manual_price >= 0),
+ manual_original_price numeric(12,2) check (manual_original_price >= 0),
  stock_qty integer check (stock_qty >= 0),
  purchase_date date,
  paid_amount numeric(12,2) check (paid_amount >= 0),
