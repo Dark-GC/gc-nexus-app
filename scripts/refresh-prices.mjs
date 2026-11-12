@@ -30,7 +30,7 @@ function providerOf(address) {
 async function fetchText(url, type="text/html") {
   const allowed = new Set(["www.vevor.com","vevor.com","www.crealityfalcon.com","crealityfalcon.com"]);
   const target = validHttp(url);
-  if (!target || !allowed.has(target.hostname)) throw Error("Origen no permitido");
+  if (!target || target.protocol !== "https:" || !allowed.has(target.hostname)) throw Error("Origen HTTPS no permitido");
   const response = await fetch(target,{signal:AbortSignal.timeout(17000),redirect:"follow",headers:{"accept":type,"user-agent":"GCGraphicsInventory/1.0 (+https://github.com/Dark-GC/gc-nexus-app; inventory monitoring)"}});
   if(!response.ok)throw Error("HTTP "+response.status);
   const final = new URL(response.url);
