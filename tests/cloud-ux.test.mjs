@@ -29,7 +29,7 @@ test("quote fetch verifies HTTPS retailer allowlist, real-time auto refresh",()=
 });
 test("photo fallback data is only for exact products and app handles broken photos",()=>{
  const data=JSON.parse(read("data/verified-images.json")),client=read("app.js");
- assert.equal(Object.keys(data.items).length,4);
+ assert.ok(Object.keys(data.items).length>=8);
  assert.match(client,/productImageCandidates/);
  assert.match(client,/imageAttempt/);
  assert.match(client,/img\.addEventListener\("error"/);
