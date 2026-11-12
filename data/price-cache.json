@@ -1,6 +1,175 @@
 {
   "schemaVersion": 1,
-  "generatedAt": null,
-  "items": {},
-  "notes": "No se publican precios, existencias ni fotos sin una extracción verificable. El script de actualización produce capturas con fecha."
+  "generatedAt": "2026-11-12T21:03:57.614Z",
+  "items": {
+    "gc-bettersub": {
+      "sourceUrl": "https://a.co/d/0bwLNZk1",
+      "provider": "amazon",
+      "checkedAt": "2026-11-12T21:03:57.614Z",
+      "price": null,
+      "currency": null,
+      "priceStatus": "unavailable",
+      "stockStatus": "unknown",
+      "stockQuantity": null,
+      "imageUrl": "",
+      "error": "Amazon: precio y stock requieren API autorizada. Imagen y precio se pueden añadir manualmente."
+    },
+    "gc-epson": {
+      "sourceUrl": "https://a.co/d/06O8MAgi",
+      "provider": "amazon",
+      "checkedAt": "2026-11-12T21:03:57.614Z",
+      "price": null,
+      "currency": null,
+      "priceStatus": "unavailable",
+      "stockStatus": "unknown",
+      "stockQuantity": null,
+      "imageUrl": "",
+      "error": "Amazon: precio y stock requieren API autorizada. Imagen y precio se pueden añadir manualmente."
+    },
+    "gc-buyounger": {
+      "sourceUrl": "https://a.co/d/0bnGnkkK",
+      "provider": "amazon",
+      "checkedAt": "2026-11-12T21:03:57.614Z",
+      "price": null,
+      "currency": null,
+      "priceStatus": "unavailable",
+      "stockStatus": "unknown",
+      "stockQuantity": null,
+      "imageUrl": "",
+      "error": "Amazon: precio y stock requieren API autorizada. Imagen y precio se pueden añadir manualmente."
+    },
+    "gc-topdeep": {
+      "sourceUrl": "https://a.co/d/00mUP4nA",
+      "provider": "amazon",
+      "checkedAt": "2026-11-12T21:03:57.614Z",
+      "price": null,
+      "currency": null,
+      "priceStatus": "unavailable",
+      "stockStatus": "unknown",
+      "stockQuantity": null,
+      "imageUrl": "",
+      "error": "Amazon: precio y stock requieren API autorizada. Imagen y precio se pueden añadir manualmente."
+    },
+    "gc-vevor": {
+      "sourceUrl": "https://www.vevor.com/vinyl-cutter-c_11151/vevor-cutting-machine-vinyl-cutter-machine-automatic-edge-detection-2-blade-type-p_010610190808",
+      "provider": "vevor",
+      "checkedAt": "2026-11-12T21:03:57.614Z",
+      "price": null,
+      "currency": null,
+      "priceStatus": "unavailable",
+      "stockStatus": "unknown",
+      "stockQuantity": null,
+      "imageUrl": "",
+      "error": null
+    },
+    "gc-colemoly": {
+      "sourceUrl": "https://a.co/d/02iIZjEH",
+      "provider": "amazon",
+      "checkedAt": "2026-11-12T21:03:57.614Z",
+      "price": null,
+      "currency": null,
+      "priceStatus": "unavailable",
+      "stockStatus": "unknown",
+      "stockQuantity": null,
+      "imageUrl": "",
+      "error": "Amazon: precio y stock requieren API autorizada. Imagen y precio se pueden añadir manualmente."
+    },
+    "gc-mebmik": {
+      "sourceUrl": "https://a.co/d/0baoOFbE",
+      "provider": "amazon",
+      "checkedAt": "2026-11-12T21:03:57.614Z",
+      "price": null,
+      "currency": null,
+      "priceStatus": "unavailable",
+      "stockStatus": "unknown",
+      "stockQuantity": null,
+      "imageUrl": "",
+      "error": "Amazon: precio y stock requieren API autorizada. Imagen y precio se pueden añadir manualmente."
+    },
+    "gc-dispensador": {
+      "sourceUrl": "https://a.co/d/0dxKicGG",
+      "provider": "amazon",
+      "checkedAt": "2026-11-12T21:03:57.614Z",
+      "price": null,
+      "currency": null,
+      "priceStatus": "unavailable",
+      "stockStatus": "unknown",
+      "stockQuantity": null,
+      "imageUrl": "",
+      "error": "Amazon: precio y stock requieren API autorizada. Imagen y precio se pueden añadir manualmente."
+    },
+    "gc-caja": {
+      "sourceUrl": "https://a.co/d/0cjpCrj8",
+      "provider": "amazon",
+      "checkedAt": "2026-11-12T21:03:57.614Z",
+      "price": null,
+      "currency": null,
+      "priceStatus": "unavailable",
+      "stockStatus": "unknown",
+      "stockQuantity": null,
+      "imageUrl": "",
+      "error": "Amazon: precio y stock requieren API autorizada. Imagen y precio se pueden añadir manualmente."
+    },
+    "gc-ptfe": {
+      "sourceUrl": "https://a.co/d/037cijDs",
+      "provider": "amazon",
+      "checkedAt": "2026-11-12T21:03:57.614Z",
+      "price": null,
+      "currency": null,
+      "priceStatus": "unavailable",
+      "stockStatus": "unknown",
+      "stockQuantity": null,
+      "imageUrl": "",
+      "error": "Amazon: precio y stock requieren API autorizada. Imagen y precio se pueden añadir manualmente."
+    },
+    "gc-cinta": {
+      "sourceUrl": "https://a.co/d/0gYDXPdp",
+      "provider": "amazon",
+      "checkedAt": "2026-11-12T21:03:57.614Z",
+      "price": null,
+      "currency": null,
+      "priceStatus": "unavailable",
+      "stockStatus": "unknown",
+      "stockQuantity": null,
+      "imageUrl": "",
+      "error": "Amazon: precio y stock requieren API autorizada. Imagen y precio se pueden añadir manualmente."
+    },
+    "gc-falcon10": {
+      "sourceUrl": "https://www.amazon.com/dp/B0D9VWCHM8",
+      "provider": "amazon",
+      "checkedAt": "2026-11-12T21:03:57.614Z",
+      "price": null,
+      "currency": null,
+      "priceStatus": "unavailable",
+      "stockStatus": "unknown",
+      "stockQuantity": null,
+      "imageUrl": "",
+      "error": "Amazon: precio y stock requieren API autorizada. Imagen y precio se pueden añadir manualmente."
+    },
+    "gc-cubierta": {
+      "sourceUrl": "https://www.crealityfalcon.com/products/protective-cover-for-laser-engraver",
+      "provider": "creality",
+      "checkedAt": "2026-11-12T21:03:57.614Z",
+      "price": 49,
+      "currency": "USD",
+      "priceStatus": "verified",
+      "stockStatus": "in_stock",
+      "stockQuantity": null,
+      "imageUrl": "https://cdn.shopify.com/s/files/1/0799/8714/7049/files/Falcon_Protective_Cover_for_Laser_Engraver.png?v=1762439470",
+      "error": null
+    },
+    "gc-colmena": {
+      "sourceUrl": "https://www.crealityfalcon.com/products/honeycomb-workbench-for-laser-engraver-500mm-500mm",
+      "provider": "creality",
+      "checkedAt": "2026-11-12T21:03:57.614Z",
+      "price": 99.99,
+      "currency": "USD",
+      "priceStatus": "verified",
+      "stockStatus": "in_stock",
+      "stockQuantity": null,
+      "imageUrl": "https://cdn.shopify.com/s/files/1/0799/8714/7049/files/honeycomb_500-500.png?v=1762439471",
+      "error": null
+    }
+  },
+  "notes": "Capturas de páginas públicas; fecha de revisión, sin garantía de datos en caja. Los artículos Amazon requieren una API autorizada para precio/stock."
 }
