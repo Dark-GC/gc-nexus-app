@@ -31,7 +31,7 @@ test("photo fallback data is only for exact products and app handles broken phot
  const data=JSON.parse(read("data/verified-images.json")),client=read("app.js");
  assert.ok(Object.keys(data.items).length>=8);
  assert.match(client,/productImageCandidates/);
- assert.match(client,/imageAttempt/);
+ assert.match(client,/brokenImages/);
  assert.match(client,/img\.addEventListener\("error"/);
 });
 test("cloud config does not expose a secret key",()=>{
