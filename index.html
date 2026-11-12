@@ -25,6 +25,7 @@
         <button class="nav-link" data-view="pending"><span class="nav-icon">◷</span> Por comprar <span class="nav-count" id="navPending">–</span></button>
         <button class="nav-link" data-view="purchased"><span class="nav-icon">✓</span> Comprados <span class="nav-count" id="navPurchased">–</span></button>
         <button class="nav-link" data-view="out"><span class="nav-icon">⊘</span> Sin existencias <span class="nav-count" id="navOut">–</span></button>
+        <button class="nav-link" data-view="deals"><span class="nav-icon">%</span> Ofertas <span class="nav-count" id="navDeals">–</span></button>
       </nav>
       <div class="side-divider"></div>
       <div class="nav-label">GESTIÓN</div>
@@ -70,7 +71,7 @@
           </div>
           <div class="catalog-actions">
             <button class="btn btn-secondary" id="exportCsv">↓ Exportar CSV</button>
-            <button class="btn btn-secondary mobile-backup" id="exportJson">↓ Respaldo JSON</button>
+            <button class="btn btn-secondary mobile-backup" id="exportJson">↓ Respaldo</button><button class="btn btn-secondary mobile-import" id="mobileImport" type="button">⇧ Importar</button>
           </div>
         </section>
         <div class="filter-panel">
@@ -91,6 +92,12 @@
     </main>
   </div>
 
+  <nav class="mobile-nav" aria-label="Navegación móvil" id="mobileNav">
+    <button type="button" class="mobile-tab active" data-view="all" aria-label="Todos los artículos"><span class="mobile-tab-icon">▦</span><span>Inicio</span></button>
+    <button type="button" class="mobile-tab" data-view="pending" aria-label="Pendientes de compra"><span class="mobile-tab-icon">◷</span><span>Pendientes</span></button>
+    <button type="button" class="mobile-tab" data-view="purchased" aria-label="Artículos comprados"><span class="mobile-tab-icon">✓</span><span>Comprados</span></button>
+    <button type="button" class="mobile-tab" data-view="deals" aria-label="Ofertas verificadas"><span class="mobile-tab-icon">%</span><span>Ofertas</span></button>
+  </nav>
   <div class="overlay hidden" id="formOverlay" role="presentation">
     <div class="modal large" role="dialog" aria-modal="true" aria-labelledby="formTitle">
       <div class="modal-head"><div><div class="modal-kicker">GESTIÓN DE INVENTARIO</div><h2 id="formTitle">Nuevo artículo</h2></div><button class="close-btn" id="closeForm" aria-label="Cerrar formulario">×</button></div>
@@ -106,6 +113,7 @@
             <label class="field span-2"><span>Enlace de imagen (opcional)</span><input name="imageUrl" type="text" placeholder="https://.../imagen.jpg"><small>También puedes subir una foto. Usaremos la miniatura de la tienda cuando esté disponible.</small></label>
             <label class="field span-2 image-upload"><span>Foto propia del artículo</span><input id="uploadPhoto" type="file" accept="image/png,image/jpeg,image/webp"><small>Se comprime y guarda solo en este navegador.</small></label>
             <label class="field"><span>Precio de referencia (USD)</span><input name="manualPrice" type="number" inputmode="decimal" min="0" step="0.01" placeholder="Sin registrar"></label>
+            <label class="field"><span>Precio anterior (USD, opcional)</span><input name="manualOriginalPrice" type="number" inputmode="decimal" min="0" step="0.01" placeholder="Solo cuando hay descuento"></label>
             <label class="field"><span>Unidades disponibles publicadas</span><input name="stockQty" type="number" min="0" step="1" placeholder="No informado"><small>Solo si la tienda indica una cantidad.</small></label>
             <label class="field span-2"><span>Notas / descripción</span><textarea name="notes" rows="3" maxlength="1200" placeholder="Modelo, compatibilidad, proveedor, observaciones..."></textarea></label>
           </div>
