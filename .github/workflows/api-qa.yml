@@ -1,0 +1,28 @@
+name: GC Graphics — API y web QA
+on:
+  workflow_dispatch:
+  push:
+    branches: [panda]
+    paths:
+      - "public/**"
+      - "server.js"
+      - "package.json"
+      - "tests/server.test.js"
+      - ".github/workflows/api-qa.yml"
+  pull_request:
+    branches: [panda]
+permissions:
+  contents: read
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 6
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - name: Validar servidor y frontend
+        run: npm run check
+      - name: Pruebas unitarias e integración HTTP
+        run: npm test
