@@ -33,14 +33,29 @@
       "source": "Manual exact ASIN B0BFPDKN6R"
     },
     "gc-colemoly": {
-      "url": "https://m.media-amazon.com/images/I/71clkw8X6dL._AC_US500_.jpg",
-      "model": "Colemoly paper 8.5x11 300 sheets B0D62QWN6M",
-      "source": "Retail product photo and ASIN confirmed"
+      "url": "https://m.media-amazon.com/images/I/71UfTTqAh2L._AC_SL1500_.jpg",
+      "model": "Colemoly 8.5x11 300 hojas B0D62QWN6M",
+      "source": "Galería de producto para ASIN exacto"
     },
     "gc-caja": {
       "url": "https://images-na.ssl-images-amazon.com/images/I/71AKIxMLjzL.jpg",
       "model": "Creality laser enclosure 2.0 B0CMXGG8XX",
       "source": "Retail reference Creality enclosure 2.0; check precise variation"
+    },
+    "gc-mebmik": {
+      "url": "https://m.media-amazon.com/images/I/61BKpsbsLXL._SL1500_.jpg",
+      "model": "MEBMIK 6 rollos 10mm × 16m B0CQYH6VLH",
+      "source": "ASIN B0CQYH6VLH corroborado por enlace original"
+    },
+    "gc-dispensador": {
+      "url": "https://m.media-amazon.com/images/I/61U33yrBXIL._AC_SL1000_.jpg",
+      "model": "Dispensador de cinta B08CCT5W77",
+      "source": "Galería de producto para ASIN exacto"
+    },
+    "gc-cinta": {
+      "url": "https://m.media-amazon.com/images/I/61eJeUsVUBL._SL1500_.jpg",
+      "model": "Cinta térmica COOLTOOLS 6 rollos B0FPG8RC3J",
+      "source": "Galería de producto para ASIN exacto"
     }
   }
 }
