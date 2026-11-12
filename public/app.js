@@ -423,7 +423,6 @@ function bindEvents() {
   $('#fieldImage').addEventListener('input', (e) => {
     imageCandidate = safeImage(e.target.value.trim()); previewImage();
   });
-  document.querySelector('.file-upload').addEventListener('click', () => $('#imageFile').click());
   $('#imageFile').addEventListener('change', (e) => {
     const file = e.target.files?.[0];
     if (!file) return;
