@@ -3,7 +3,7 @@
   const KEY = "gc_graphics_inventory_v1";
   const CATEGORIES = ["Todas", "Maquinaria", "Accesorio", "Consumible"];
   const $ = id => document.getElementById(id);
-  const S = {items: [], feed: {items: {}}, amazonFeed:{items:{}}, liveQuotes:{}, verifiedImages:{}, brokenImages:new Set(), view: "all", category: "Todas", query: "", sort: "order", editing: null, pendingPhoto: null, decision: null, incoming: null};
+  const S = {items: [], feed: {items: {}}, amazonFeed:{items:{}}, promotions:{items:{}}, liveQuotes:{}, verifiedImages:{}, brokenImages:new Set(), view: "all", category: "Todas", query: "", sort: "order", editing: null, pendingPhoto: null, decision: null, incoming: null};
   const safeText = v => String(v == null ? "" : v);
   const esc = v => safeText(v).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#39;");
   const urlOK = v => /^https:\/\/[^\s]+$/i.test(safeText(v)) || /^http:\/\/[^\s]+$/i.test(safeText(v));
@@ -80,6 +80,12 @@
     }else if(Number.isFinite(p.manualPrice)){
       value=p.manualPrice;label="Precio introducido manualmente";kind="manual";orig=p.manualOriginalPrice;
     }
+    // A reference snapshot must not present an old Amazon discount as active indefinitely.
+    if(f?.provider==="amazon-snapshot" && Date.now()-new Date(f.checkedAt).getTime()>48*3600000)orig=null;
+    const promo=S.promotions.items?.[p.id];
+    if(orig==null&&promo?.sourceUrl===p.url&&Number.isFinite(value)&&promo.currency===currency&&
+      Math.abs(value-promo.observedPrice)<0.005&&Date.now()<new Date(promo.validUntil).getTime())
+      orig=promo.originalPrice;
     const originalPrice=Number.isFinite(orig)&&Number.isFinite(value)&&orig>value&&orig<=value*10?orig:null;
     const discountPercent=originalPrice===null?null:Math.round((1-value/originalPrice)*100);
     return {value,currency,label,kind,originalPrice,discountPercent:discountPercent>0?discountPercent:null};
@@ -347,6 +353,10 @@
     try{
       const r=await fetch("./data/amazon-snapshot.json",{cache:"no-store"});
       if(r.ok){const data=await r.json();if(data.schemaVersion===1&&data.items&&typeof data.items==="object"){S.amazonFeed=data;render();}}
+    }catch{}
+    try {
+      const r=await fetch("./data/verified-promotions.json",{cache:"no-store"});
+      if(r.ok){const data=await r.json();if(data.schemaVersion===1&&data.items){S.promotions=data;render();}}
     }catch{}
     try {
       const response=await fetch("./data/verified-images.json",{cache:"no-store"});
