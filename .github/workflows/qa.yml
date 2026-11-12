@@ -1,0 +1,33 @@
+name: GC Graphics — QA
+on:
+  workflow_dispatch:
+  push:
+    branches: [panda]
+    paths:
+      - "*.html"
+      - "*.js"
+      - "*.css"
+      - "*.svg"
+      - "data/items.json"
+      - "data/price-cache.json"
+      - "scripts/**"
+      - "tests/**"
+      - ".github/workflows/qa.yml"
+  pull_request:
+    branches: [panda]
+permissions:
+  contents: read
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - name: Verificar código y seed
+        run: |
+          node --check app.js
+          node --check scripts/refresh-prices.mjs
+          node --test tests/*.test.mjs
