@@ -1,0 +1,26 @@
+{
+  "schemaVersion": 1,
+  "checkedAt": "2026-11-12",
+  "items": {
+    "gc-epson": {
+      "url": "https://90a1c75758623581b3f8-5c119c3de181c9857fcb2784776b17ef.ssl.cf2.rackcdn.com/640173_307157_01_front_zoom.jpg",
+      "model": "Epson ET-2800",
+      "source": "Micro Center exact model"
+    },
+    "gc-buyounger": {
+      "url": "https://images-na.ssl-images-amazon.com/images/I/71-SOs-3lWL.jpg",
+      "model": "Buyounger 4-in-1 B09471X83K",
+      "source": "ASIN mirror exact model"
+    },
+    "gc-falcon10": {
+      "url": "https://www.creality.store/cdn/shop/files/10W_CR-Laser_Falcon_Engraver-13.png?v=1754647362&width=1080",
+      "model": "Creality CR-Laser Falcon 10W",
+      "source": "Creality product official"
+    },
+    "gc-ptfe": {
+      "url": "https://i5.walmartimages.com/seo/4-Pack-PTFE-Teflon-Sheets-Size-L16-x-20-for-Auto-Heat-Press-Heat-Transfer-Paper-and-Sublimation-Paper-Reusable-Heat-Resistant-Non-stick_2baac3c2-3439-46ba-9c62-0b3294a149e9.2213d1d2c70daf61dd418b57e486a4cf.jpeg",
+      "model": "TransOurDream four 16x20 PTFE",
+      "source": "Walmart photo matched brand dimensions and pack"
+    }
+  }
+}
