@@ -3,7 +3,7 @@
   const KEY = "gc_graphics_inventory_v1";
   const CATEGORIES = ["Todas", "Maquinaria", "Accesorio", "Consumible"];
   const $ = id => document.getElementById(id);
-  const S = {items: [], feed: {items: {}}, view: "all", category: "Todas", query: "", sort: "order", editing: null, pendingPhoto: null, decision: null, incoming: null};
+  const S = {items: [], feed: {items: {}}, liveQuotes:{}, view: "all", category: "Todas", query: "", sort: "order", editing: null, pendingPhoto: null, decision: null, incoming: null};
   const safeText = v => String(v == null ? "" : v);
   const esc = v => safeText(v).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#39;");
   const urlOK = v => /^https:\/\/[^\s]+$/i.test(safeText(v)) || /^http:\/\/[^\s]+$/i.test(safeText(v));
@@ -52,9 +52,12 @@
     };
   }
   function feedOf(p) {
-    const f = (S.feed.items || {})[p.id];
-    if (!f || f.sourceUrl !== p.url || !f.checkedAt) return null;
-    return f;
+    const archived = (S.feed.items || {})[p.id];
+    const live = S.liveQuotes[p.id];
+    const older = archived?.sourceUrl === p.url ? archived : null;
+    if (live?.sourceUrl !== p.url) return older;
+    if (live.priceStatus === "verified" || live.stockStatus === "out_of_stock" || live.stockStatus === "in_stock") return live;
+    return older || live;
   }
   function statusCaption(f) {
     if (!f || !f.checkedAt) return "Precio no verificado";
@@ -77,7 +80,7 @@
   }
   function productImage(p) {
     const f = feedOf(p);
-    const u = p.imageUrl || (f && f.imageUrl) || "";
+    const u = p.imageUrl || S.liveQuotes[p.id]?.imageUrl || (f && f.imageUrl) || "";
     return imageOK(u) ? u : "";
   }
   function flag(p) {
@@ -130,7 +133,7 @@
       '<div class="product-image">' + thumb + '<span class="product-flag '+ f.css +'">'+esc(f.text)+'</span><div class="product-menu"><button data-action="edit" data-id="'+encoded+'" title="Editar" aria-label="Editar '+name+'">✎</button><button data-action="delete" data-id="'+encoded+'" title="Eliminar" aria-label="Eliminar '+name+'">×</button></div></div>' +
       '<div class="product-body"><div class="product-meta">'+ esc(p.type) + (p.code ? " · " + esc(p.code) : "") + '</div>' +
       '<h3 class="product-name" title="'+name+'">'+name+'</h3><p class="product-desc">'+notes+'</p>'+
-      '<div class="product-price-row"><div><div class="price-num '+(price.value==null?'unknown':'')+'">'+(price.value==null?'Sin precio':esc(priceText(price.value,price.currency)))+'</div><span class="price-detail">'+esc(price.label)+'</span></div>'+
+      '<div class="product-price-row"><div><div class="price-num '+(price.value==null?'unknown':'')+'">'+(price.value==null?'Consultar precio':esc(priceText(price.value,price.currency)))+'</div><span class="price-detail">'+esc(price.label)+'</span></div>'+
       '<span class="stock-pill '+s.kind+'">'+esc(s.text)+'</span></div>'+
       '<div class="product-bottom">'+buy+link+'</div></div></article>';
   }
@@ -194,6 +197,7 @@
     if(vals.status!=="Comprada") vals.received=false;
     if(current)S.items=S.items.map(p=>p.id===current.id?safeItem(vals):p);else S.items.push(safeItem(vals));
     save();closeOverlays();render();toast(current?"Artículo actualizado.":"Artículo agregado al inventario.");
+    if(supportsLive(vals))getLiveQuote(vals);
   }
   function confirmDecision() {
     const d=S.decision; if(!d)return closeOverlays();
@@ -237,6 +241,46 @@
       if(data&&typeof data.items==="object"){S.feed=data;render();if(!silent)toast(data.generatedAt?"Capturas de proveedores revisadas.":"Todavía no hay una captura automática disponible.");}
     }catch {if(!silent)toast("No se pudo consultar el feed. Tus datos locales están intactos.",true);}
   }
+  const API_ORIGIN = "https://gc-graphics-prices-api.onrender.com";
+  let liveTimer = null;
+  function supportsLive(p){
+    try{
+      const u=new URL(p.url),h=u.hostname.toLowerCase();
+      return u.protocol==="https:" && (h==="www.vevor.com"||h==="vevor.com"||h==="www.crealityfalcon.com"||h==="crealityfalcon.com");
+    }catch{return false;}
+  }
+  async function getLiveQuote(p){
+    try{
+      const url=API_ORIGIN+"/api/product-preview?url="+encodeURIComponent(p.url);
+      const response=await fetch(url,{signal:AbortSignal.timeout(50000),cache:"no-store"});
+      if(!response.ok)throw Error("HTTP "+response.status);
+      const info=await response.json();
+      if(!info||info.productUrl!==p.url)return;
+      const v=Number(info.price);
+      const f={
+        sourceUrl:p.url,provider:"official",checkedAt:info.checkedAt,
+        price:(info.price != null && Number.isFinite(v) && v>=0)?v:null,
+        currency:/^[A-Z]{3}$/.test(info.currency||"")?info.currency:null,
+        priceStatus:info.price!=null&&info.currency?"verified":"unavailable",
+        stockStatus:info.availability==="in_stock"?"in_stock":info.availability==="out_of_stock"?"out_of_stock":"unknown",
+        stockQuantity:Number.isInteger(info.stockQty)&&info.stockQty>=0?info.stockQty:null,
+        imageUrl:imageOK(info.image)?info.image:"",
+        error:null
+      };
+      S.liveQuotes[p.id]=f;
+      if(S.items.some(x=>x.id===p.id&&x.url===p.url))render();
+    }catch(e){console.info("GC live quote unavailable for "+p.id+":",e.message);}
+  }
+  function autoRefreshQuotes(){
+    if(document.visibilityState==="hidden")return;
+    for(const p of S.items.filter(supportsLive))getLiveQuote(p);
+  }
+  function scheduleLiveQuotes(){
+    if(liveTimer)return;
+    autoRefreshQuotes();
+    liveTimer=setInterval(autoRefreshQuotes,5*60*1000);
+    document.addEventListener("visibilitychange",()=>{if(document.visibilityState==="visible")autoRefreshQuotes();});
+  }
   function bind(){
     document.querySelectorAll("[data-view]").forEach(b=>b.addEventListener("click",()=>setView(b.dataset.view)));
     $("filterChips").addEventListener("click",e=>{const el=e.target.closest("[data-category]");if(el){S.category=el.dataset.category;render();}});
@@ -269,7 +313,7 @@
       try{const r=await fetch("./data/items.json",{cache:"no-store"});if(!r.ok)throw Error("No se cargó el catálogo inicial");const data=await r.json();S.items=data.items.map(safeItem);save();}
       catch(e){S.items=[];toast("No se pudo cargar el catálogo inicial. Prueba recargar.",true);}
     }
-    render();await refreshFeed(true);
+    render();await refreshFeed(true);scheduleLiveQuotes();
   }
   window.GCInventory = {
     getItems: () => S.items.map(p => ({...p})),
