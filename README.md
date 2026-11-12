@@ -31,10 +31,10 @@ python -m http.server 8080
 |---|---|---|
 | Creality Falcon | Shopify product JSON público | Precio de variante si es único y disponible. Stock numérico solo si la API lo publica explícitamente. |
 | VEVOR | JSON-LD y metaetiquetas del sitio oficial | Puede omitir precio, stock o imagen si no hay datos confiables; no se infieren unidades. |
-| Amazon / a.co | API pendiente de habilitar | Por respeto a sus restricciones, **no se scrapean sus precios**. Es necesario proveedor/API autorizada y credenciales propias si se quiere actualizar en producción. |
+| Amazon / a.co | Consulta puntual de ASINs mediante proveedor externo | `data/amazon-snapshot.json` registra 10 precios observados para 11 productos (12/11/2026), con marca temporal; sin actualización automática ni stock numérico. Una API autorizada sigue pendiente. |
 | Nuevos productos añadidos solo en el navegador | Sin actualización automática | Deben conectarse a un backend/sincronización para integrarse en el monitor de proveedores. Se pueden usar precio e imagen manuales mientras tanto. |
 
-La captura se escribe en \`data/price-cache.json\`; cada entrada incluye el enlace exacto, fecha, estado del dato y procedencia. El botón «↻» descarga la última captura publicada, **no ejecuta una consulta directa a las tiendas**. La frecuencia programada es cada 3 h, pero GitHub puede retrasar o suspender las ejecuciones automáticas.
+La captura automatizada de VEVOR/Creality se escribe en \`data/price-cache.json\`; las consultas puntuales de Amazon se mantienen aparte. cada entrada incluye el enlace exacto, fecha, estado del dato y procedencia. El botón «↻» descarga la última captura publicada, **no ejecuta una consulta directa a las tiendas**. La frecuencia programada es cada 3 h, pero GitHub puede retrasar o suspender las ejecuciones automáticas.
 
 Si se genera un bloqueo, variante ambigua o respuesta incompleta, la app muestra el campo como no verificado. En ningún caso se inventan datos. Los precios no incluyen automáticamente envío, impuestos o aduanas dominicanas.
 
@@ -72,4 +72,25 @@ node scripts/refresh-prices.mjs
 node --test tests/*.test.mjs
 \`\`\`
 
-**Estado:** implementación inicial en rama principal del repositorio reutilizado. No afirmar «tiempo real», sincronización Notion o funcionamiento en producción sin evidencias de las integraciones y despliegue.
+**Estado:** V1.2 funcional desplegada, pero sin nube sincronizada y sin monitor automático de Amazon. No afirmar «tiempo real» absoluto, sincronización Notion o todas las imágenes garantizadas mientras no se validen las integraciones y dispositivos.
+
+
+## V1.2 — catálogo de ofertas y sitio móvil (12/11/2026)
+
+**Interfaz:** se conserva el diseño original en escritorio. En teléfonos se incorpora barra de navegación fija con zona segura inferior, fichas compactas en una columna a 520 px o menos, filtros desplazables, formulario táctil a pantalla casi completa, opciones de exportar **e importar** copias sin ordenador, y tamaños de entrada de 16 px para evitar zoom involuntario en iOS.
+
+**Ofertas:** se muestra precio actual, precio anterior tachado, ahorro y porcentaje solamente cuando la fuente devuelve ambos valores para el mismo artículo. Hay una sección «Ofertas» disponible en ordenador y móvil. Se verifican comparativos oficiales de Creality Shopify y VEVOR (desde el propio sitio). Un dato promocional capturado en una lista oficial VEVOR se muestra solo mientras el precio actual coincide y antes de su vencimiento conservador.
+
+**Amazon:** \`data/amazon-snapshot.json\` guarda una **consulta puntual de precios de 11 ASIN exactos**, con 10 importes confirmados el 12/11/2026 y uno sin precio (Epson ET-2800: no se observó una oferta destacada). Dos de esos listados tenían precio de referencia superior. La fuente es un proveedor externo consultado mediante Firecrawl; la integración **no se ejecuta automáticamente desde GitHub** y no reemplaza ni simula una API de Amazon. El campo muestra el día y hora de observación; después de 24 h se marca como «precio de referencia». Los descuentos puntuales de Amazon dejan de mostrarse como ofertas activas después de 48 h. Las cantidades exactas no se infieren.
+
+**Imágenes:** \`data/verified-images.json\` mapea fotografías verificadas para 11 ASIN conocidos; las otras 3 fichas usan imágenes de la tienda oficial. Los enlaces externos pueden bloquear la carga en ciertos navegadores: se prueban URL alternativas, se evita reiterar URLs que fallaron durante la sesión y el usuario puede subir su fotografía propia. No se reemplaza un producto por una imagen genérica de otro modelo.
+
+**Backend de precios:** \`/api/product-preview\` en [Render](https://gc-graphics-prices-api.onrender.com/api/health) consulta precios públicos oficiales compatibles cuando abre la web y cada 5 minutos mientras está visible; la caché dura 3 minutos. La información puede ir retrasada por disponibilidad y límites del proveedor: *no existe un flujo streaming en tiempo real garantizado*. Amazon requiere credenciales/API autorizada o proveedor de datos contractualizado para actualizaciones continuas.
+
+**Sincronización:** NO está activada: el proyecto Supabase cotizado a US$0 necesita aún autorización adicional del propietario, y no se creó. Los cambios del inventario siguen siendo locales a cada navegador; siempre exportar copia JSON si se van a borrar datos del navegador o cambiar de dispositivo. Los ficheros de esquema SQL y cliente de autenticación son preparatorios, no prueba de puesta en producción.
+
+### Validación de V1.2
+
+- GitHub Actions: \`node --check app.js\`, \`node --check scripts/refresh-prices.mjs\` y \`node --test tests/*.test.mjs\`, incluyendo pruebas de descuentos con fuente, caducidad, ASIN exacto y navegación móvil.
+- Render: sitio web y servicio de precios desplegados, respuesta HTTP 200.
+- Comprobación con navegador móvil: render de los 14 artículos, navegación inferior presente y 5 promociones visibles con precio actual/anterior y ahorro. No declarar QA físico Safari/Android PASS mientras no se haya ejecutado.
