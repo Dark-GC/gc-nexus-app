@@ -1,11 +1,11 @@
 {
   "schemaVersion": 1,
-  "generatedAt": "2026-11-12T21:03:57.614Z",
+  "generatedAt": "2026-11-12T21:07:42.239Z",
   "items": {
     "gc-bettersub": {
       "sourceUrl": "https://a.co/d/0bwLNZk1",
       "provider": "amazon",
-      "checkedAt": "2026-11-12T21:03:57.614Z",
+      "checkedAt": "2026-11-12T21:07:42.239Z",
       "price": null,
       "currency": null,
       "priceStatus": "unavailable",
@@ -17,7 +17,7 @@
     "gc-epson": {
       "sourceUrl": "https://a.co/d/06O8MAgi",
       "provider": "amazon",
-      "checkedAt": "2026-11-12T21:03:57.614Z",
+      "checkedAt": "2026-11-12T21:07:42.239Z",
       "price": null,
       "currency": null,
       "priceStatus": "unavailable",
@@ -29,7 +29,7 @@
     "gc-buyounger": {
       "sourceUrl": "https://a.co/d/0bnGnkkK",
       "provider": "amazon",
-      "checkedAt": "2026-11-12T21:03:57.614Z",
+      "checkedAt": "2026-11-12T21:07:42.239Z",
       "price": null,
       "currency": null,
       "priceStatus": "unavailable",
@@ -41,7 +41,7 @@
     "gc-topdeep": {
       "sourceUrl": "https://a.co/d/00mUP4nA",
       "provider": "amazon",
-      "checkedAt": "2026-11-12T21:03:57.614Z",
+      "checkedAt": "2026-11-12T21:07:42.239Z",
       "price": null,
       "currency": null,
       "priceStatus": "unavailable",
@@ -53,19 +53,19 @@
     "gc-vevor": {
       "sourceUrl": "https://www.vevor.com/vinyl-cutter-c_11151/vevor-cutting-machine-vinyl-cutter-machine-automatic-edge-detection-2-blade-type-p_010610190808",
       "provider": "vevor",
-      "checkedAt": "2026-11-12T21:03:57.614Z",
-      "price": null,
-      "currency": null,
-      "priceStatus": "unavailable",
-      "stockStatus": "unknown",
+      "checkedAt": "2026-11-12T21:07:42.239Z",
+      "price": 254.93,
+      "currency": "USD",
+      "priceStatus": "verified",
+      "stockStatus": "in_stock",
       "stockQuantity": null,
-      "imageUrl": "",
+      "imageUrl": "https://img.vevorstatic.com/us%2FTSSDKZJ21INCUGSLU001V1%2Fgoods_grid-v1%2Fcutter-machine-m100-1.2.jpg?timestamp=1750313457000&format=webp",
       "error": null
     },
     "gc-colemoly": {
       "sourceUrl": "https://a.co/d/02iIZjEH",
       "provider": "amazon",
-      "checkedAt": "2026-11-12T21:03:57.614Z",
+      "checkedAt": "2026-11-12T21:07:42.239Z",
       "price": null,
       "currency": null,
       "priceStatus": "unavailable",
@@ -77,7 +77,7 @@
     "gc-mebmik": {
       "sourceUrl": "https://a.co/d/0baoOFbE",
       "provider": "amazon",
-      "checkedAt": "2026-11-12T21:03:57.614Z",
+      "checkedAt": "2026-11-12T21:07:42.239Z",
       "price": null,
       "currency": null,
       "priceStatus": "unavailable",
@@ -89,7 +89,7 @@
     "gc-dispensador": {
       "sourceUrl": "https://a.co/d/0dxKicGG",
       "provider": "amazon",
-      "checkedAt": "2026-11-12T21:03:57.614Z",
+      "checkedAt": "2026-11-12T21:07:42.239Z",
       "price": null,
       "currency": null,
       "priceStatus": "unavailable",
@@ -101,7 +101,7 @@
     "gc-caja": {
       "sourceUrl": "https://a.co/d/0cjpCrj8",
       "provider": "amazon",
-      "checkedAt": "2026-11-12T21:03:57.614Z",
+      "checkedAt": "2026-11-12T21:07:42.239Z",
       "price": null,
       "currency": null,
       "priceStatus": "unavailable",
@@ -113,7 +113,7 @@
     "gc-ptfe": {
       "sourceUrl": "https://a.co/d/037cijDs",
       "provider": "amazon",
-      "checkedAt": "2026-11-12T21:03:57.614Z",
+      "checkedAt": "2026-11-12T21:07:42.239Z",
       "price": null,
       "currency": null,
       "priceStatus": "unavailable",
@@ -125,7 +125,7 @@
     "gc-cinta": {
       "sourceUrl": "https://a.co/d/0gYDXPdp",
       "provider": "amazon",
-      "checkedAt": "2026-11-12T21:03:57.614Z",
+      "checkedAt": "2026-11-12T21:07:42.239Z",
       "price": null,
       "currency": null,
       "priceStatus": "unavailable",
@@ -137,7 +137,7 @@
     "gc-falcon10": {
       "sourceUrl": "https://www.amazon.com/dp/B0D9VWCHM8",
       "provider": "amazon",
-      "checkedAt": "2026-11-12T21:03:57.614Z",
+      "checkedAt": "2026-11-12T21:07:42.239Z",
       "price": null,
       "currency": null,
       "priceStatus": "unavailable",
@@ -149,7 +149,7 @@
     "gc-cubierta": {
       "sourceUrl": "https://www.crealityfalcon.com/products/protective-cover-for-laser-engraver",
       "provider": "creality",
-      "checkedAt": "2026-11-12T21:03:57.614Z",
+      "checkedAt": "2026-11-12T21:07:42.239Z",
       "price": 49,
       "currency": "USD",
       "priceStatus": "verified",
@@ -161,7 +161,7 @@
     "gc-colmena": {
       "sourceUrl": "https://www.crealityfalcon.com/products/honeycomb-workbench-for-laser-engraver-500mm-500mm",
       "provider": "creality",
-      "checkedAt": "2026-11-12T21:03:57.614Z",
+      "checkedAt": "2026-11-12T21:07:42.239Z",
       "price": 99.99,
       "currency": "USD",
       "priceStatus": "verified",
