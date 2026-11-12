@@ -3,7 +3,7 @@
   const KEY = "gc_graphics_inventory_v1";
   const CATEGORIES = ["Todas", "Maquinaria", "Accesorio", "Consumible"];
   const $ = id => document.getElementById(id);
-  const S = {items: [], feed: {items: {}}, liveQuotes:{}, verifiedImages:{}, view: "all", category: "Todas", query: "", sort: "order", editing: null, pendingPhoto: null, decision: null, incoming: null};
+  const S = {items: [], feed: {items: {}}, amazonFeed:{items:{}}, liveQuotes:{}, verifiedImages:{}, brokenImages:new Set(), view: "all", category: "Todas", query: "", sort: "order", editing: null, pendingPhoto: null, decision: null, incoming: null};
   const safeText = v => String(v == null ? "" : v);
   const esc = v => safeText(v).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#39;");
   const urlOK = v => /^https:\/\/[^\s]+$/i.test(safeText(v)) || /^http:\/\/[^\s]+$/i.test(safeText(v));
@@ -44,7 +44,7 @@
       received: p.received === true,
       url: urlOK(p.url) ? clamp(p.url, 1500) : "",
       imageUrl: imageOK(p.imageUrl) ? safeText(p.imageUrl).slice(0, 180000) : "",
-      manualPrice: toNum(p.manualPrice), stockQty: p.stockQty === 0 ? 0 : (Number.isInteger(Number(p.stockQty)) && p.stockQty !== "" && p.stockQty != null && Number(p.stockQty) >= 0 ? Number(p.stockQty) : null),
+      manualPrice: toNum(p.manualPrice), manualOriginalPrice:toNum(p.manualOriginalPrice), stockQty: p.stockQty === 0 ? 0 : (Number.isInteger(Number(p.stockQty)) && p.stockQty !== "" && p.stockQty != null && Number(p.stockQty) >= 0 ? Number(p.stockQty) : null),
       purchaseDate: /^\d{4}-\d{2}-\d{2}$/.test(safeText(p.purchaseDate)) ? p.purchaseDate : null,
       paidAmount: toNum(p.paidAmount), notes: clamp(p.notes, 1200),
       notionUrl: urlOK(p.notionUrl) ? p.notionUrl : "",
@@ -52,24 +52,37 @@
     };
   }
   function feedOf(p) {
-    const archived = (S.feed.items || {})[p.id];
-    const live = S.liveQuotes[p.id];
-    const older = archived?.sourceUrl === p.url ? archived : null;
-    if (live?.sourceUrl !== p.url) return older;
-    if (live.priceStatus === "verified" || live.stockStatus === "out_of_stock" || live.stockStatus === "in_stock") return live;
-    return older || live;
+    const archived=(S.feed.items||{})[p.id],amazon=(S.amazonFeed.items||{})[p.id],live=S.liveQuotes[p.id];
+    const official=archived?.sourceUrl===p.url?archived:null;
+    const verifiedAmazon=amazon?.sourceUrl===p.url?amazon:null;
+    const older=official?.priceStatus==="verified"?official:(verifiedAmazon?.priceStatus==="verified"?verifiedAmazon:official||verifiedAmazon);
+    if(live?.sourceUrl!==p.url)return older;
+    if(live.priceStatus==="verified"||live.stockStatus==="out_of_stock"||live.stockStatus==="in_stock"){
+      if(live.originalPrice==null&&older?.price===live.price&&older?.currency===live.currency)
+        return {...live,originalPrice:older.originalPrice};
+      return live;
+    }
+    return older||live;
   }
   function statusCaption(f) {
     if (!f || !f.checkedAt) return "Precio no verificado";
     let hour = "";
     try {hour = new Intl.DateTimeFormat("es-DO",{timeZone:"America/Santo_Domingo",hour:"2-digit",minute:"2-digit"}).format(new Date(f.checkedAt));}catch{}
-    return (f.provider==="official"?"Consulta automática":"Última captura")+" · "+dateText(f.checkedAt)+(hour?" "+hour:"");
+    const age=Date.now()-new Date(f.checkedAt).getTime();
+    const label=f.provider==="official"?"Tienda oficial · consulta":f.provider==="amazon-snapshot"?(age>86400000?"Amazon · precio de referencia":"Amazon · consulta puntual"):"Última captura";
+    return label+" · "+dateText(f.checkedAt)+(hour?" "+hour:"");
   }
   function productPrice(p) {
-    const f = feedOf(p);
-    if (f && f.priceStatus === "verified" && Number.isFinite(f.price) && f.currency) return {value: f.price, currency: f.currency, label: statusCaption(f), kind: "online"};
-    if (Number.isFinite(p.manualPrice)) return {value: p.manualPrice, currency: "USD", label: "Precio manual · USD", kind: "manual"};
-    return {value: null, currency: "USD", label: f && f.error ? "Proveedor sin datos · revisión pendiente" : "Pendiente de consulta", kind: "unknown"};
+    const f=feedOf(p);
+    let value=null,currency="USD",label="Consultar en la tienda",kind="unknown",orig=null;
+    if(f&&f.priceStatus==="verified"&&Number.isFinite(f.price)&&f.price>=0&&/^[A-Z]{3}$/.test(f.currency||"")){
+      value=f.price;currency=f.currency;label=statusCaption(f);kind=f.provider==="amazon-snapshot"?"snapshot":"online";orig=f.originalPrice;
+    }else if(Number.isFinite(p.manualPrice)){
+      value=p.manualPrice;label="Precio introducido manualmente";kind="manual";orig=p.manualOriginalPrice;
+    }
+    const originalPrice=Number.isFinite(orig)&&Number.isFinite(value)&&orig>value&&orig<=value*10?orig:null;
+    const discountPercent=originalPrice===null?null:Math.round((1-value/originalPrice)*100);
+    return {value,currency,label,kind,originalPrice,discountPercent:discountPercent>0?discountPercent:null};
   }
   function productStock(p) {
     const f = feedOf(p);
@@ -82,8 +95,8 @@
   }
   function productImageCandidates(p) {
     const f = feedOf(p);
-    const choices=[p.imageUrl,S.liveQuotes[p.id]?.imageUrl,f?.imageUrl,S.verifiedImages[p.id]?.url];
-    return [...new Set(choices.filter(imageOK))];
+    const choices=[p.imageUrl,S.liveQuotes[p.id]?.imageUrl,S.verifiedImages[p.id]?.url,f?.imageUrl,S.amazonFeed.items?.[p.id]?.imageUrl];
+    return [...new Set(choices.filter(imageOK).filter(u=>!S.brokenImages.has(u)))];
   }
   function productImage(p) {return productImageCandidates(p)[0] || "";}
 
@@ -168,7 +181,7 @@
     $("formTitle").textContent=item?"Editar artículo":"Nuevo artículo";
     const form=$("itemForm");form.reset();
     const p=item||{};
-    ["name","brand","code","type","status","url","imageUrl","manualPrice","stockQty","notes"].forEach(k=>{
+    ["name","brand","code","type","status","url","imageUrl","manualPrice","manualOriginalPrice","stockQty","notes"].forEach(k=>{
       const el=form.elements.namedItem(k); if(el) el.value=p[k] == null ? (k==="type"?"Maquinaria":k==="status"?"Pendiente":"") : p[k];
     });
     form.elements.namedItem("received").checked=!!p.received;
@@ -200,7 +213,7 @@
     if(img && !imageOK(img)) return toast("Imagen inválida: introduce una URL http(s) o sube una fotografía.",true);
     const vals={...current,id:current?.id||("gc-"+Date.now()+"-"+Math.random().toString(16).slice(2)),order:current?.order??(Math.max(0,...S.items.map(p=>p.order))+1),
       name:clamp(get("name"),140),brand:clamp(get("brand"),70),code:clamp(get("code"),35),type:get("type"),status:get("status"),
-      received:form.elements.namedItem("received").checked,url,imageUrl:img,manualPrice:toNum(get("manualPrice")),
+      received:form.elements.namedItem("received").checked,url,imageUrl:img,manualPrice:toNum(get("manualPrice")),manualOriginalPrice:toNum(get("manualOriginalPrice")),
       stockQty:get("stockQty")===""?null:Number.parseInt(get("stockQty"),10),
       notes:clamp(get("notes"),1200),editedAt:now()};
     if(!vals.name)return toast("Agrega el nombre del artículo.",true);
@@ -270,6 +283,7 @@
       const f={
         sourceUrl:p.url,provider:"official",checkedAt:info.checkedAt,
         price:(info.price != null && Number.isFinite(v) && v>=0)?v:null,
+        originalPrice:(info.originalPrice!=null&&Number.isFinite(Number(info.originalPrice))&&Number(info.originalPrice)>v)?Number(info.originalPrice):null,
         currency:/^[A-Z]{3}$/.test(info.currency||"")?info.currency:null,
         priceStatus:info.price!=null&&info.currency?"verified":"unavailable",
         stockStatus:info.availability==="in_stock"?"in_stock":info.availability==="out_of_stock"?"out_of_stock":"unknown",
@@ -324,6 +338,10 @@
       catch(e){S.items=[];toast("No se pudo cargar el catálogo inicial. Prueba recargar.",true);}
     }
     render();await refreshFeed(true);
+    try{
+      const r=await fetch("./data/amazon-snapshot.json",{cache:"no-store"});
+      if(r.ok){const data=await r.json();if(data.schemaVersion===1&&data.items&&typeof data.items==="object"){S.amazonFeed=data;render();}}
+    }catch{}
     try {
       const response=await fetch("./data/verified-images.json",{cache:"no-store"});
       if(response.ok){const extra=await response.json();S.verifiedImages=extra.items||{};render();}
