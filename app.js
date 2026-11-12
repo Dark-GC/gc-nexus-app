@@ -86,7 +86,7 @@
   function productImage(p) {return productImageCandidates(p)[0] || "";}
 
   function flag(p) {
-    if (p.status === "Comprada") return {text: p.received ? "✓ COMPRADA Y RECIBIDA" : "✓ COMPRADA", css: "bought"};
+    if (p.status === "Comprada") return {text: p.received ? "✓ COMPRADA Y RECIBIDA" : "◷ COMPRADA · POR RECIBIR", css: "bought"};
     if (p.status === "Revisar") return {text:"⚑ REVISAR",css:"review"};
     if (p.status === "Cancelada") return {text:"× CANCELADA",css:"canceled"};
     return {text:"◷ PENDIENTE",css:"pending"};
@@ -179,7 +179,7 @@
     $("decisionMessage").textContent=mode==="delete"?"Se eliminará «"+p.name+"» del catálogo de este navegador. Antes puedes exportar una copia JSON.":mode==="buy"?"¿Confirmas la compra de «"+p.name+"»? Se registrará como comprado, con opción de indicar la recepción.":mode==="receive"?"¿Confirmas que recibiste físicamente «"+p.name+"»?":mode==="import"?"Se reemplazarán los artículos actuales por "+(S.incoming?.length || 0)+" artículos de la copia seleccionada.": "El sistema publica capturas de proveedores con fecha y procedencia. Amazon y algunas tiendas pueden bloquear las consultas. Nunca mostramos cifras supuestas como precios o cantidades reales; para nuevos datos debe ejecutarse la actualización automática en GitHub.";
     const confirm=$("confirmDecision");confirm.textContent=mode==="delete"?"Eliminar":mode==="buy"?"Registrar compra":mode==="receive"?"Marcar como recibido":mode==="import"?"Restaurar inventario":"Entendido";
     confirm.className="btn "+(mode==="delete"?"btn-danger":"btn-primary");
-    if(mode==="buy"){$("purchasedDate").value=new Date().toISOString().slice(0,10);$("paidAmount").value="";$("purchaseReceived").checked=false;}
+    if(mode==="buy"){$("purchasedDate").value=new Date().toISOString().slice(0,10);$("paidAmount").value="";document.querySelectorAll('input[name="purchaseReceivedChoice"]').forEach(x=>x.checked=false);}
     showOverlay("decisionOverlay");
   }
   async function shrinkImage(file) {
@@ -217,7 +217,7 @@
     const p=S.items.find(x=>x.id===d.id);if(!p)return closeOverlays();
     if(d.mode==="delete")S.items=S.items.filter(x=>x.id!==p.id);
     if(d.mode==="receive")p.received=true;
-    if(d.mode==="buy"){p.status="Comprada";p.received=$("purchaseReceived").checked;p.purchaseDate=$("purchasedDate").value||new Date().toISOString().slice(0,10);p.paidAmount=toNum($("paidAmount").value);}
+    if(d.mode==="buy"){const choice=document.querySelector('input[name="purchaseReceivedChoice"]:checked')?.value;if(!choice)return toast("Selecciona si ya recibiste físicamente la compra.",true);p.status="Comprada";p.received=choice==="yes";p.purchaseDate=$("purchasedDate").value||new Date().toISOString().slice(0,10);p.paidAmount=toNum($("paidAmount").value);}
     if(d.mode!=="delete")p.editedAt=now();
     save();closeOverlays();render();toast(d.mode==="delete"?"Artículo eliminado.":d.mode==="receive"?"Recepción registrada.":"Compra registrada correctamente.");
   }
