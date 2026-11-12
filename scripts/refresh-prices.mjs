@@ -71,9 +71,16 @@ function structuredProducts(html){
   }
   return all;
 }
+function vevorOriginalPrice(html, current){
+  if(!Number.isFinite(current)||current<=0)return null;
+  const m=html.match(/<div\\b(?=[^>]*class=["'][^"']*\\bDM_dp-marketPrice\\b)(?=[^>]*data-currency=["']([\\d.]+)["'])[^>]*>/i);
+  if(!m)return null;
+  const n=Number(m[1]);
+  return Number.isFinite(n)&&n>current&&n<=current*10?Math.round(n*100)/100:null;
+}
 function parseOffer(html){
   const tags=parseTags(html),products=structuredProducts(html);
-  const result={price:null,currency:null,stockStatus:"unknown",stockQuantity:null,imageUrl:"",priceStatus:"unavailable"};
+  const result={price:null,originalPrice:null,currency:null,stockStatus:"unknown",stockQuantity:null,imageUrl:"",priceStatus:"unavailable"};
   const image=tags["og:image"]||tags["twitter:image"]||products.map(p=>Array.isArray(p.image)?p.image[0]:p.image).find(Boolean)||"";
   const src=typeof image==="object"?image.url:image;
   if(validHttp(src))result.imageUrl=src;
@@ -89,13 +96,14 @@ function parseOffer(html){
     else if(av.endsWith("instock")||av.endsWith("limitedavailability"))result.stockStatus="in_stock";
     const exact=offer.inventoryLevel?.value??offer.inventoryLevel?.quantity;
     if(Number.isInteger(Number(exact))&&exact!=null&&Number(exact)>=0)result.stockQuantity=Number(exact);
-    if(result.priceStatus==="verified")return result;
+    if(result.priceStatus==="verified"){result.originalPrice=vevorOriginalPrice(html,result.price);return result;}
   }
   if(result.priceStatus!=="verified"){
     const value=Number(tags["product:price:amount"]||tags["og:price:amount"]||"");
     const currency=(tags["product:price:currency"]||tags["og:price:currency"]||"").toUpperCase();
     if(Number.isFinite(value)&&value>0&&/^[A-Z]{3}$/.test(currency)){result.price=value;result.currency=currency;result.priceStatus="verified";}
   }
+  result.originalPrice=vevorOriginalPrice(html,result.price);
   return result;
 }
 async function shopify(address){
@@ -106,18 +114,21 @@ async function shopify(address){
   const variants=(prod.variants||[]).filter(v=>v.available);
   const all=prod.variants||[];
   const prices=[...new Set(variants.map(v=>v.price).filter(Number.isFinite))];
+  const compared=variants.filter(v=>prices.length===1&&v.price===prices[0]).map(v=>v.compare_at_price).filter(n=>Number.isFinite(n)&&n>prices[0]);
+  const uniqueCompared=[...new Set(compared)];
+  const originalPrice=uniqueCompared.length===1?uniqueCompared[0]/100:null;
   const found=prices.length===1?prices[0]:null;
   const candidate=prod.featured_image||prod.images?.[0]||"";
   const src=typeof candidate==="string"?candidate:(candidate?.src||"");
   const imageUrl=src.startsWith("//")?"https:"+src:src;
-  return {price:found===null?null:found/100,currency:found===null?null:"USD",priceStatus:found===null?"unavailable":"verified",
+  return {price:found===null?null:found/100,originalPrice,currency:found===null?null:"USD",priceStatus:found===null?"unavailable":"verified",
     stockStatus:all.length>0&&variants.length===0?"out_of_stock":(variants.length===1?"in_stock":"unknown"),
     stockQuantity:variants.length===1&&Number.isInteger(variants[0].inventory_quantity)&&variants[0].inventory_quantity>=0?variants[0].inventory_quantity:null,
     imageUrl:validHttp(imageUrl)?imageUrl:""};
 }
 for(const p of data.items){
   const provider=providerOf(p.url);
-  const base={sourceUrl:p.url,provider,checkedAt:checked,price:null,currency:null,priceStatus:"unavailable",stockStatus:"unknown",stockQuantity:null,imageUrl:"",error:null};
+  const base={sourceUrl:p.url,provider,checkedAt:checked,price:null,originalPrice:null,currency:null,priceStatus:"unavailable",stockStatus:"unknown",stockQuantity:null,imageUrl:"",error:null};
   try{
     if(provider==="amazon"){base.error="Amazon: precio y stock requieren API autorizada. Imagen y precio se pueden añadir manualmente.";}
     else if(provider==="creality")Object.assign(base,await shopify(p.url));
