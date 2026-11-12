@@ -18,12 +18,13 @@
       type:item.type,status:item.status,received:!!item.received,
       brand:item.brand||"",code:item.code||"",product_url:item.url||"",
       image_url:item.imageUrl||"",notes:item.notes||"",notion_url:item.notionUrl||"",
-      manual_price:item.manualPrice??null,stock_qty:item.stockQty??null,
+      manual_price:item.manualPrice??null,manual_original_price:item.manualOriginalPrice??null,stock_qty:item.stockQty??null,
       purchase_date:item.purchaseDate||null,paid_amount:item.paidAmount??null};
   }
   function itemFrom(x){return {id:x.id,order:x.sort_order,name:x.name,type:x.type,brand:x.brand,code:x.code,
     status:x.status,received:x.received,url:x.product_url,imageUrl:x.image_url,
     manualPrice:x.manual_price===null?null:Number(x.manual_price),
+    manualOriginalPrice:x.manual_original_price===null?null:Number(x.manual_original_price),
     stockQty:x.stock_qty,purchaseDate:x.purchase_date,
     paidAmount:x.paid_amount===null?null:Number(x.paid_amount),
     notes:x.notes,notionUrl:x.notion_url,editedAt:x.updated_at};}
