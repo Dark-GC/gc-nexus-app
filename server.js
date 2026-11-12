@@ -152,6 +152,37 @@ async function fetchPage(url) {
   throw new Error('too_many_redirects');
 }
 
+// Storefront API for exact Creality product pages (no login, cookies or bypass).
+const quoteCache=new Map();
+async function getShopifyQuote(input){
+  const link=new URL(input);
+  const match=link.pathname.match(/^\/products\/([a-z0-9-]+)\/?$/i);
+  if(!match || !/^(www\.)?crealityfalcon\.com$/.test(link.hostname))throw Error('storefront_not_supported');
+  const query=new URL("https://www.crealityfalcon.com/products/"+match[1]+".js");
+  const response=await fetch(query,{signal:AbortSignal.timeout(13000),redirect:"error",headers:{Accept:"application/json","User-Agent":"GCGraphicsInventory/2.0"}});
+  if(!response.ok)throw Error("store_http_"+response.status);
+  const body=await response.text();if(body.length>2_000_000)throw Error("storefront_response_too_large");
+  const p=JSON.parse(body), all=Array.isArray(p.variants)?p.variants:[],available=all.filter(v=>v.available===true);
+  const prices=[...new Set(available.map(v=>v.price).filter(v=>Number.isFinite(v)&&v>0))];
+  const img=typeof p.featured_image==="string"?p.featured_image:(p.featured_image?.src||p.images?.[0]||"");
+  const normalized=img.startsWith("//")?"https:"+img:img;
+  return {title:p.title||null,image:cleanImage(normalized),price:prices.length===1?prices[0]/100:null,
+    currency:prices.length===1?"USD":null,
+    availability:all.length>0&&available.length===0?"out_of_stock":available.length?"in_stock":"unknown",
+    stockQty:null,checkedAt:new Date().toISOString(),source:"shopify-storefront-json",
+    productUrl:input,note:prices.length>1?"Precio variable según variante; elige variante en la tienda.":"Precio y stock reportados por la tienda; confirmar variante antes de comprar."};
+}
+async function previewProduct(url){
+  const cache=quoteCache.get(url);
+  if(cache&&Date.now()-cache.time<180000)return cache.value;
+  const domain=new URL(url).hostname.toLowerCase();
+  const value=domain.endsWith("crealityfalcon.com")?
+    await getShopifyQuote(url):
+    await fetchPage(url).then(page=>parseProduct(page.html,page.url));
+  quoteCache.set(url,{time:Date.now(),value});
+  if(quoteCache.size>150)quoteCache.delete(quoteCache.keys().next().value);
+  return value;
+}
 const files = {
   '/': ['index.html', 'text/html; charset=utf-8'],
   '/index.html': ['index.html', 'text/html; charset=utf-8'],
@@ -163,6 +194,8 @@ const files = {
 
 function send(res, status, data, type = 'application/json; charset=utf-8') {
   res.writeHead(status, {
+    'Access-Control-Allow-Origin': 'https://gc-graphics-inventory.onrender.com',
+    'Vary': 'Origin',
     'Content-Type': type,
     'Cache-Control': 'no-store',
     'X-Content-Type-Options': 'nosniff',
@@ -187,8 +220,7 @@ export const server = http.createServer(async (req, res) => {
         }));
       }
       try {
-        const page = await fetchPage(link);
-        return send(res, 200, JSON.stringify(parseProduct(page.html, page.url)));
+        return send(res, 200, JSON.stringify(await previewProduct(link)));
       } catch (error) {
         const reason = error.name === 'TimeoutError' ? 'timeout' : String(error.message || 'store_unreachable');
         return send(res, 503, JSON.stringify({ error: 'store_unavailable', reason, message: 'No se pudieron verificar datos de esta tienda en este momento. No se inventará precio ni stock.' }));
