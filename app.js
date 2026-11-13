@@ -406,7 +406,9 @@
       try{const r=await fetch("./data/items.json",{cache:"no-store"});if(!r.ok)throw Error("No se cargó el catálogo inicial");const data=await r.json();S.items=data.items.map(safeItem);save();}
       catch(e){S.items=[];toast("No se pudo cargar el catálogo inicial. Prueba recargar.",true);}
     }
-    render();await refreshFeed(true);
+    render();
+    S.initialized=true;document.dispatchEvent(new Event("gc-inventory-ready"));
+    await refreshFeed(true);
     try{
       const r=await fetch("./data/amazon-snapshot.json",{cache:"no-store"});
       if(r.ok){const data=await r.json();if(data.schemaVersion===1&&data.items&&typeof data.items==="object"){S.amazonFeed=data;render();}}
@@ -420,7 +422,6 @@
       if(response.ok){const extra=await response.json();S.verifiedImages=extra.items||{};render();}
     }catch{}
     scheduleLiveQuotes();
-    S.initialized=true;document.dispatchEvent(new Event("gc-inventory-ready"));
   }
   window.GCInventory = {
     getItems: () => S.items.map(p => ({...p})),
