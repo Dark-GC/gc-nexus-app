@@ -30,7 +30,52 @@ create or replace function private.reserve_amazon_quote(p_key text,p_credits int
 returns boolean language plpgsql security definer set search_path='' as $$
 declare inserted boolean;
 begin
-  if p_credits<1 or p_credits>5 or p_key !~ '^[A-Za-z0-9:,_-]{8,500}$' then raise exception 'invalid reservation'; end if;
+  if p_key is null or length(p_key) not between 8 and 500 or p_key !~ '^[A-Za-z0-9:,_-]+
+  insert into private.amazon_quote_budget(month) values(p_month) on conflict(month) do nothing;
+  perform 1 from private.amazon_quote_budget where month=p_month for update;
+  if exists(select 1 from private.amazon_quote_reservations where request_key=p_key) then return true; end if;
+  select committed_credits+reserved_credits+p_credits<=monthly_cap into inserted from private.amazon_quote_budget where month=p_month;
+  if not inserted then return false; end if;
+  insert into private.amazon_quote_reservations(request_key,month,credits) values(p_key,p_month,p_credits);
+  update private.amazon_quote_budget set reserved_credits=reserved_credits+p_credits,updated_at=now() where month=p_month;
+  return true;
+end $$;
+revoke all on function private.reserve_amazon_quote(text,integer,date) from public, anon, authenticated;
+grant execute on function private.reserve_amazon_quote(text,integer,date) to service_role;
+create or replace function private.finish_amazon_quote_reservation(p_key text,p_success boolean)
+returns void language plpgsql security definer set search_path='' as $$
+declare r private.amazon_quote_reservations%rowtype;
+begin
+  select * into r from private.amazon_quote_reservations where request_key=p_key for update;
+  if not found or r.state<>'reserved' then return; end if;
+  update private.amazon_quote_budget set reserved_credits=reserved_credits-r.credits,
+    committed_credits=committed_credits+case when p_success then r.credits else 0 end,updated_at=now() where month=r.month;
+  update private.amazon_quote_reservations set state=case when p_success then 'committed' else 'released' end where request_key=p_key;
+end $$;
+revoke all on function private.finish_amazon_quote_reservation(text,boolean) from public, anon, authenticated;
+grant execute on function private.finish_amazon_quote_reservation(text,boolean) to service_role;
+create or replace function public.gc_record_private_amazon_quote(p_owner_id uuid,p_item_id text,p_asin text,p_price numeric,p_currency text,p_stock_status text,p_seller text,p_product_url text,p_observed_url text,p_observed_at timestamptz,p_verification_status text,p_request_key text)
+returns void language plpgsql security definer set search_path='' as $$
+begin
+  insert into private.amazon_quote_requests(owner_id,item_id,asin,product_url,request_key,status)
+    values(p_owner_id,p_item_id,p_asin,p_product_url,p_request_key,'succeeded')
+    on conflict(request_key) do update set status='succeeded',updated_at=now(),error_code=null;
+  insert into private.amazon_quote_history(owner_id,item_id,asin,price,currency,stock_status,seller,product_url,observed_url,source_method,observed_at,verification_status)
+    values(p_owner_id,p_item_id,p_asin,p_price,p_currency,p_stock_status,p_seller,p_product_url,p_observed_url,'firecrawl-alexandria',p_observed_at,p_verification_status);
+end $$;
+revoke all on function public.gc_record_private_amazon_quote(uuid,text,text,numeric,text,text,text,text,text,timestamptz,text,text) from public,anon,authenticated;
+grant execute on function public.gc_record_private_amazon_quote(uuid,text,text,numeric,text,text,text,text,text,timestamptz,text,text) to service_role;
+create or replace function public.gc_mark_private_amazon_request(p_owner_id uuid,p_item_id text,p_asin text,p_product_url text,p_request_key text,p_status text,p_error text default null)
+returns void language plpgsql security definer set search_path='' as $$
+begin
+  insert into private.amazon_quote_requests(owner_id,item_id,asin,product_url,request_key,status,error_code)
+  values(p_owner_id,p_item_id,p_asin,p_product_url,p_request_key,p_status,p_error)
+  on conflict(request_key) do update set status=excluded.status,error_code=excluded.error_code,updated_at=now();
+end $$;
+revoke all on function public.gc_mark_private_amazon_request(uuid,text,text,text,text,text,text) from public,anon,authenticated;
+grant execute on function public.gc_mark_private_amazon_request(uuid,text,text,text,text,text,text) to service_role;
+commit;
+ or p_credits is null or p_credits<1 or p_credits>5 then raise exception 'invalid reservation'; end if;
   insert into private.amazon_quote_budget(month) values(p_month) on conflict(month) do nothing;
   perform 1 from private.amazon_quote_budget where month=p_month for update;
   if exists(select 1 from private.amazon_quote_reservations where request_key=p_key) then return true; end if;
