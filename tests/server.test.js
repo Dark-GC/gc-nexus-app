@@ -60,7 +60,7 @@ test('HTTP health and unsupported source are explicit', async () => {
     const base = 'http://127.0.0.1:' + server.address().port;
     const health = await fetch(base + '/api/health');
     assert.equal(health.status, 200);
-    assert.equal((await health.json()).ok, true);
+    assert.deepEqual(await health.json(), { ok: true, app: 'gc-graphics-inventory', version: '1.6.1' });
     const blocked = await fetch(base + '/api/product-preview?url=' + encodeURIComponent('https://www.amazon.com/dp/B0D9VWCHM8'));
     assert.equal(blocked.status, 422);
     assert.equal((await blocked.json()).error, 'unsupported_source');
