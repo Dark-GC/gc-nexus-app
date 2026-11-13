@@ -7,9 +7,13 @@
   <meta name="description" content="GC GRAPHICS Origen · Inventario de equipos, registro de inversiones y bitácora de crecimiento del negocio">
   <title>GC GRAPHICS — Origen e Inventario</title>
   <link rel="icon" href="./favicon.svg" type="image/svg+xml">
+  <link rel="manifest" href="./data/manifest.webmanifest">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <link rel="stylesheet" href="./styles.css">
   <link rel="stylesheet" href="./data/growth.css">
   <script src="./app.js" defer></script>
+  <script src="./data/pwa.js" defer></script>
   <script src="./data/growth.js" defer></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.118.0" defer></script>
   <script src="./data/cloud.js" defer></script>
@@ -51,6 +55,7 @@
       <header class="topbar">
         <div class="crumbs">WORKSPACE <span>/</span> <b>INVENTARIO</b></div>
         <div class="top-actions">
+          <button type="button" id="installPwa" class="cloud-button" title="Instalar GC GRAPHICS como aplicación">↗ Instalar app</button>
           <button id="cloudButton" class="cloud-button" type="button">☁ Conectar nube</button><div class="local-pill"><span class="tiny-dot"></span> INVENTARIO GC</div>
           <button class="icon-btn" id="refreshFeed" title="Comprobar últimas capturas de precios" aria-label="Actualizar precios">↻</button>
           <div class="avatar">GC</div>
