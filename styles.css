@@ -198,3 +198,34 @@ button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible{
 @media(prefers-reduced-motion:reduce){
   *,*::before,*::after{transition-duration:.01ms!important;animation-duration:.01ms!important;scroll-behavior:auto!important}
 }
+
+
+/* GC GRAPHICS Origen · family access, PWA and USD/DOP reference */
+.exchange-caption{margin:-4px 0 16px;display:flex;justify-content:space-between;gap:10px;align-items:center;flex-wrap:wrap;color:#a8b3c7;font-size:11px;line-height:1.45}
+.exchange-caption a{color:#b39bfd;text-decoration:underline;text-underline-offset:2px;font-size:10px}
+.converted-price{display:block;font-size:12px;font-weight:800;color:#a8c7ed;margin-top:2px}
+.family-status{display:inline-flex;align-items:center;min-height:35px;padding:8px;color:#a5c6b7;background:#193a3545;border:1px solid #32756477;border-radius:9px;font-size:11px;font-weight:800;line-height:1.3}
+.viewer-tools{padding:15px 25px 18px;border-top:1px solid #394053;background:#121b2a;max-height:40vh;overflow:auto}
+.viewer-tools h3{font-size:13px;margin-bottom:8px;color:#e7dcff}
+.viewer-tools p{font-size:11px;color:#98a6be;line-height:1.6;margin-bottom:12px}
+.viewer-form{display:grid;gap:10px}.viewer-form .btn{min-height:41px}
+.viewer-invite{display:flex;align-items:center;gap:8px;justify-content:space-between;padding:10px 0;border-bottom:1px solid #293349;font-size:11px;color:#bbd3e5;overflow-wrap:anywhere}
+.viewer-invite .btn{min-height:30px;padding:6px 9px;font-size:10px;flex-shrink:0}
+.viewer-list{color:#9aa7b7;font-size:10px;padding-top:10px}
+body.family-viewer .product-menu,body.family-viewer #addItem,body.family-viewer #sideAdd,body.family-viewer #sideImport,body.family-viewer #mobileImport,body.family-viewer #emptyAdd,body.family-viewer #growthAddEntry,body.family-viewer #growthNewMilestoneBtn,body.family-viewer #growthNewMilestone,body.family-viewer [data-growth-action],body.family-viewer .growth-edit-controls{display:none!important}
+body.cloud-needs-auth .main>.content{visibility:hidden;pointer-events:none}
+body.cloud-needs-auth .growth-screen{visibility:hidden}
+.purchase-currency{margin:8px 0 15px;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:11px}
+.purchase-currency .field{min-width:0}
+.purchase-currency select{width:100%;font-size:12px}
+body.family-viewer .growth-pane{padding-bottom:10px}
+@media(max-width:760px){
+ .mobile-nav{grid-template-columns:repeat(5,minmax(0,1fr))}
+ .mobile-tab{font-size:9px}
+ .exchange-caption{gap:4px;margin-top:-3px}
+ .exchange-caption a{font-size:9px}
+ .viewer-tools{padding:14px 17px;max-height:45vh}
+ .purchase-currency{grid-template-columns:1fr;gap:10px}
+ #installPwa{max-width:95px}
+}
+@media(max-width:370px){.mobile-tab{font-size:8px}.cloud-button{font-size:9px}#installPwa{max-width:81px;padding-left:6px;padding-right:6px}}
