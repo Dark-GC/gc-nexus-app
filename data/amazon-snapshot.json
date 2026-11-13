@@ -1,14 +1,14 @@
 {
   "schemaVersion": 1,
-  "generatedAt": "2026-11-12T21:46:21.479Z",
-  "provider": "Amazon US via retrieved third-party catalog snapshots",
-  "disclaimer": "Observación puntual de un proveedor de datos, no sincronizada automáticamente; verificar precio, versión, inventario e impuestos en Amazon antes de pagar.",
+  "generatedAt": "2026-11-13T14:05:51.689Z",
+  "provider": "Firecrawl Alexandria — Amazon.com products/prices, 3 lotes de 5 créditos",
+  "disclaimer": "Verificación puntual para Amazon US sin ZIP de entrega configurado. No equivale a precio en tiempo real ni asegura stock, descuento promocional, vencimiento, costos de envío o impuestos. Comparaciones son precios de lista, no necesariamente precios anteriores. Comprobar en Amazon antes de pagar.",
   "items": {
     "gc-bettersub": {
       "sourceUrl": "https://a.co/d/0bwLNZk1",
       "observedUrl": "https://www.amazon.com/dp/B09NRDXYP3",
       "asin": "B09NRDXYP3",
-      "checkedAt": "2026-11-12T21:45:44.515Z",
+      "checkedAt": "2026-11-13T14:05:51.313Z",
       "provider": "amazon-snapshot",
       "price": 81.59,
       "originalPrice": null,
@@ -17,13 +17,19 @@
       "stockStatus": "in_stock",
       "stockQuantity": null,
       "imageUrl": "",
-      "error": null
+      "error": null,
+      "comparisonPriceType": null,
+      "seller": "BetterSub",
+      "availabilityText": "In Stock",
+      "servedAsin": "B09NRDXYP3",
+      "marketplace": "US",
+      "deliveryZipVerified": false
     },
     "gc-epson": {
       "sourceUrl": "https://a.co/d/06O8MAgi",
       "observedUrl": "https://www.amazon.com/dp/B096N8DN2H",
       "asin": "B096N8DN2H",
-      "checkedAt": "2026-11-12T21:45:44.515Z",
+      "checkedAt": "2026-11-13T14:05:51.313Z",
       "provider": "amazon-snapshot",
       "price": null,
       "originalPrice": null,
@@ -32,13 +38,19 @@
       "stockStatus": "unknown",
       "stockQuantity": null,
       "imageUrl": "",
-      "error": "Sin oferta destacada verificable para este ASIN"
+      "error": "Sin oferta destacada verificable para este ASIN",
+      "comparisonPriceType": null,
+      "seller": null,
+      "availabilityText": null,
+      "servedAsin": "B096N8DN2H",
+      "marketplace": "US",
+      "deliveryZipVerified": false
     },
     "gc-buyounger": {
       "sourceUrl": "https://a.co/d/0bnGnkkK",
       "observedUrl": "https://www.amazon.com/dp/B09471X83K",
       "asin": "B09471X83K",
-      "checkedAt": "2026-11-12T21:45:44.515Z",
+      "checkedAt": "2026-11-13T14:05:51.313Z",
       "provider": "amazon-snapshot",
       "price": 29.99,
       "originalPrice": null,
@@ -47,13 +59,19 @@
       "stockStatus": "in_stock",
       "stockQuantity": null,
       "imageUrl": "",
-      "error": null
+      "error": null,
+      "comparisonPriceType": null,
+      "seller": "EVERSEAS TECHNOLOGY CO., LIMITED",
+      "availabilityText": "In Stock",
+      "servedAsin": "B09471X83K",
+      "marketplace": "US",
+      "deliveryZipVerified": false
     },
     "gc-topdeep": {
       "sourceUrl": "https://a.co/d/00mUP4nA",
       "observedUrl": "https://www.amazon.com/dp/B0BFPDKN6R",
       "asin": "B0BFPDKN6R",
-      "checkedAt": "2026-11-12T21:45:44.515Z",
+      "checkedAt": "2026-11-13T14:05:51.313Z",
       "provider": "amazon-snapshot",
       "price": 194.9,
       "originalPrice": null,
@@ -62,13 +80,19 @@
       "stockStatus": "in_stock",
       "stockQuantity": null,
       "imageUrl": "",
-      "error": null
+      "error": null,
+      "comparisonPriceType": null,
+      "seller": "SHENG YUAN HOME TOOLS LIMITED",
+      "availabilityText": "Only 19 left in stock - order soon.",
+      "servedAsin": "B0BFPDKN6R",
+      "marketplace": "US",
+      "deliveryZipVerified": false
     },
     "gc-colemoly": {
       "sourceUrl": "https://a.co/d/02iIZjEH",
       "observedUrl": "https://www.amazon.com/dp/B0D62QWN6M",
       "asin": "B0D62QWN6M",
-      "checkedAt": "2026-11-12T21:45:44.515Z",
+      "checkedAt": "2026-11-13T14:05:51.313Z",
       "provider": "amazon-snapshot",
       "price": 24.56,
       "originalPrice": null,
@@ -77,13 +101,19 @@
       "stockStatus": "in_stock",
       "stockQuantity": null,
       "imageUrl": "",
-      "error": null
+      "error": null,
+      "comparisonPriceType": null,
+      "seller": "Colemoly",
+      "availabilityText": "In Stock",
+      "servedAsin": "B0D62QWN6M",
+      "marketplace": "US",
+      "deliveryZipVerified": false
     },
     "gc-mebmik": {
       "sourceUrl": "https://a.co/d/0baoOFbE",
       "observedUrl": "https://www.amazon.com/dp/B0CQYH6VLH",
       "asin": "B0CQYH6VLH",
-      "checkedAt": "2026-11-12T21:45:44.515Z",
+      "checkedAt": "2026-11-13T14:05:51.689Z",
       "provider": "amazon-snapshot",
       "price": 9.99,
       "originalPrice": null,
@@ -92,13 +122,19 @@
       "stockStatus": "in_stock",
       "stockQuantity": null,
       "imageUrl": "",
-      "error": null
+      "error": null,
+      "comparisonPriceType": null,
+      "seller": "HEKALM",
+      "availabilityText": "In Stock",
+      "servedAsin": "B0CQYH6VLH",
+      "marketplace": "US",
+      "deliveryZipVerified": false
     },
     "gc-dispensador": {
       "sourceUrl": "https://a.co/d/0dxKicGG",
       "observedUrl": "https://www.amazon.com/dp/B08CCT5W77",
       "asin": "B08CCT5W77",
-      "checkedAt": "2026-11-12T21:45:44.515Z",
+      "checkedAt": "2026-11-13T14:05:51.689Z",
       "provider": "amazon-snapshot",
       "price": 11.99,
       "originalPrice": 13.99,
@@ -107,13 +143,19 @@
       "stockStatus": "in_stock",
       "stockQuantity": null,
       "imageUrl": "",
-      "error": null
+      "error": null,
+      "comparisonPriceType": "amazon_list_price",
+      "seller": "HONG LIN",
+      "availabilityText": "In Stock",
+      "servedAsin": "B08CCT5W77",
+      "marketplace": "US",
+      "deliveryZipVerified": false
     },
     "gc-caja": {
       "sourceUrl": "https://a.co/d/0cjpCrj8",
       "observedUrl": "https://www.amazon.com/dp/B0CMXGG8XX",
       "asin": "B0CMXGG8XX",
-      "checkedAt": "2026-11-12T21:45:44.515Z",
+      "checkedAt": "2026-11-13T14:05:51.689Z",
       "provider": "amazon-snapshot",
       "price": 52.99,
       "originalPrice": null,
@@ -122,13 +164,19 @@
       "stockStatus": "in_stock",
       "stockQuantity": null,
       "imageUrl": "",
-      "error": null
+      "error": null,
+      "comparisonPriceType": null,
+      "seller": "CREALITY FALCON Official",
+      "availabilityText": "In Stock",
+      "servedAsin": "B0CMXGG8XX",
+      "marketplace": "US",
+      "deliveryZipVerified": false
     },
     "gc-ptfe": {
       "sourceUrl": "https://a.co/d/037cijDs",
       "observedUrl": "https://www.amazon.com/dp/B0DK5CQPP8",
       "asin": "B0DK5CQPP8",
-      "checkedAt": "2026-11-12T21:45:44.515Z",
+      "checkedAt": "2026-11-13T14:05:51.689Z",
       "provider": "amazon-snapshot",
       "price": 9.99,
       "originalPrice": null,
@@ -137,13 +185,19 @@
       "stockStatus": "in_stock",
       "stockQuantity": null,
       "imageUrl": "",
-      "error": null
+      "error": null,
+      "comparisonPriceType": null,
+      "seller": "Transourdream",
+      "availabilityText": "In Stock",
+      "servedAsin": "B0DK5CQPP8",
+      "marketplace": "US",
+      "deliveryZipVerified": false
     },
     "gc-cinta": {
       "sourceUrl": "https://a.co/d/0gYDXPdp",
       "observedUrl": "https://www.amazon.com/dp/B0FPG8RC3J",
       "asin": "B0FPG8RC3J",
-      "checkedAt": "2026-11-12T21:45:44.515Z",
+      "checkedAt": "2026-11-13T14:05:51.689Z",
       "provider": "amazon-snapshot",
       "price": 6.19,
       "originalPrice": null,
@@ -152,13 +206,19 @@
       "stockStatus": "in_stock",
       "stockQuantity": null,
       "imageUrl": "",
-      "error": null
+      "error": null,
+      "comparisonPriceType": null,
+      "seller": "COOLTOOLS",
+      "availabilityText": "In Stock",
+      "servedAsin": "B0FPG8RC3J",
+      "marketplace": "US",
+      "deliveryZipVerified": false
     },
     "gc-falcon10": {
       "sourceUrl": "https://www.amazon.com/dp/B0D9VWCHM8",
       "observedUrl": "https://www.amazon.com/dp/B0D9VWCHM8",
       "asin": "B0D9VWCHM8",
-      "checkedAt": "2026-11-12T21:45:44.515Z",
+      "checkedAt": "2026-11-13T14:05:49.265Z",
       "provider": "amazon-snapshot",
       "price": 189.9,
       "originalPrice": 204.99,
@@ -167,7 +227,13 @@
       "stockStatus": "in_stock",
       "stockQuantity": null,
       "imageUrl": "",
-      "error": null
+      "error": null,
+      "comparisonPriceType": "amazon_list_price",
+      "seller": "CREALITY FALCON Official",
+      "availabilityText": "Only 3 left in stock - order soon.",
+      "servedAsin": "B0D9VWCHM8",
+      "marketplace": "US",
+      "deliveryZipVerified": false
     }
   }
 }
