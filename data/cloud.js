@@ -440,6 +440,16 @@
       try{await navigator.clipboard.writeText(value);show("Datos copiados. Pégalos en el chat privado con tu familiar.","ok");}
       catch{$("familyCredentialsText")?.select();show("Selecciona y copia el mensaje para compartirlo.","info");}
     });
+    $("shareFamilyCredentials")?.addEventListener("click",async()=>{
+      const value=$("familyCredentialsText")?.value;if(!value)return;
+      if(navigator.share){
+        try{await navigator.share({title:"Acceso privado a GC GRAPHICS",text:value});}
+        catch(e){if(e.name!=="AbortError")show("No se pudo abrir Compartir. Usa «Copiar datos».","error");}
+      }else{
+        try{await navigator.clipboard.writeText(value);show("Datos copiados. Pégalos en WhatsApp.","ok");}
+        catch{show("Selecciona y copia los datos para enviarlos.","info");}
+      }
+    });
     $("hideFamilyCredentials")?.addEventListener("click",hideCredentials);
     $("authSignOut")?.addEventListener("click",signOut);
     $("viewerForm")?.addEventListener("submit",addViewer);
