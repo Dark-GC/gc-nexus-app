@@ -9,6 +9,7 @@ import { fileURLToPath } from 'node:url';
 
 const ROOT = fileURLToPath(new URL('../', import.meta.url));
 const SNAPSHOT = resolve(ROOT, 'data/amazon-snapshot.json');
+const HISTORY = resolve(ROOT, 'data/amazon-price-history.json');
 const LEDGER = resolve(ROOT, '.automation/amazon-budget.json');
 const API = 'https://api.firecrawl.dev/v2/scrape';
 const PROVIDER = 'amazon-com';
@@ -89,6 +90,8 @@ export async function refreshAmazon({key, date = new Date(), fetchBatch = retrie
   const day = date.toISOString().slice(0,10);
   const month = calendarMonth(date);
   const snapshot = await readJSON(SNAPSHOT);
+  const history = await readJSON(HISTORY, {schemaVersion:1,items:{}});
+  if (history.schemaVersion !== 1 || !history.items) throw new Error('Invalid Amazon observation history');
   if (!snapshot || snapshot.schemaVersion !== 1 || !snapshot.items) throw new Error('Invalid Amazon snapshot');
   const products = Object.entries(snapshot.items);
   if (!products.length || products.length > MAX_ASINS || products.some(([,x]) => !/^[A-Z0-9]{10}$/.test(x.asin))) {
@@ -120,11 +123,17 @@ export async function refreshAmazon({key, date = new Date(), fetchBatch = retrie
       const next = normaliseAmazonRow(row, previous, result.timestamp);
       if (!next) {rejected++;continue;}
       snapshot.items[id] = next;
+      const previousEvents = Array.isArray(history.items[id]) ? history.items[id] : [];
+      history.items[id] = [...previousEvents.filter(x => x.checkedAt !== next.checkedAt), {
+        asin:next.asin,checkedAt:next.checkedAt,price:next.price,currency:next.currency,
+        priceStatus:next.priceStatus,listPrice:next.listPrice,seller:next.seller,stockStatus:next.stockStatus
+      }].slice(-90);
       checked++;
       if (next.priceStatus !== 'verified') unavailable++;
     }
     snapshot.generatedAt = new Date(result.timestamp).toISOString();
     await writeAtomic(SNAPSHOT, snapshot); // Partial successful batches retained if the next fails.
+    await writeAtomic(HISTORY, history);
   }
   ledger.runs.push({day, chargedCredits:spentThisRun, checked, unavailable, rejected});
   ledger.runs = ledger.runs.slice(-45);
