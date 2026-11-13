@@ -6,8 +6,9 @@ const read=p=>fs.readFileSync(new URL("../"+p,import.meta.url),"utf8");
 test("desktop installation entry is hidden by device capability, not viewport width",()=>{
   const pwa=read("data/pwa.js"),css=read("styles.css"),sw=read("data/sw.js");
   assert.match(pwa,/function isDesktopComputer\(\).*pointer: fine/);
+  assert.doesNotMatch(pwa,/isDesktopComputer\(\).*min-width/);
   assert.match(pwa,/button\.hidden=standalone\|\|isDesktopComputer\(\)/);
-  assert.match(css,/@media\(min-width:761px\)\{\s*#installPwa\{display:none!important\}/);
+  assert.match(css,/@media\(pointer:fine\)\{\s*#installPwa\{display:none!important\}/);
   assert.match(sw,/gc-origen-pwa-v10/);
 });
 

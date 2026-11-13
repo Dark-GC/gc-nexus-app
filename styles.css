@@ -217,10 +217,13 @@ button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible{
 .promotion-source{display:block;color:#7f8a9f;font-size:9px;line-height:1.4;margin-top:5px;overflow-wrap:anywhere}
 .product-bottom{margin-top:12px;padding-top:12px}.product-bottom .btn{min-height:44px;white-space:normal;line-height:1.25}
 .open-link{width:44px;height:44px;flex:0 0 44px}.deal-flag{max-width:calc(100% - 24px);white-space:normal}
+.product-body>.deal-flag{position:static;display:inline-flex;align-self:flex-start;margin:1px 0 10px;max-width:100%;line-height:1.25}
 
 /* Desktop cards reserve independent regions for status, promotion and actions. */
-@media(min-width:761px){
+@media(pointer:fine){
   #installPwa{display:none!important}
+}
+@media(min-width:761px){
   .topbar{height:auto;min-height:84px;align-items:center;gap:18px;padding-top:12px;padding-bottom:12px}
   .top-actions{min-width:0;flex-wrap:wrap;justify-content:flex-end}
   .local-pill{min-width:0;overflow-wrap:anywhere}
@@ -229,7 +232,6 @@ button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible{
   .product-price-row{display:grid;grid-template-columns:minmax(0,1fr) minmax(94px,auto);align-items:start;gap:14px}
   .price-block{min-width:0;overflow-wrap:anywhere}
   .stock-pill{max-width:150px;min-width:94px;align-self:start}
-  .product-body>.deal-flag{position:static;display:inline-flex;align-self:flex-start;margin:1px 0 10px;max-width:100%;line-height:1.25}
   .product-bottom{display:grid;grid-template-columns:minmax(0,1fr) 44px;align-items:stretch;gap:9px}
 }
 

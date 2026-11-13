@@ -15,7 +15,8 @@ function installStandaloneGesturePolicy(){
  document.addEventListener("touchmove",e=>{if(e.touches.length>1&&!insideViewer(e.target))e.preventDefault();},{passive:false});
  let lastTap=0;document.addEventListener("touchend",e=>{const t=Date.now();if(t-lastTap<280&&!insideViewer(e.target))e.preventDefault();lastTap=t;},{passive:false});
 }
-function isDesktopComputer(){return matchMedia("(min-width: 761px) and (pointer: fine)").matches;}
+// Desktop capability, not window width: a narrow Chrome/Edge window is still a PC.
+function isDesktopComputer(){return matchMedia("(pointer: fine)").matches;}
 function updateInstallVisibility(){
  const standalone=matchMedia("(display-mode:standalone)").matches||navigator.standalone===true;
  const button=document.getElementById("installPwa");
