@@ -1,0 +1,13 @@
+{
+  "month": "2026-11",
+  "spent": 15,
+  "runs": [
+    {
+      "day": "2026-11-13",
+      "chargedCredits": 15,
+      "checked": 11,
+      "unavailable": 0,
+      "rejected": 0
+    }
+  ]
+}

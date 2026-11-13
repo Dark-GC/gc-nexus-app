@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "generatedAt": "2026-11-13T14:05:51.689Z",
+  "generatedAt": "2026-11-13T14:36:34.840Z",
   "provider": "Firecrawl Alexandria — Amazon.com products/prices, 3 lotes de 5 créditos",
   "disclaimer": "Observación puntual de Amazon US; la lista de Amazon NO es precio histórico ni constituye por sí sola una oferta. Sin ZIP de destino, las existencias y vendedor pueden variar; confirmar antes de pagar. No incluye envío, impuestos ni promociones con fecha de vencimiento verificada.",
   "items": {
@@ -8,7 +8,7 @@
       "sourceUrl": "https://a.co/d/0bwLNZk1",
       "observedUrl": "https://www.amazon.com/dp/B09NRDXYP3",
       "asin": "B09NRDXYP3",
-      "checkedAt": "2026-11-13T14:05:51.313Z",
+      "checkedAt": "2026-11-13T14:36:29.677Z",
       "provider": "amazon-snapshot",
       "price": 81.59,
       "originalPrice": null,
@@ -23,34 +23,38 @@
       "availabilityText": "In Stock",
       "servedAsin": "B09NRDXYP3",
       "marketplace": "US",
-      "deliveryZipVerified": false
+      "deliveryZipVerified": false,
+      "sourceMethod": "firecrawl-alexandria",
+      "listPrice": null
     },
     "gc-epson": {
       "sourceUrl": "https://a.co/d/06O8MAgi",
       "observedUrl": "https://www.amazon.com/dp/B096N8DN2H",
       "asin": "B096N8DN2H",
-      "checkedAt": "2026-11-13T14:05:51.313Z",
+      "checkedAt": "2026-11-13T14:36:29.677Z",
       "provider": "amazon-snapshot",
-      "price": null,
+      "price": 189.99,
       "originalPrice": null,
-      "currency": null,
-      "priceStatus": "unavailable",
-      "stockStatus": "unknown",
+      "currency": "USD",
+      "priceStatus": "verified",
+      "stockStatus": "in_stock",
       "stockQuantity": null,
       "imageUrl": "",
-      "error": "Sin oferta destacada verificable para este ASIN",
-      "comparisonPriceType": null,
-      "seller": null,
-      "availabilityText": null,
+      "error": null,
+      "comparisonPriceType": "amazon_list_price",
+      "seller": "Amazon.com",
+      "availabilityText": "Available to ship in 1-2 days",
       "servedAsin": "B096N8DN2H",
       "marketplace": "US",
-      "deliveryZipVerified": false
+      "deliveryZipVerified": false,
+      "sourceMethod": "firecrawl-alexandria",
+      "listPrice": 239.99
     },
     "gc-buyounger": {
       "sourceUrl": "https://a.co/d/0bnGnkkK",
       "observedUrl": "https://www.amazon.com/dp/B09471X83K",
       "asin": "B09471X83K",
-      "checkedAt": "2026-11-13T14:05:51.313Z",
+      "checkedAt": "2026-11-13T14:36:29.677Z",
       "provider": "amazon-snapshot",
       "price": 29.99,
       "originalPrice": null,
@@ -65,13 +69,15 @@
       "availabilityText": "In Stock",
       "servedAsin": "B09471X83K",
       "marketplace": "US",
-      "deliveryZipVerified": false
+      "deliveryZipVerified": false,
+      "sourceMethod": "firecrawl-alexandria",
+      "listPrice": null
     },
     "gc-topdeep": {
       "sourceUrl": "https://a.co/d/00mUP4nA",
       "observedUrl": "https://www.amazon.com/dp/B0BFPDKN6R",
       "asin": "B0BFPDKN6R",
-      "checkedAt": "2026-11-13T14:05:51.313Z",
+      "checkedAt": "2026-11-13T14:36:29.677Z",
       "provider": "amazon-snapshot",
       "price": 194.9,
       "originalPrice": null,
@@ -86,13 +92,15 @@
       "availabilityText": "Only 19 left in stock - order soon.",
       "servedAsin": "B0BFPDKN6R",
       "marketplace": "US",
-      "deliveryZipVerified": false
+      "deliveryZipVerified": false,
+      "sourceMethod": "firecrawl-alexandria",
+      "listPrice": null
     },
     "gc-colemoly": {
       "sourceUrl": "https://a.co/d/02iIZjEH",
       "observedUrl": "https://www.amazon.com/dp/B0D62QWN6M",
       "asin": "B0D62QWN6M",
-      "checkedAt": "2026-11-13T14:05:51.313Z",
+      "checkedAt": "2026-11-13T14:36:29.677Z",
       "provider": "amazon-snapshot",
       "price": 24.56,
       "originalPrice": null,
@@ -107,13 +115,15 @@
       "availabilityText": "In Stock",
       "servedAsin": "B0D62QWN6M",
       "marketplace": "US",
-      "deliveryZipVerified": false
+      "deliveryZipVerified": false,
+      "sourceMethod": "firecrawl-alexandria",
+      "listPrice": null
     },
     "gc-mebmik": {
       "sourceUrl": "https://a.co/d/0baoOFbE",
       "observedUrl": "https://www.amazon.com/dp/B0CQYH6VLH",
       "asin": "B0CQYH6VLH",
-      "checkedAt": "2026-11-13T14:05:51.689Z",
+      "checkedAt": "2026-11-13T14:36:32.966Z",
       "provider": "amazon-snapshot",
       "price": 9.99,
       "originalPrice": null,
@@ -128,13 +138,15 @@
       "availabilityText": "In Stock",
       "servedAsin": "B0CQYH6VLH",
       "marketplace": "US",
-      "deliveryZipVerified": false
+      "deliveryZipVerified": false,
+      "sourceMethod": "firecrawl-alexandria",
+      "listPrice": null
     },
     "gc-dispensador": {
       "sourceUrl": "https://a.co/d/0dxKicGG",
       "observedUrl": "https://www.amazon.com/dp/B08CCT5W77",
       "asin": "B08CCT5W77",
-      "checkedAt": "2026-11-13T14:05:51.689Z",
+      "checkedAt": "2026-11-13T14:36:32.966Z",
       "provider": "amazon-snapshot",
       "price": 11.99,
       "originalPrice": null,
@@ -150,13 +162,14 @@
       "servedAsin": "B08CCT5W77",
       "marketplace": "US",
       "deliveryZipVerified": false,
-      "listPrice": 13.99
+      "listPrice": 13.99,
+      "sourceMethod": "firecrawl-alexandria"
     },
     "gc-caja": {
       "sourceUrl": "https://a.co/d/0cjpCrj8",
       "observedUrl": "https://www.amazon.com/dp/B0CMXGG8XX",
       "asin": "B0CMXGG8XX",
-      "checkedAt": "2026-11-13T14:05:51.689Z",
+      "checkedAt": "2026-11-13T14:36:32.966Z",
       "provider": "amazon-snapshot",
       "price": 52.99,
       "originalPrice": null,
@@ -171,13 +184,15 @@
       "availabilityText": "In Stock",
       "servedAsin": "B0CMXGG8XX",
       "marketplace": "US",
-      "deliveryZipVerified": false
+      "deliveryZipVerified": false,
+      "sourceMethod": "firecrawl-alexandria",
+      "listPrice": null
     },
     "gc-ptfe": {
       "sourceUrl": "https://a.co/d/037cijDs",
       "observedUrl": "https://www.amazon.com/dp/B0DK5CQPP8",
       "asin": "B0DK5CQPP8",
-      "checkedAt": "2026-11-13T14:05:51.689Z",
+      "checkedAt": "2026-11-13T14:36:32.966Z",
       "provider": "amazon-snapshot",
       "price": 9.99,
       "originalPrice": null,
@@ -192,13 +207,15 @@
       "availabilityText": "In Stock",
       "servedAsin": "B0DK5CQPP8",
       "marketplace": "US",
-      "deliveryZipVerified": false
+      "deliveryZipVerified": false,
+      "sourceMethod": "firecrawl-alexandria",
+      "listPrice": null
     },
     "gc-cinta": {
       "sourceUrl": "https://a.co/d/0gYDXPdp",
       "observedUrl": "https://www.amazon.com/dp/B0FPG8RC3J",
       "asin": "B0FPG8RC3J",
-      "checkedAt": "2026-11-13T14:05:51.689Z",
+      "checkedAt": "2026-11-13T14:36:32.966Z",
       "provider": "amazon-snapshot",
       "price": 6.19,
       "originalPrice": null,
@@ -213,13 +230,15 @@
       "availabilityText": "In Stock",
       "servedAsin": "B0FPG8RC3J",
       "marketplace": "US",
-      "deliveryZipVerified": false
+      "deliveryZipVerified": false,
+      "sourceMethod": "firecrawl-alexandria",
+      "listPrice": null
     },
     "gc-falcon10": {
       "sourceUrl": "https://www.amazon.com/dp/B0D9VWCHM8",
       "observedUrl": "https://www.amazon.com/dp/B0D9VWCHM8",
       "asin": "B0D9VWCHM8",
-      "checkedAt": "2026-11-13T14:05:49.265Z",
+      "checkedAt": "2026-11-13T14:36:34.840Z",
       "provider": "amazon-snapshot",
       "price": 189.9,
       "originalPrice": null,
@@ -231,11 +250,12 @@
       "error": null,
       "comparisonPriceType": "amazon_list_price",
       "seller": "CREALITY FALCON Official",
-      "availabilityText": "Only 3 left in stock - order soon.",
+      "availabilityText": "Only 2 left in stock - order soon.",
       "servedAsin": "B0D9VWCHM8",
       "marketplace": "US",
       "deliveryZipVerified": false,
-      "listPrice": 204.99
+      "listPrice": 204.99,
+      "sourceMethod": "firecrawl-alexandria"
     }
   }
 }
