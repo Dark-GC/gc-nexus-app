@@ -19,7 +19,7 @@
    ["experiencias","06 · APRENDIZAJE","Documentar las primeras experiencias","Registrar trabajos, errores, mejoras y decisiones sin montar todavía un ERP."]
  ];
  const defaults=()=>phaseSeeds.map(([id,phase,title,description],order)=>({id,phase,title,description,order,completedAt:null,isCustom:false}));
- const st={entries:[],milestones:defaults(),section:"journal",kind:"Todos",query:"",open:false,editing:null,initialized:false};
+ const st={entries:[],familyEvents:[],milestones:defaults(),section:"journal",kind:"Todos",query:"",open:false,editing:null,initialized:false};
  function validateEntry(e){
    if(!e||typeof e!=="object"||!e.id||!e.title)return null;
    return {id:short(e.id,90),date:/^\d{4}-\d{2}-\d{2}$/.test(e.date||"")?e.date:today(),
@@ -94,6 +94,26 @@
      investedDOP=paid.filter(p=>p.paidCurrency==="DOP").reduce((sum,p)=>sum+Number(p.paidAmount),0);
    return {products:products.length,purchased:purchased.length,received:received.length,paid:paid.length,missing:purchased.length-paid.length,investedUSD,investedDOP};
  }
+ function setFamilyEvents(rows){
+   const list=Array.isArray(rows)?rows:[];
+   const seen=new Set();
+   st.familyEvents=list.filter(e=>{
+     if(!e||!["purchase_confirmed","received_confirmed"].includes(e.event_type)||e.detail?.actor_role!=="buyer")return false;
+     if(seen.has(e.event_id))return false;seen.add(e.event_id);return true;
+   }).slice(0,200).map(e=>{
+     const purchased=e.event_type==="purchase_confirmed";
+     const amount=Number(e.detail?.paid_amount);
+     const validAmount=e.detail?.paid_amount!=null&&Number.isFinite(amount)&&amount>=0;
+     const where=e.detail?.purchase_country==="US"?" · Compra en EE. UU.":e.detail?.purchase_country==="DO"?" · Compra en RD":"";
+     const description=purchased?
+       "Confirmada con el acceso de compras familiar."+(validAmount?" Importe registrado: "+money(amount,e.detail?.paid_currency==="DOP"?"DOP":"USD")+".":" Importe pagado no indicado.")+where:
+       (e.detail?.confirmed_with_purchase?"La recepción se confirmó junto con la compra.":"Se confirmó físicamente la recepción del artículo.")+" Registro familiar.";
+     const at=String(e.event_at||now());
+     return {id:"server-"+short(e.event_id,50),date:at.slice(0,10),title:purchased?"Compra confirmada por la familia":"Recepción confirmada por la familia",
+       category:purchased?"Compra":"Recepción",description,itemId:short(e.item_id,90),createdAt:at,origin:"inventory",server:true};
+   });
+   if(st.open)render();
+ }
  function getBackup(){return {schemaVersion:1,entries:st.entries.map(e=>({...e})),milestones:st.milestones.map(m=>({...m}))};}
  function restoreFromBackup(data){
    if(!validBackup(data))return false;
@@ -162,23 +182,23 @@
       ["INVERSIÓN DOCUMENTADA",money(a.investedUSD)+(a.investedDOP>0?" · "+money(a.investedDOP,"DOP"):""),a.missing+" compras sin importe declarado","$"],
       ["RUTA COMPLETADA",p.pct+"%",p.done+" de "+p.total+" hitos confirmados","◇"]
    ].map(([label,value,caption,ico])=>'<div class="growth-stat"><div class="growth-stat-top">'+esc(label)+'<span>'+esc(ico)+'</span></div><strong>'+esc(value)+'</strong><small>'+esc(caption)+'</small></div>').join("");
-   $("growthEntriesCount").textContent=st.entries.length+" registros";
+   $("growthEntriesCount").textContent=(st.entries.length+st.familyEvents.length)+" registros";
    $("growthSaveState").textContent=window.GCCloud?.isViewer?.()?"Vista familiar de solo lectura · sincronizada desde la cuenta principal.":window.GCCloud?.ready?.()?"Bitácora sincronizada en la nube · exporta copias JSON de respaldo.":"Bitácora guardada en este navegador · exporta copias JSON de respaldo.";
  }
  function renderLog(){
    const terms=st.query.toLocaleLowerCase("es");
-   const data=st.entries.filter(e=>(st.kind==="Todos"||e.category===st.kind)&&
+   const data=[...st.entries,...st.familyEvents].filter(e=>(st.kind==="Todos"||e.category===st.kind)&&
      (!terms||[e.title,e.description,e.category].join(" ").toLocaleLowerCase("es").includes(terms)))
      .sort((a,b)=>b.date.localeCompare(a.date)||b.createdAt.localeCompare(a.createdAt));
    const root=$("growthEntries");
-   if(!data.length){root.innerHTML='<div class="growth-empty"><span>✧</span><h3>'+ (st.entries.length?"No hay entradas con este filtro":"El comienzo queda documentado aquí") +'</h3><p>'+(st.entries.length?"Prueba otra categoría o búsqueda.":"Registra tu primera decisión, una prueba de máquina o un aprendizaje. Los movimientos futuros del inventario también quedarán anotados.")+'</p></div>';return;}
+   if(!data.length){root.innerHTML='<div class="growth-empty"><span>✧</span><h3>'+ (st.entries.length+st.familyEvents.length?"No hay entradas con este filtro":"El comienzo queda documentado aquí") +'</h3><p>'+(st.entries.length+st.familyEvents.length?"Prueba otra categoría o búsqueda.":"Registra tu primera decisión, una prueba de máquina o un aprendizaje. Los movimientos futuros del inventario también quedarán anotados.")+'</p></div>';return;}
    root.innerHTML=data.map(e=>{
      const p=items().find(x=>x.id===e.itemId);
      return '<article class="growth-entry"><div class="growth-entry-marker '+(e.origin==="inventory"?"auto":"")+'">◆</div>'+
-       '<div class="growth-entry-content"><div class="growth-entry-top"><span class="growth-kind">'+esc(e.category)+'</span><time datetime="'+esc(e.date)+'">'+esc(fmtDate(e.date))+'</time>'+(e.origin==="inventory"?'<span class="growth-origin">REGISTRO AUTOMÁTICO</span>':"")+'</div>'+
+       '<div class="growth-entry-content"><div class="growth-entry-top"><span class="growth-kind">'+esc(e.category)+'</span><time datetime="'+esc(e.date)+'">'+esc(fmtDate(e.date))+'</time>'+(e.server?'<span class="growth-origin">REGISTRO FAMILIAR</span>':e.origin==="inventory"?'<span class="growth-origin">REGISTRO AUTOMÁTICO</span>':"")+'</div>'+
        '<h3>'+esc(e.title)+'</h3>'+(e.description?'<p>'+esc(e.description)+'</p>':"")+
        (p?'<span class="growth-associated">↳ '+esc(p.name)+'</span>':e.itemId?'<span class="growth-associated">↳ Artículo retirado del inventario</span>':"")+
-       '<div class="growth-entry-actions"><button type="button" data-growth-action="edit" data-id="'+esc(e.id)+'">Editar</button><button type="button" data-growth-action="remove" data-id="'+esc(e.id)+'">Eliminar</button></div></div></article>';
+       (e.server?'':'<div class="growth-entry-actions"><button type="button" data-growth-action="edit" data-id="'+esc(e.id)+'">Editar</button><button type="button" data-growth-action="remove" data-id="'+esc(e.id)+'">Eliminar</button></div>')+'</div></article>';
    }).join("");
  }
  function renderRoadmap(){
@@ -243,7 +263,7 @@
    $("growthModal").addEventListener("click",e=>{if(e.target===$("growthModal"))closeForm();});
    document.addEventListener("keydown",e=>{if(e.key==="Escape")closeForm();});
  }
- window.GCGrowth={getBackup,restoreFromBackup,validateBackup:validBackup,recordInventoryAction,clearPrivateView:()=>{st.entries=[];st.milestones=defaults();try{localStorage.removeItem(KEY);}catch{}if(st.open)render();},isOpen:()=>st.open,reassertNav:()=>{
+ window.GCGrowth={getBackup,restoreFromBackup,validateBackup:validBackup,recordInventoryAction,setFamilyEvents,clearPrivateView:()=>{st.familyEvents=[];st.entries=[];st.milestones=defaults();try{localStorage.removeItem(KEY);}catch{}if(st.open)render();},isOpen:()=>st.open,reassertNav:()=>{
    if(st.open)document.querySelectorAll("[data-view]").forEach(b=>b.classList.remove("active"));
  }};
  if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",init);else init();
