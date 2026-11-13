@@ -23,6 +23,10 @@ export const calendarMonth = (date) => date.toISOString().slice(0, 7);
 export const splitBatches = (arr, size = MAX_BATCH) =>
   Array.from({length: Math.ceil(arr.length / size)}, (_, i) => arr.slice(i * size, (i + 1) * size));
 export const batchKey = batch => batch.map(([, item]) => item.asin).join(',');
+export const dailyReservationKey = (day, batch) => {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(day)) throw new Error('invalid daily reservation date');
+  return 'daily:' + day + ':' + batchKey(batch);
+};
 // Old ledgers did not have a status. A recorded chargedCredits entry is a completed
 // run from that format, never a reason to issue the same day's requests again.
 export const completedRun = run => run?.status === 'completed' ||
@@ -133,7 +137,7 @@ export async function refreshAmazon({key, date = new Date(), fetchBatch = retrie
     const keyForBatch = batchKey(batch);
     if (run.completedBatchKeys.includes(keyForBatch)) continue;
     if (ledger.spent + PER_BATCH_CREDITS > MONTHLY_CAP) break;
-    const centralKey='daily:'+month+':'+keyForBatch;
+    const centralKey=dailyReservationKey(day,batch);
     if(budget){
       const reservation=await budget.reserve(centralKey,PER_BATCH_CREDITS,'daily',month);
       if(!reservation?.accepted)throw new Error('Central monthly budget cap reached');
