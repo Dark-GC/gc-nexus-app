@@ -232,3 +232,8 @@ body.family-viewer .growth-pane{padding-bottom:10px}
 
 /* Prevent cramped header controls on 320-430px phones */
 @media(max-width:520px){.topbar{justify-content:flex-end}.topbar .crumbs{display:none}.top-actions{width:100%;justify-content:space-between;gap:6px}.top-actions .cloud-button{flex:0 1 auto;white-space:nowrap}.exchange-caption{font-size:10px}.family-status{font-size:10px}}
+
+.local-quote{margin-top:9px;padding:8px 10px;border-radius:9px;background:#192d2d;border:1px solid #335d57;display:flex;flex-direction:column;gap:3px}
+.local-quote strong{font-size:12px;color:#b9f1d3}
+.local-quote small{font-size:10px;color:#90bbae;overflow-wrap:anywhere}
+@media(max-width:520px){.local-quote{padding:7px}.local-quote strong{font-size:11px}.local-quote small{font-size:9px}}
