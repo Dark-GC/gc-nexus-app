@@ -15,6 +15,7 @@
   <link rel="stylesheet" href="./styles.css">
   <link rel="stylesheet" href="./data/growth.css">
   <link rel="stylesheet" href="./data/login.css">
+  <script src="./data/ui.js" defer></script>
   <script src="./app.js" defer></script>
   <script src="./data/pwa.js" defer></script>
   <script src="./data/fx.js" defer></script>
@@ -52,7 +53,7 @@
       <div class="sidebar-bottom">
         <div class="connection"><span class="connection-dot"></span> Datos guardados en este navegador</div>
         <p>GC GRAPHICS · República Dominicana</p>
-        <p class="version">Origen V1.3 · Construimos nuestro camino</p>
+        <p class="version">Origen V1.6 · Construimos nuestro camino</p>
       </div>
     </aside>
     <main class="main">
@@ -61,7 +62,6 @@
         <div class="top-actions">
           <button type="button" id="installPwa" class="cloud-button" title="Instalar GC GRAPHICS como aplicación">↗ Instalar app</button>
           <button id="cloudButton" class="cloud-button" type="button">☁ Conectar nube</button><div class="local-pill"><span class="tiny-dot"></span> INVENTARIO GC</div>
-          <button class="icon-btn" id="refreshFeed" title="Comprobar últimas capturas de precios" aria-label="Actualizar precios">↻</button>
           <div class="avatar">GC</div>
         </div>
       </header>
@@ -113,7 +113,7 @@
           <button class="btn btn-primary add-top" id="addItem"><span class="btn-plus">＋</span> Agregar artículo</button>
         </section>
         <section id="statGrid" class="stat-grid" aria-label="Indicadores de inventario"></section>
-        <div class="exchange-caption"><span id="fxStatus">Consultando referencia de cambio US$ / RD$…</span><a href="https://www.exchangerate-api.com" target="_blank" rel="noopener noreferrer">Tasa: ExchangeRate-API</a></div>
+        <div class="exchange-caption" aria-live="polite"><span class="exchange-icon" aria-hidden="true">$</span><div><strong id="fxRate">Consultando US$ / RD$…</strong><span id="fxStatus">Conversión orientativa; no incluye envío, impuestos ni cargos bancarios.</span></div></div>
         <section class="info-strip">
           <div class="info-icon">↗</div>
           <div><strong>Precios verificados, nunca estimados.</strong><span id="feedLine">Comprobando capturas de proveedores...</span></div>
@@ -174,13 +174,19 @@
       <div class="modal-head"><div><div class="modal-kicker">GESTIÓN DE INVENTARIO</div><h2 id="formTitle">Nuevo artículo</h2></div><button class="close-btn" id="closeForm" aria-label="Cerrar formulario">×</button></div>
       <form id="itemForm">
         <div class="form-scroll">
+          <section class="url-analyzer" aria-labelledby="urlAnalyzerTitle">
+            <div class="url-analyzer-copy"><span class="modal-kicker">AUTOCOMPLETADO SEGURO</span><h3 id="urlAnalyzerTitle">Pega el enlace del producto</h3><p>Intentaremos completar la ficha con datos públicos verificables. Podrás corregir todo antes de guardar.</p></div>
+            <label class="field url-analyzer-field"><span>Enlace original *</span><div class="url-analyzer-control"><input name="url" id="itemUrl" type="url" inputmode="url" autocomplete="off" placeholder="https://tienda.com/producto"><button type="button" class="btn btn-primary" id="analyzeProduct">Analizar enlace</button></div></label>
+            <div id="urlAnalyzeStatus" class="url-analyze-status" role="status" aria-live="polite"><span class="url-status-dot"></span><span>Pega un enlace. El formulario manual permanece disponible.</span></div>
+            <div id="urlPreview" class="url-preview hidden"></div>
+          </section>
+          <div class="manual-form-label"><span>O completa la ficha manualmente</span></div>
           <div class="form-two">
             <label class="field span-2"><span>Nombre del artículo *</span><input name="name" id="itemName" required maxlength="140" placeholder="Ej. Epson EcoTank ET-2800"></label>
             <label class="field"><span>Marca</span><input name="brand" maxlength="70" placeholder="Ej. Epson"></label>
             <label class="field"><span>Código interno</span><input name="code" maxlength="35" placeholder="Ej. EQ-008"></label>
             <label class="field"><span>Tipo</span><select name="type" id="itemType"><option value="Maquinaria">Maquinaria</option><option value="Accesorio">Accesorio</option><option value="Consumible">Consumible</option></select></label>
             <label class="field"><span>Estado de compra</span><select name="status" id="itemStatus"><option value="Pendiente">Pendiente</option><option value="Comprada">Comprada</option><option value="Revisar">Revisar</option><option value="Cancelada">Cancelada</option></select></label>
-            <label class="field span-2"><span>Enlace al producto</span><input name="url" type="url" placeholder="https://www.amazon.com/..."></label>
             <label class="field span-2"><span>Enlace de imagen (opcional)</span><input name="imageUrl" type="text" placeholder="https://.../imagen.jpg"><small>También puedes subir una foto. Usaremos la miniatura de la tienda cuando esté disponible.</small></label>
             <label class="field span-2 image-upload"><span>Foto propia del artículo</span><input id="uploadPhoto" type="file" accept="image/png,image/jpeg,image/webp"><small>Se comprime y guarda solo en este navegador.</small></label>
             <label class="field"><span>Precio de referencia (USD)</span><input name="manualPrice" type="number" inputmode="decimal" min="0" step="0.01" placeholder="Sin registrar"></label>
@@ -239,7 +245,7 @@
             <button type="submit" class="gc-login-submit" id="authLoginButton"><span>Entrar a GC GRAPHICS</span><span aria-hidden="true">→</span></button>
           </form>
           <div class="gc-login-help"><span class="gc-help-icon">i</span><p>¿No tienes cuenta? El administrador crea tu acceso y te comparte tus datos. <strong>No necesitas registrarte.</strong></p></div>
-          <div class="gc-login-bottom"><span><span class="gc-safe-dot"></span> Acceso protegido</span><span>GC ORIGEN V1.5</span></div>
+          <div class="gc-login-bottom"><span><span class="gc-safe-dot"></span> Acceso protegido</span><span>GC ORIGEN V1.6</span></div>
         </section>
         <section id="gcAccountView" class="gc-account-view hidden">
           <div class="gc-access-overline"><span class="gc-live-dot"></span> TU ESPACIO PRIVADO</div>
@@ -247,11 +253,16 @@
           <p id="cloudState" class="gc-account-status">Sesión protegida.</p>
           <section class="viewer-tools hidden" id="viewerTools">
             <h3>Crear acceso familiar</h3>
-            <p>Tu mamá solo necesita un correo y la contraseña que generaré para ella. Elige qué puede hacer y luego copia los datos para enviárselos.</p>
+            <p>Elige el correo, una contraseña privada y el permiso. La contraseña se usa para crear el acceso y no vuelve a guardarse ni mostrarse en esta lista.</p>
             <form id="viewerForm" class="viewer-form">
               <label class="field" for="viewerEmail"><span>Correo de tu familiar</span><input id="viewerEmail" type="email" autocomplete="off" inputmode="email" required placeholder="correo@ejemplo.com"></label>
+              <div class="gc-password-grid">
+                <label class="field" for="viewerPassword"><span>Contraseña elegida por ti</span><input id="viewerPassword" type="password" autocomplete="new-password" minlength="12" maxlength="128" required placeholder="12 caracteres o más"></label>
+                <label class="field" for="viewerPasswordConfirm"><span>Confirmar contraseña</span><input id="viewerPasswordConfirm" type="password" autocomplete="new-password" minlength="12" maxlength="128" required placeholder="Repite la contraseña"></label>
+              </div>
+              <div class="gc-strength" id="viewerPasswordStrength" data-score="0"><span><i></i></span><small>Fortaleza: escribe al menos 12 caracteres</small></div>
               <label class="field" for="viewerRole"><span>Permisos de su cuenta</span><select id="viewerRole" aria-label="Permisos del familiar"><option value="buyer" selected>Compras y recepción · recomendado para mamá</option><option value="viewer">Solo lectura · ver avances</option></select></label>
-              <button type="submit" class="btn btn-primary gc-family-submit" id="createFamilyButton">＋ Crear cuenta y contraseña</button>
+              <button type="submit" class="btn btn-primary gc-family-submit" id="createFamilyButton">＋ Crear acceso familiar</button>
             </form>
             <div id="familyCredentials" class="gc-credentials hidden" aria-live="polite">
               <div class="gc-credentials-heading"><span aria-hidden="true">✓</span><b>¡Acceso creado!</b></div>
@@ -270,5 +281,14 @@
   </div>
   <input type="file" id="importFile" accept="application/json,.json" hidden>
   <div id="toast" class="toast hidden" role="status"></div>
+  <div class="overlay hidden ui-dialog-overlay" id="uiDialogOverlay" role="presentation">
+    <div class="modal compact ui-dialog" role="dialog" aria-modal="true" aria-labelledby="uiDialogTitle" aria-describedby="uiDialogMessage">
+      <div class="modal-head"><div><div class="modal-kicker" id="uiDialogKicker">GC GRAPHICS</div><h2 id="uiDialogTitle">Confirmación</h2></div><button type="button" class="close-btn" id="uiDialogClose" aria-label="Cerrar diálogo">×</button></div>
+      <p class="decision-message" id="uiDialogMessage"></p>
+      <div class="ui-dialog-fields" id="uiDialogFields"></div>
+      <p class="ui-dialog-error" id="uiDialogError" role="alert"></p>
+      <div class="modal-foot"><button type="button" class="btn btn-secondary" id="uiDialogCancel">Cancelar</button><button type="button" class="btn btn-primary" id="uiDialogConfirm">Aceptar</button></div>
+    </div>
+  </div>
 </body>
 </html>

@@ -183,6 +183,79 @@ button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible{
   .stat-top{font-size:10px}
   .stat-foot{font-size:9px}
 }
+
+/* === Origen V1.6 · premium cards, verified automation and accessible dialogs === */
+.exchange-caption{margin:0 0 18px;padding:12px 14px;display:flex;justify-content:flex-start;align-items:center;gap:11px;
+  border:1px solid #343a50;border-radius:13px;background:linear-gradient(120deg,#171c29,#141a26);color:#b9c5d8}
+.exchange-caption .exchange-icon{display:grid;place-items:center;width:34px;height:34px;flex:0 0 34px;border-radius:10px;
+  background:#2b2544;color:#c8b2ff;font-weight:900;box-shadow:inset 0 0 0 1px #816bc94d}
+.exchange-caption>div{display:flex;min-width:0;flex-direction:column;gap:2px}.exchange-caption strong{color:#f2efff;font-size:13px}
+.exchange-caption #fxStatus{color:#8f9cb0;font-size:10px;overflow-wrap:anywhere}
+
+.catalog-grid{grid-template-columns:repeat(auto-fill,minmax(255px,1fr));gap:17px;align-items:stretch}
+.product-card{position:relative;min-width:0;display:flex;flex-direction:column;overflow:hidden;border-radius:17px;
+  border:1px solid #303747;background:linear-gradient(155deg,#171d29,#111620);box-shadow:0 13px 40px #00000024;
+  transition:transform .2s ease,border-color .25s ease,box-shadow .25s ease}
+.product-card::after{content:"";position:absolute;inset:-1px;pointer-events:none;border-radius:inherit;opacity:.42;
+  background:linear-gradient(125deg,transparent 55%,#9f7cff10);transition:opacity .25s ease}
+.product-card:hover{transform:translateY(-2px);border-color:#514d69;box-shadow:0 18px 48px #0000003a}
+.product-card:hover::after{opacity:.85}.product-card.purchase-pending{border-color:#6c57a34f}.product-card.purchase-awaiting{border-color:#547db466}
+.product-card.purchase-received{border-color:#3f856d66}.product-card.stock-out{box-shadow:inset 3px 0 #bd566166,0 13px 40px #0003}
+.product-card.promo-active{border-color:#c68c4d88;box-shadow:0 0 0 1px #e2a65c20,0 16px 46px #5a35142b}
+.product-image{height:auto;aspect-ratio:4/3;min-height:0;background:radial-gradient(circle at 50% 42%,#2b3242,#171c27 70%);overflow:hidden}
+.product-image img{width:100%;height:100%;object-fit:contain;padding:14px;filter:saturate(.98) contrast(1.02)}
+.product-body{display:flex;flex:1;flex-direction:column;min-width:0;padding:15px 16px 14px}.product-meta{overflow-wrap:anywhere}
+.product-brand{margin-top:4px;color:#a99bd1;font-size:10px;font-weight:800;letter-spacing:.35px;overflow-wrap:anywhere}
+.product-name{min-height:0;margin:5px 0 8px;font-size:15px;line-height:1.32;overflow-wrap:anywhere;word-break:normal;hyphens:auto}
+.product-desc{display:block;margin:0;color:#8d98aa;font-size:10.5px;line-height:1.5;overflow-wrap:anywhere}
+.product-price-row{margin-top:auto;padding-top:14px;min-width:0;align-items:flex-start;gap:10px}.price-block{min-width:0}
+.price-num{line-height:1.12;overflow-wrap:anywhere}.stock-pill{flex-shrink:0;max-width:47%;white-space:normal;text-align:center;line-height:1.25}
+.promotion-line{display:flex;flex-wrap:wrap;gap:6px;margin:8px 0 0}.campaign-badge,.promo-countdown{display:inline-flex;align-items:center;
+  min-height:24px;border-radius:7px;padding:4px 7px;font-size:9px;font-weight:900;letter-spacing:.25px}
+.campaign-badge{color:#ffe4ad;background:#7d4e2738;border:1px solid #c4884d77}.campaign-badge.black-friday{color:#fff;background:#19191d;border-color:#7b6a8d}
+.promo-countdown{color:#d9cffd;background:#352b515e;border:1px solid #71609b77;font-variant-numeric:tabular-nums}
+.promotion-source{display:block;color:#7f8a9f;font-size:9px;line-height:1.4;margin-top:5px;overflow-wrap:anywhere}
+.product-bottom{margin-top:12px;padding-top:12px}.product-bottom .btn{min-height:44px;white-space:normal;line-height:1.25}
+.open-link{width:44px;height:44px;flex:0 0 44px}.deal-flag{max-width:calc(100% - 24px);white-space:normal}
+
+.url-analyzer{margin:0 0 20px;padding:18px;border:1px solid #6555a06b;border-radius:15px;
+  background:radial-gradient(circle at 96% 0,#795ad322,transparent 45%),linear-gradient(145deg,#1b2030,#121824)}
+.url-analyzer-copy h3{font:800 20px/1.2 Manrope;margin:5px 0 5px;color:#f1edff}.url-analyzer-copy p{margin:0 0 15px;color:#9aa6ba;font-size:11px;line-height:1.55}
+.url-analyzer-control{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:8px}.url-analyzer-control input{font-size:14px}
+.url-analyze-status{display:flex;align-items:flex-start;gap:8px;margin-top:11px;color:#a9b5c8;font-size:10px;line-height:1.45}
+.url-status-dot{width:7px;height:7px;margin-top:4px;flex:0 0 7px;border-radius:50%;background:#6f7b90}.url-analyze-status[data-state="busy"] .url-status-dot{background:#b69aff;box-shadow:0 0 0 5px #b69aff16;animation:gcPulse 1.2s ease-in-out infinite}
+.url-analyze-status[data-state="ok"] .url-status-dot{background:#65d5aa}.url-analyze-status[data-state="warning"] .url-status-dot{background:#e4af55}
+.url-analyze-status[data-state="error"] .url-status-dot{background:#ed737b}.url-preview{display:grid;grid-template-columns:78px 1fr;gap:12px;margin-top:14px;padding:11px;border-radius:12px;background:#0e1420;border:1px solid #303b50}
+.url-preview img{width:78px;height:72px;object-fit:contain;background:#fff;border-radius:9px}.url-preview strong,.url-preview span{display:block;overflow-wrap:anywhere}
+.url-preview strong{font-size:12px}.url-preview span{margin-top:5px;color:#9ba8bd;font-size:10px;line-height:1.45}
+.manual-form-label{display:flex;align-items:center;gap:10px;margin:0 0 16px;color:#7f899c;font-size:9px;font-weight:900;letter-spacing:1.4px;text-transform:uppercase}
+.manual-form-label::before,.manual-form-label::after{content:"";height:1px;flex:1;background:#303747}
+
+.ui-dialog-overlay{z-index:120}.ui-dialog{max-height:min(92dvh,680px)}.ui-dialog-fields{display:grid;gap:12px;padding:0 28px 18px}
+.ui-dialog-field input,.ui-dialog-field textarea{font-size:16px}.ui-dialog-error{min-height:18px;margin:0;padding:0 28px 12px;color:#ff9ea6;font-size:11px}
+body.ui-dialog-open{overflow:hidden}.gc-strength{display:grid;grid-template-columns:90px 1fr;align-items:center;gap:9px;margin-top:-3px}
+.gc-strength>span{height:5px;border-radius:9px;background:#31394a;overflow:hidden}.gc-strength i{display:block;width:10%;height:100%;background:#ce5e69;transition:width .2s,background .2s}
+.gc-strength[data-score="2"] i,.gc-strength[data-score="3"] i{width:60%;background:#dda951}.gc-strength[data-score="4"] i,.gc-strength[data-score="5"] i{width:100%;background:#61cda5}
+.gc-strength small{color:#8f9cb1;font-size:9px}.gc-password-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+
+@keyframes gcPulse{50%{opacity:.45;transform:scale(.8)}}
+@media(max-width:760px){
+  .catalog-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:11px}.product-image{aspect-ratio:1.22/1}.product-body{padding:12px}
+  .product-name{font-size:13px}.product-desc{font-size:10px}.product-price-row{padding-top:11px}.exchange-caption{margin-bottom:15px}
+  .url-analyzer{padding:14px}.url-analyzer-control{grid-template-columns:1fr}.url-analyzer-control input{font-size:16px}.url-analyzer-control .btn{width:100%;min-height:44px}
+  .ui-dialog-fields{padding:0 17px 15px}.ui-dialog-error{padding:0 17px 10px}
+}
+@media(max-width:520px){
+  .catalog-grid{grid-template-columns:1fr;gap:12px}.product-card{display:flex;grid-template-columns:none;border-radius:16px}.product-image{height:148px;min-height:148px;aspect-ratio:auto}
+  .product-image img{padding:10px}.product-body{padding:13px 14px}.product-name{font-size:14px;line-height:1.3;margin:4px 0 7px}
+  .product-desc{display:block;font-size:10px;line-height:1.45}.product-price-row{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:8px}
+  .price-num{font-size:20px}.stock-pill{max-width:115px}.product-flag{max-width:calc(100% - 86px);left:8px;top:8px}
+  .deal-flag{top:auto;bottom:8px;left:8px}.product-menu{flex-direction:row;right:8px;top:8px}.product-menu button{width:32px;height:32px;min-width:32px;min-height:32px}
+  .product-bottom{margin-top:10px;padding-top:10px}.product-bottom .btn{min-height:46px;font-size:11px}.open-link{width:46px;height:46px;flex-basis:46px}
+  .gc-password-grid{grid-template-columns:1fr}.url-preview{grid-template-columns:64px 1fr}.url-preview img{width:64px;height:62px}
+}
+@media(max-width:340px){.content{padding-left:10px;padding-right:10px}.product-body{padding:11px}.price-num{font-size:18px}.stock-pill{font-size:8px}.top-actions{gap:4px}.cloud-button{padding-left:7px;padding-right:7px}}
+@media(prefers-reduced-motion:reduce){.url-analyze-status[data-state="busy"] .url-status-dot{animation:none}}
 @media(max-width:350px){
   .crumbs{font-size:9px;letter-spacing:.3px}
   .cloud-button{max-width:115px;overflow:hidden;text-overflow:ellipsis}
@@ -254,3 +327,8 @@ body.family-buyer .product-bottom .family-status{font-size:11px}
  .viewer-invite .btn{flex:1 1 100%}
  body.family-buyer .product-bottom .btn-bought{min-height:43px;font-size:11px;font-weight:800}
 }
+
+/* Final V1.6 cascade: keep the exchange card presentation after legacy family rules. */
+.exchange-caption{margin:0 0 18px;padding:12px 14px;display:flex;justify-content:flex-start;align-items:center;gap:11px;border:1px solid #343a50;border-radius:13px;background:linear-gradient(120deg,#171c29,#141a26);color:#b9c5d8}
+.exchange-caption .exchange-icon{display:grid;place-items:center;width:34px;height:34px;flex:0 0 34px;border-radius:10px;background:#2b2544;color:#c8b2ff;font-weight:900;box-shadow:inset 0 0 0 1px #816bc94d}
+.exchange-caption>div{display:flex;min-width:0;flex-direction:column;gap:2px}.exchange-caption strong{color:#f2efff;font-size:13px}.exchange-caption #fxStatus{color:#8f9cb0;font-size:10px;overflow-wrap:anywhere}

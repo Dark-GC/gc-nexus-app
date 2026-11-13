@@ -17,6 +17,13 @@
     if($("familyCredentialsText"))$("familyCredentialsText").value="";
     $("familyCredentials")?.classList.add("hidden");
   }
+  function updatePasswordStrength(){
+    const input=$("viewerPassword"),meter=$("viewerPasswordStrength");if(!input||!meter)return;
+    const result=window.GCDialog?.passwordStrength?.(input.value)||{score:0,label:"Débil"};
+    meter.dataset.score=String(result.score);
+    const suffix=input.value.length<12?" · faltan "+(12-input.value.length)+" caracteres":"";
+    meter.querySelector("small").textContent="Fortaleza: "+result.label+suffix;
+  }
   function openLogin(){
     const overlay=$("cloudOverlay");if(!overlay)return;
     const loggedIn=!!(state.ready&&state.user);
@@ -59,6 +66,7 @@
         "USER_CREATION_FAILED":"No se pudo crear la cuenta. Revisa si el correo ya tiene una.",
         "INVITATION_FAILED":"La cuenta no se vinculó. Vuelve a intentarlo.",
         "PASSWORD_RESET_FAILED":"No se pudo renovar la contraseña.",
+        "WEAK_PASSWORD":"La contraseña debe tener entre 12 y 128 caracteres.",
         "NOT_YOUR_MEMBER":"Este usuario no pertenece a tu inventario.",
         "NOT_A_MANAGED_USER":"Esta cuenta no fue creada desde este panel.",
         "LOGIN_REQUIRED":"Tu sesión terminó. Vuelve a entrar."
@@ -206,16 +214,18 @@
       });
       const reset=document.createElement("button");reset.type="button";reset.textContent="Activar / nueva clave";reset.className="btn btn-secondary";
       reset.addEventListener("click",async()=>{
-        if(!confirm("¿Generar una contraseña nueva para "+item.viewer_email+"? La anterior dejará de funcionar."))return;
-        reset.disabled=true;reset.textContent="Generando…";
-        try{const result=await memberRequest({action:"reset",email:item.viewer_email});hideCredentials();revealCredentials(result);
+        const passwords=await window.GCDialog?.requestPassword?.({title:"Nueva contraseña para "+item.viewer_email,message:"La contraseña anterior dejará de funcionar. Elige una nueva de al menos 12 caracteres y compártela de forma privada.",confirmLabel:"Renovar contraseña"});
+        if(!passwords)return;
+        reset.disabled=true;reset.textContent="Guardando…";
+        try{const result=await memberRequest({action:"reset",email:item.viewer_email,password:passwords.uiPassword});hideCredentials();revealCredentials(result);
           show("Contraseña renovada. Copia los nuevos datos y envíaselos de forma privada.","ok");
         }catch(e){show(e.message,"error");}
         finally{reset.disabled=false;reset.textContent="Nueva clave";}
       });
       const remove=document.createElement("button");remove.type="button";remove.textContent="Revocar";remove.className="btn btn-secondary";
       remove.addEventListener("click",async()=>{
-        if(!confirm("¿Quitar el acceso a "+item.viewer_email+"? No podrá consultar ni registrar compras."))return;
+        const accepted=await window.GCDialog?.confirm?.({title:"Revocar acceso familiar",kicker:"CUENTAS FAMILIARES",message:"¿Quitar el acceso a "+item.viewer_email+"? No podrá consultar ni registrar compras.",confirmLabel:"Revocar acceso",danger:true});
+        if(!accepted)return;
         remove.disabled=true;
         const {error}=await state.client.from("inventory_viewers").delete().eq("owner_id",state.user.id).eq("viewer_email",item.viewer_email);
         if(error){show("No se pudo revocar el acceso.","error");remove.disabled=false;}
@@ -236,15 +246,20 @@
       show("Tu cuenta administradora ya tiene acceso.","info");return;
     }
     const role=$("viewerRole").value==="viewer"?"viewer":"buyer";
+    const password=$("viewerPassword").value,confirmation=$("viewerPasswordConfirm").value;
+    if(password.length<12){show("La contraseña debe tener al menos 12 caracteres.","error");$("viewerPassword").focus();return;}
+    if(password.length>128){show("La contraseña es demasiado larga.","error");return;}
+    if(password!==confirmation){show("Las contraseñas no coinciden.","error");$("viewerPasswordConfirm").focus();return;}
     const submit=$("createFamilyButton");submit.disabled=true;submit.textContent="Creando acceso seguro…";
     try{
-      const result=await memberRequest({action:"create",email,role});
+      const result=await memberRequest({action:"create",email,role,password});
       hideCredentials();revealCredentials(result);
       $("viewerEmail").value="";
+      $("viewerPassword").value="";$("viewerPasswordConfirm").value="";updatePasswordStrength();
       show("¡Cuenta creada! Copia sus datos para enviarlos a tu familiar.","ok");
       await refreshViewers();
     }catch(e){show(e.message,"error");}
-    finally{submit.disabled=false;submit.textContent="＋ Crear cuenta y contraseña";}
+    finally{submit.disabled=false;submit.textContent="＋ Crear acceso familiar";}
   }
   async function fetchFamilyEvents(){
     if(!state.client||!state.ownerId||!state.user)return;
@@ -453,10 +468,15 @@
     $("hideFamilyCredentials")?.addEventListener("click",hideCredentials);
     $("authSignOut")?.addEventListener("click",signOut);
     $("viewerForm")?.addEventListener("submit",addViewer);
+    $("viewerPassword")?.addEventListener("input",updatePasswordStrength);
+    $("viewerPasswordConfirm")?.addEventListener("input",()=>{
+      const confirmation=$("viewerPasswordConfirm"),password=$("viewerPassword");
+      confirmation.setCustomValidity(confirmation.value&&confirmation.value!==password.value?"Las contraseñas no coinciden.":"");
+    });
     $("copyFamilyLink")?.addEventListener("click",async()=>{
       const link=window.location.origin+"/data/app.html";
       try{await navigator.clipboard.writeText(link);show("Enlace copiado. Compártelo por WhatsApp con tu madre.","ok");}
-      catch{prompt("Copia este enlace para tu familiar:",link);}
+      catch{await window.GCDialog?.notice?.({title:"Enlace de la aplicación",kicker:"ACCESO FAMILIAR",message:"Copia este enlace y envíalo por un canal privado.",fields:[{id:"uiFamilyLink",label:"Enlace",value:link,readonly:true}]});}
     });
     window.addEventListener("online",()=>{if(state.ready&&!state.viewer){notify();notifyGrowth();}else if(state.ready)loadRemote(false);});
     try{

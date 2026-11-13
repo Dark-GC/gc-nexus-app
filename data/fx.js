@@ -12,12 +12,13 @@
    return "≈ "+new Intl.NumberFormat("es-DO",{style:"currency",currency:"DOP",maximumFractionDigits:0}).format(usd*current.rate);
  }
  function status(){
-   const el=document.getElementById("fxStatus");
-   if(!el)return;
-   if(!valid(current)){el.textContent="Conversión RD$ no disponible · el precio en US$ se mantiene";return;}
+   const el=document.getElementById("fxStatus"),rateEl=document.getElementById("fxRate");
+   if(!el||!rateEl)return;
+   if(!valid(current)){rateEl.textContent="Conversión RD$ no disponible";el.textContent="El precio en US$ se mantiene; volveremos a intentar automáticamente.";return;}
    const date=new Intl.DateTimeFormat("es-DO",{dateStyle:"medium",timeZone:"America/Santo_Domingo"}).format(new Date(current.updatedAt));
    const stale=Date.now()-current.updatedAt>2*24*3600*1000;
-   el.textContent="US$1 ≈ RD$"+current.rate.toFixed(2)+" · "+date+(stale?" · Tasa antigua":"")+" · Conversión orientativa; no incluye envío ni impuestos. ";
+   rateEl.textContent="US$1 ≈ RD$"+current.rate.toFixed(2)+(stale?" · referencia desactualizada":"");
+   el.textContent="Fuente pública: open.er-api.com · "+date+" · Conversión estimada; no es el precio real de una tienda dominicana.";
  }
  async function refresh(){
    try{
@@ -32,7 +33,7 @@
    }catch(e){console.info("FX temporalmente no disponible:",e.message);}
    status();
  }
- function boot(){status();if(!current||Date.now()-current.updatedAt>12*3600*1000)refresh();}
+ function boot(){status();if(!current||Date.now()-current.updatedAt>12*3600*1000)refresh();setInterval(()=>{if(document.visibilityState!=="hidden"&&(!current||Date.now()-current.updatedAt>12*3600*1000))refresh();},60*60*1000);}
  window.GCFX={convert:fxText,get:()=>current,refresh};
  if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",boot);else boot();
 })();

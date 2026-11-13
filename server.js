@@ -67,6 +67,14 @@ function cleanImage(value) {
     return null;
   }
 }
+function cleanText(value, max=600) {
+  return decodeEntities(String(value || '').replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim()).slice(0,max) || null;
+}
+function brandName(value) {
+  if (typeof value === 'string') return cleanText(value, 80);
+  if (value && typeof value === 'object') return cleanText(value.name, 80);
+  return null;
+}
 
 // VEVOR shows its original list price in a separate market-price DOM element.
 // Only trust the explicitly labeled amount on the SAME product page.
@@ -109,10 +117,16 @@ export function parseProduct(html, pageUrl) {
     ? Number(rawQty) : null;
   const title = typeof product?.name === 'string' ? product.name : getMeta(html, 'og:title');
   const image = cleanImage(product?.image) || cleanImage(getMeta(html, 'og:image'));
+  const description=cleanText(product?.description||getMeta(html,'og:description')||getMeta(html,'description'));
+  const brand=brandName(product?.brand);
+  const model=cleanText(product?.model||product?.mpn||product?.sku,100);
+  const category=cleanText(product?.category,100);
+  const store=new URL(pageUrl).hostname.toLowerCase().replace(/^www\./,'');
   const hasStructuredData = Boolean(product);
   return {
     title: title ? title.slice(0, 280) : null,
     image,
+    brand,model,category,description,store,
     price: verifiedPrice,
     originalPrice: pageUrl.includes('vevor.com') ? vevorListPrice(html, verifiedPrice) : null,
     currency: currency ? String(currency).toUpperCase().slice(0, 5) : null,
@@ -181,7 +195,7 @@ async function getShopifyQuote(input){
   const originalPrice=compareValues.length===1?compareValues[0]/100:null;
   const img=typeof p.featured_image==="string"?p.featured_image:(p.featured_image?.src||p.images?.[0]||"");
   const normalized=img.startsWith("//")?"https:"+img:img;
-  return {title:p.title||null,image:cleanImage(normalized),price:prices.length===1?prices[0]/100:null,
+  return {title:p.title||null,image:cleanImage(normalized),brand:cleanText(p.vendor,80),model:null,category:cleanText(p.product_type,100),description:cleanText(p.description||p.body_html),store:"crealityfalcon.com",price:prices.length===1?prices[0]/100:null,
     originalPrice,
     currency:prices.length===1?"USD":null,
     availability:all.length>0&&available.length===0?"out_of_stock":available.length?"in_stock":"unknown",
@@ -195,6 +209,7 @@ async function previewProduct(url){
   const value=domain.endsWith("crealityfalcon.com")?
     await getShopifyQuote(url):
     await fetchPage(url).then(page=>parseProduct(page.html,page.url));
+  value.requestedUrl=url;
   quoteCache.set(url,{time:Date.now(),value});
   if(quoteCache.size>150)quoteCache.delete(quoteCache.keys().next().value);
   return value;
@@ -226,7 +241,7 @@ export const server = http.createServer(async (req, res) => {
   try {
     const target = new URL(req.url || '/', 'http://localhost');
     if (req.method !== 'GET') return send(res, 405, JSON.stringify({ error: 'method_not_allowed' }));
-    if (target.pathname === '/api/health') return send(res, 200, JSON.stringify({ ok: true, app: 'gc-graphics-inventory', version: '0.1.0' }));
+    if (target.pathname === '/api/health') return send(res, 200, JSON.stringify({ ok: true, app: 'gc-graphics-inventory', version: '1.6.0' }));
     if (target.pathname === '/api/product-preview') {
       const link = target.searchParams.get('url');
       if (!allowedProductUrl(link)) {

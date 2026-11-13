@@ -149,10 +149,12 @@
    if(old)st.entries=st.entries.map(x=>x.id===e.id?e:x);else st.entries.unshift(e);
    save();closeForm();render();
  }
- function deleteEntry(entryId){
+  async function deleteEntry(entryId){
    if(window.GCCloud?.isViewer?.())return;
    const e=st.entries.find(x=>x.id===entryId);
-   if(!e||!confirm("¿Eliminar de la bitácora «"+e.title+"»? Esta acción no borra el artículo del inventario."))return;
+    if(!e)return;
+    const accepted=await window.GCDialog?.confirm?.({title:"Eliminar registro",kicker:"BITÁCORA",message:"¿Eliminar de la bitácora «"+e.title+"»? Esta acción no borra el artículo del inventario.",confirmLabel:"Eliminar registro",danger:true});
+    if(!accepted)return;
    st.entries=st.entries.filter(x=>x.id!==entryId);save();render();
  }
  function toggleMilestone(mid){
@@ -164,11 +166,11 @@
      description:finished?"Marcado como completado manualmente.":"Se reabrió este hito para continuar mejorándolo."});
    save();render();
  }
- function addMilestone(){
+  async function addMilestone(){
    if(window.GCCloud?.isViewer?.())return;
    const field=$("growthNewMilestone"),value=short(field?.value,160);
    if(!value)return;
-   if(st.milestones.length>=60){alert("Límite de 60 hitos. Puedes cerrar o editar los actuales.");return;}
+    if(st.milestones.length>=60){await window.GCDialog?.notice?.({title:"Límite de hitos",kicker:"NUESTRA RUTA",message:"Llegaste al límite de 60 hitos. Puedes cerrar o editar los actuales."});return;}
    st.milestones.push({id:id(),phase:"RUTA PERSONALIZADA",title:value,
      description:"Definido por ti; marca su finalización solo cuando sea un hecho.",order:st.milestones.length,
      completedAt:null,isCustom:true});

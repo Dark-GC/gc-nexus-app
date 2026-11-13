@@ -3,7 +3,7 @@
   const KEY = "gc_graphics_inventory_v1";
   const CATEGORIES = ["Todas", "Maquinaria", "Accesorio", "Consumible"];
   const $ = id => document.getElementById(id);
-  const S = {items: [], feed: {items: {}}, amazonFeed:{items:{}}, promotions:{items:{}}, liveQuotes:{}, verifiedImages:{}, brokenImages:new Set(), view: "all", category: "Todas", query: "", sort: "order", editing: null, pendingPhoto: null, decision: null, incoming: null,readOnly:false,familyBuyer:false,familyBusy:false,initialized:false};
+  const S = {items: [], feed: {items: {}}, amazonFeed:{items:{}}, promotions:{items:{}}, liveQuotes:{}, verifiedImages:{}, brokenImages:new Set(), view: "all", category: "Todas", query: "", sort: "order", editing: null, pendingPhoto: null, decision: null, incoming: null,readOnly:false,familyBuyer:false,familyBusy:false,initialized:false,analysisController:null};
   const safeText = v => String(v == null ? "" : v);
   const esc = v => safeText(v).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#39;");
   const urlOK = v => /^https:\/\/[^\s]+$/i.test(safeText(v)) || /^http:\/\/[^\s]+$/i.test(safeText(v));
@@ -87,13 +87,21 @@
     }
     // A reference snapshot must not present an old Amazon discount as active indefinitely.
     if(f?.provider==="amazon-snapshot" && Date.now()-new Date(f.checkedAt).getTime()>48*3600000)orig=null;
-    const promo=S.promotions.items?.[p.id];
-    if(orig==null&&promo?.sourceUrl===p.url&&Number.isFinite(value)&&promo.currency===currency&&
-      Math.abs(value-promo.observedPrice)<0.005&&Date.now()<new Date(promo.validUntil).getTime())
+    const promo=S.promotions.items?.[p.id],promoChecked=Date.parse(promo?.checkedAt||S.promotions.checkedAt||"");
+    const verifiedEnd=promo?.endsAtVerified===true&&Number.isFinite(Date.parse(promo.validUntil));
+    const promoCurrent=promo?.sourceUrl===p.url&&Number.isFinite(value)&&promo.currency===currency&&
+      Math.abs(value-promo.observedPrice)<0.005&&Number.isFinite(promoChecked)&&Date.now()-promoChecked<7*86400000&&
+      (!verifiedEnd||Date.now()<Date.parse(promo.validUntil));
+    if(orig==null&&promoCurrent)
       orig=promo.originalPrice;
     const originalPrice=Number.isFinite(orig)&&Number.isFinite(value)&&orig>value&&orig<=value*10?orig:null;
     const discountPercent=originalPrice===null?null:Math.round((1-value/originalPrice)*100);
-    return {value,currency,label,kind,originalPrice,discountPercent:discountPercent>0?discountPercent:null};
+    const promotion=originalPrice!==null&&promoCurrent?{
+      label:promo.campaignVerified===true&&promo.campaignName?clamp(promo.campaignName,40):"Oferta verificada",
+      campaignVerified:promo.campaignVerified===true,source:clamp(promo.sourceName||"Tienda oficial",80),checkedAt:promo.checkedAt||S.promotions.checkedAt,
+      validUntil:verifiedEnd?promo.validUntil:null,endsAtVerified:verifiedEnd
+    }:null;
+    return {value,currency,label,kind,originalPrice,discountPercent:discountPercent>0?discountPercent:null,promotion};
   }
   function productStock(p) {
     const f = feedOf(p);
@@ -151,13 +159,22 @@
     };
     return [...data].sort(sorters[S.sort] || sorters.order);
   }
+  function countdownText(value){
+    const remaining=Math.max(0,Date.parse(value)-Date.now());
+    const total=Math.floor(remaining/1000),days=Math.floor(total/86400),hours=Math.floor(total%86400/3600),minutes=Math.floor(total%3600/60),seconds=total%60;
+    return days+"d "+String(hours).padStart(2,"0")+"h "+String(minutes).padStart(2,"0")+"m "+String(seconds).padStart(2,"0")+"s";
+  }
   function productCard(p) {
     const s = productStock(p), f = flag(p), price = productPrice(p), image = productImage(p);
     const thumb = image ? '<img loading="lazy" data-product-id="'+ esc(p.id) +'" referrerpolicy="no-referrer" src="' + esc(image) + '" alt="Imagen del producto '+ esc(p.name) +'">' : '<div class="product-symbol">' + esc(titleInitials(p.brand || p.name)) + '</div>';
     const converted=price.currency==="USD"&&Number.isFinite(price.value)?(window.GCFX?.convert?.(price.value)||""):"";
-    const dealBadge=price.discountPercent?'<span class="deal-flag">-'+price.discountPercent+'% OFERTA</span>':"";
+    const promo=price.promotion;
+    const campaignClass=promo?.campaignVerified&&/^black friday$/i.test(promo.label)?" black-friday":"";
+    const dealBadge=price.discountPercent?'<span class="deal-flag">-'+price.discountPercent+'% '+esc(promo?.label||"OFERTA")+'</span>':"";
     const localQuote=Number.isFinite(p.localPriceDop)?'<div class="local-quote"><strong>Precio RD: '+esc(priceText(p.localPriceDop,"DOP"))+'</strong><small>'+esc(p.localShopName||"Cotización manual")+' · '+esc(p.localPriceCheckedAt||"sin fecha")+'</small></div>':"";
     const offerMeta=price.originalPrice!==null?'<div class="old-price-row"><del>'+esc(priceText(price.originalPrice,price.currency))+'</del><span>Ahorras '+esc(priceText(price.originalPrice-price.value,price.currency))+'</span></div>':"";
+    const promotionMeta=promo?'<div class="promotion-line"><span class="campaign-badge'+campaignClass+'">'+esc(promo.label)+'</span>'+
+      (promo.endsAtVerified?'<span class="promo-countdown" data-promo-end="'+esc(promo.validUntil)+'">'+esc(countdownText(promo.validUntil))+'</span>':"")+'</div><span class="promotion-source">'+esc(promo.source)+' · verificada '+esc(dateText(promo.checkedAt))+(promo.endsAtVerified?' · fin confirmado':' · sin hora final confirmada')+'</span>':"";
     const name = esc(p.name), encoded = esc(p.id), notes = esc(p.notes || "Sin descripción adicional.");
     const link = p.url ? '<a class="open-link" href="'+esc(p.url)+'" target="_blank" rel="noreferrer noopener" aria-label="Visitar tienda de '+name+'" title="Ver en tienda">↗</a>' : "";
     const familyCanMark=S.readOnly&&S.familyBuyer;
@@ -169,11 +186,13 @@
         : p.received
           ? '<span class="family-status">✓ Comprado y recibido</span>'
           : '<button type="button" class="btn btn-bought" data-action="receive" data-id="'+encoded+'">'+(familyCanMark?"✓ Ya llegó":"✓ Marcar recibido")+'</button>';
-    return '<article class="product-card">' +
+    const purchaseClass=p.status==="Comprada"?(p.received?"purchase-received":"purchase-awaiting"):"purchase-pending";
+    const cardClass="product-card "+purchaseClass+(s.kind==="out"?" stock-out":"")+(price.discountPercent?" promo-active":"");
+    return '<article class="'+cardClass+'">' +
       '<div class="product-image">' + thumb + '<span class="product-flag '+ f.css +'">'+esc(f.text)+'</span>'+dealBadge+'<div class="product-menu"><button data-action="edit" data-id="'+encoded+'" title="Editar" aria-label="Editar '+name+'">✎</button><button data-action="delete" data-id="'+encoded+'" title="Eliminar" aria-label="Eliminar '+name+'">×</button></div></div>' +
-      '<div class="product-body"><div class="product-meta">'+ esc(p.type) + (p.code ? " · " + esc(p.code) : "") + '</div>' +
+      '<div class="product-body"><div class="product-meta">'+ esc(p.type) + (p.code ? " · " + esc(p.code) : "") + '</div>' +(p.brand?'<div class="product-brand">'+esc(p.brand)+'</div>':"")+
       '<h3 class="product-name" title="'+name+'">'+name+'</h3><p class="product-desc">'+notes+'</p>'+
-      '<div class="product-price-row"><div><div class="price-num '+(price.value==null?'unknown':'')+'">'+(price.value==null?'Consultar precio':esc(priceText(price.value,price.currency)))+'</div>'+offerMeta+(converted?'<span class="converted-price">'+esc(converted)+' · referencia</span>':"")+'<span class="price-detail">'+esc(price.label)+'</span>'+localQuote+'</div>'+
+      '<div class="product-price-row"><div class="price-block"><div class="price-num '+(price.value==null?'unknown':'')+'">'+(price.value==null?'Consultar precio':esc(priceText(price.value,price.currency)))+'</div>'+offerMeta+promotionMeta+(converted?'<span class="converted-price">'+esc(converted)+' · referencia</span>':"")+'<span class="price-detail">'+esc(price.label)+'</span>'+localQuote+'</div>'+
       '<span class="stock-pill '+s.kind+'">'+esc(s.text)+'</span></div>'+
       '<div class="product-bottom">'+buy+link+'</div></div></article>';
   }
@@ -201,6 +220,17 @@
     $("feedLine").textContent = "VEVOR/Creality: consultas automáticas al abrir y cada 5 min. Amazon: "+amazonCount+" precios observados en consulta puntual, con fecha; verifica el valor actual antes de comprar.";
     window.GCGrowth?.reassertNav?.();
   }
+  let countdownTimer=null;
+  function updateCountdowns(){
+    let expired=false;
+    document.querySelectorAll("[data-promo-end]").forEach(element=>{
+      const end=Date.parse(element.dataset.promoEnd||"");
+      if(!Number.isFinite(end)||end<=Date.now()){expired=true;return;}
+      element.textContent=countdownText(element.dataset.promoEnd);
+    });
+    if(expired)render();
+  }
+  function scheduleCountdowns(){if(countdownTimer)return;countdownTimer=setInterval(updateCountdowns,1000);}
   function setView(v) {S.view=v;S.category="Todas";$("searchInput").value="";S.query="";render();}
   function showOverlay(id) {$(id).classList.remove("hidden"); document.body.style.overflow="hidden";}
   function closeOverlays() {["formOverlay","decisionOverlay"].forEach(id=>$(id).classList.add("hidden"));document.body.style.overflow=""; S.editing=null; S.pendingPhoto=null; S.decision=null;}
@@ -214,7 +244,55 @@
       const el=form.elements.namedItem(k); if(el) el.value=p[k] == null ? (k==="type"?"Maquinaria":k==="status"?"Pendiente":"") : p[k];
     });
     form.elements.namedItem("received").checked=!!p.received;
-    showOverlay("formOverlay"); $("itemName").focus();
+    setAnalyzeStatus(item?"Puedes volver a analizar el enlace para actualizar los campos verificables.":"Pega un enlace. El formulario manual permanece disponible.","idle");
+    $("urlPreview").classList.add("hidden");$("urlPreview").replaceChildren();
+    showOverlay("formOverlay"); (item?$("itemName"):$("itemUrl")).focus();
+  }
+  function setAnalyzeStatus(message,state="idle"){
+    const root=$("urlAnalyzeStatus");if(!root)return;root.dataset.state=state;
+    const text=root.querySelector("span:last-child");if(text)text.textContent=message;
+  }
+  function suggestedType(info){
+    const text=[info.category,info.title,info.description].filter(Boolean).join(" ").toLowerCase();
+    if(/tape|cinta|paper|papel|sheet|hoja|ink|tinta|consum/.test(text))return "Consumible";
+    if(/cover|cubierta|honeycomb|colmena|stand|holder|accessor|accesorio|dispenser/.test(text))return "Accesorio";
+    return "Maquinaria";
+  }
+  function showUrlPreview(info,missing=[]){
+    const root=$("urlPreview"),image=imageOK(info.image)?'<img src="'+esc(info.image)+'" alt="Vista previa del producto">':'<div class="product-symbol">◎</div>';
+    const verified=[info.store,Number.isFinite(Number(info.price))&&info.currency?priceText(Number(info.price),info.currency):null,info.availability==="in_stock"?"Disponible":info.availability==="out_of_stock"?"Agotado":null].filter(Boolean).join(" · ");
+    root.innerHTML=image+'<div><strong>'+esc(info.title||"Ficha parcial")+'</strong><span>'+esc(verified||"La tienda no publicó precio o disponibilidad verificable.")+'</span>'+(missing.length?'<span>Falta: '+esc(missing.join(", "))+'</span>':"")+'</div>';
+    root.classList.remove("hidden");
+  }
+  async function analyzeProductUrl(){
+    const input=$("itemUrl"),form=$("itemForm"),url=clamp(input.value,1500);
+    if(!url||!urlOK(url)){setAnalyzeStatus("Escribe un enlace http(s) válido para analizarlo.","error");input.focus();return;}
+    if(S.analysisController)S.analysisController.abort();
+    const controller=new AbortController();S.analysisController=controller;
+    const timeoutId=setTimeout(()=>controller.abort(),50000);
+    const button=$("analyzeProduct");button.disabled=true;button.textContent="Analizando…";
+    setAnalyzeStatus("Consultando metadatos permitidos y datos públicos verificables…","busy");
+    try{
+      const response=await fetch(API_ORIGIN+"/api/product-preview?url="+encodeURIComponent(url),{signal:controller.signal,cache:"no-store"});
+      const info=await response.json().catch(()=>({}));
+      if(!response.ok){
+        const host=(()=>{try{return new URL(url).hostname.replace(/^www\./,"");}catch{return "esta tienda";}})();
+        showUrlPreview({title:"Enlace guardado: "+host,store:host},["datos automáticos no disponibles"]);
+        setAnalyzeStatus(info.message||"Esta fuente no permite autocompletado seguro. Conservamos el enlace para que completes solo lo que falte.","warning");return;
+      }
+      if(info.productUrl!==url&&info.requestedUrl!==url)throw Error("La tienda devolvió un producto distinto del enlace solicitado.");
+      const set=(name,value,overwrite=false)=>{const field=form.elements.namedItem(name);if(field&&value!==null&&value!==undefined&&value!==""&&(overwrite||!field.value))field.value=value;};
+      set("name",info.title);set("brand",info.brand);set("type",suggestedType(info));set("imageUrl",info.image);
+      if(info.currency==="USD"){set("manualPrice",info.price,true);set("manualOriginalPrice",info.originalPrice,true);}
+      if(info.availability==="out_of_stock")set("stockQty",0,true);
+      if(Number.isInteger(info.stockQty))set("stockQty",info.stockQty,true);
+      const description=[info.description,info.model?"Modelo: "+info.model:null].filter(Boolean).join("\n");set("notes",description);
+      const missing=[];if(!info.title)missing.push("nombre");if(!info.image)missing.push("imagen");if(info.price==null)missing.push("precio");if(info.availability==="unknown")missing.push("disponibilidad");
+      showUrlPreview(info,missing);
+      setAnalyzeStatus(missing.length?"Ficha parcial lista. Revisa los campos marcados como faltantes antes de guardar.":"Ficha completada con datos verificables. Revísala y confirma para guardar.",missing.length?"warning":"ok");
+    }catch(error){
+      if(error.name!=="AbortError")setAnalyzeStatus("No pudimos consultar la tienda ahora. El enlace y tus datos manuales siguen intactos.","error");
+    }finally{clearTimeout(timeoutId);if(S.analysisController===controller)S.analysisController=null;button.disabled=false;button.textContent="Analizar enlace";}
   }
   function showDecision(mode,p) {
     if(S.readOnly&&mode!=="info"&&!(S.familyBuyer&&["buy","receive"].includes(mode)))return toast("Esta acción está reservada al administrador.",true);
@@ -333,7 +411,7 @@
     }catch {if(!silent)toast("No se pudo consultar el feed. Tus datos locales están intactos.",true);}
   }
   const API_ORIGIN = "https://gc-graphics-prices-api.onrender.com";
-  let liveTimer = null;
+  let liveTimer = null,feedTimer=null;
   function supportsLive(p){
     try{
       const u=new URL(p.url),h=u.hostname.toLowerCase();
@@ -371,7 +449,8 @@
     if(liveTimer)return;
     autoRefreshQuotes();
     liveTimer=setInterval(autoRefreshQuotes,5*60*1000);
-    document.addEventListener("visibilitychange",()=>{if(document.visibilityState==="visible")autoRefreshQuotes();});
+    feedTimer=setInterval(()=>refreshFeed(true),15*60*1000);
+    document.addEventListener("visibilitychange",()=>{if(document.visibilityState==="visible"){autoRefreshQuotes();refreshFeed(true);}});
   }
   function bind(){
     document.querySelectorAll("[data-view]").forEach(b=>b.addEventListener("click",()=>setView(b.dataset.view)));
@@ -387,12 +466,14 @@
     ["addItem","sideAdd","emptyAdd"].forEach(id=>$(id).addEventListener("click",()=>showForm()));
     ["closeForm","cancelForm","closeDecision","cancelDecision"].forEach(id=>$(id).addEventListener("click",closeOverlays));
     $("itemForm").addEventListener("submit",recordForm);$("confirmDecision").addEventListener("click",confirmDecision);
+    $("analyzeProduct").addEventListener("click",analyzeProductUrl);
+    $("itemUrl").addEventListener("paste",()=>{setAnalyzeStatus("Enlace recibido. Iniciando análisis seguro…","busy");setTimeout(analyzeProductUrl,0);});
+    $("itemUrl").addEventListener("input",()=>{$("urlPreview").classList.add("hidden");if(!$("itemUrl").value)setAnalyzeStatus("Pega un enlace. El formulario manual permanece disponible.","idle");});
     $("uploadPhoto").addEventListener("change",async e=>{if(!e.target.files?.length)return;try{S.pendingPhoto=await shrinkImage(e.target.files[0]);toast("Foto optimizada y lista para guardar.");}catch(err){toast(err.message,true);}});
     ["sideExport","exportJson"].forEach(id=>$(id).addEventListener("click",exportJSON));
     $("exportCsv").addEventListener("click",exportCSV);
     ["sideImport","mobileImport"].forEach(id=>$(id)?.addEventListener("click",()=>$("importFile").click()));
     $("importFile").addEventListener("change",e=>importJSON(e.target.files[0]));
-    $("refreshFeed").addEventListener("click",()=>refreshFeed());
     window.addEventListener("gc-fx-updated",()=>render());
     $("learnFeed").addEventListener("click",()=>showDecision("info"));
     ["formOverlay","decisionOverlay"].forEach(id=>$(id).addEventListener("click",e=>{if(e.target===$(id))closeOverlays();}));
@@ -422,6 +503,7 @@
       if(response.ok){const extra=await response.json();S.verifiedImages=extra.items||{};render();}
     }catch{}
     scheduleLiveQuotes();
+    scheduleCountdowns();
   }
   window.GCInventory = {
     getItems: () => S.items.map(p => ({...p})),

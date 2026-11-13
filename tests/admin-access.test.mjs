@@ -14,6 +14,8 @@ test("login offers only sign-in, no public account creation; UI remains separate
    assert.match(html,/id="gcAccountView"/);
    assert.match(html,/id="familyCredentialsText"/);
    assert.match(html,/id="copyFamilyCredentials"/);
+   assert.match(html,/id="viewerPassword"/);
+   assert.match(html,/id="viewerPasswordConfirm"/);
    assert.match(html,/rel="stylesheet" href="\.\/data\/login\.css"/);
    assert.doesNotMatch(html,/id="authSignUp"/);
  }
@@ -42,7 +44,10 @@ test("privileged edge function checks a trusted admin claim before creating user
  assert.match(edge,/inventory_viewers/);
  assert.match(edge,/admin\.auth\.admin\.deleteUser/);
  assert.match(edge,/admin\.auth\.admin\.updateUserById/);
- assert.match(edge,/crypto\.getRandomValues/);
+ assert.match(edge,/validPassword/);
+ assert.match(edge,/body\.password/);
+ assert.match(edge,/length>=12/);
+ assert.doesNotMatch(edge,/crypto\.getRandomValues/);
  assert.doesNotMatch(read("data/cloud.js"),/SUPABASE_SERVICE_ROLE_KEY|sb_secret_/);
 });
 test("only a scoped invitation can permit password reset of a managed family account",()=>{
@@ -56,7 +61,8 @@ test("only a scoped invitation can permit password reset of a managed family acc
 });
 test("PWA offline shell includes new login UI",()=>{
  const sw=read("data/sw.js"),css=read("data/login.css");
- assert.match(sw,/gc-origen-pwa-v6/);
+ assert.match(sw,/gc-origen-pwa-v7/);
+ assert.match(sw,/\/data\/ui\.js/);
  assert.match(sw,/\/data\/login\.css/);
  assert.match(sw,/self\.skipWaiting/);
  assert.match(sw,/NETWORK_FIRST/);

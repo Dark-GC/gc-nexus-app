@@ -1,15 +1,15 @@
-/* GC GRAPHICS ORIGEN — PWA v6. Shell-only cache; private APIs never cached. */
-const CACHE="gc-origen-pwa-v6";
+/* GC GRAPHICS ORIGEN — PWA v7. Shell-only cache; private APIs never cached. */
+const CACHE="gc-origen-pwa-v7";
 const STATIC=[
   "/data/app.html","/index.html","/app.js","/styles.css",
   "/favicon.svg","/data/icon-192.png",
-  "/data/cloud.js","/data/growth.js","/data/growth.css",
+  "/data/cloud.js","/data/ui.js","/data/growth.js","/data/growth.css",
   "/data/login.css","/data/pwa.js","/data/fx.js",
   "/data/manifest.json","/data/items.json",
   "/data/verified-images.json","/data/verified-promotions.json"
 ];
 const NETWORK_FIRST=new Set([
-  "/data/cloud.js","/app.js","/data/login.css","/styles.css",
+  "/data/cloud.js","/data/ui.js","/app.js","/data/login.css","/styles.css",
   "/data/app.html","/data/pwa.js","/data/growth.js",
   "/data/manifest.json"
 ]);

@@ -16,19 +16,14 @@ function json(status: number, payload: Record<string, unknown>) {
     status, headers: {...cors,"Content-Type":"application/json; charset=utf-8","Cache-Control":"no-store"}
   });
 }
-function password() {
-  const alphabet="ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz23456789";
-  let result="";
-  const modulus=256-(256%alphabet.length);
-  while(result.length<22){
-    const bytes=new Uint8Array(32);crypto.getRandomValues(bytes);
-    for(const value of bytes)if(value<modulus && result.length<22)result+=alphabet[value%alphabet.length];
-  }
-  return result;
-}
 function validEmail(email: unknown): email is string {
   return typeof email==="string"&&email.length<=254&&email.length>=5&&
     /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+}
+function validPassword(value: unknown): value is string {
+  if(typeof value!=="string")return false;
+  const length=Array.from(value).length;
+  return length>=12&&length<=128&&value.trim().length>=12;
 }
 Deno.serve(async request=>{
   if(request.method==="OPTIONS")return new Response("ok",{headers:cors});
@@ -51,10 +46,12 @@ Deno.serve(async request=>{
   const email=typeof body.email==="string"?body.email.trim().toLowerCase():"";
   if(!validEmail(email)||email===user.email?.toLowerCase())
     return json(400,{error:"INVALID_EMAIL"});
+  const secret=typeof body.password==="string"?body.password:"";
+  if((action==="create"||action==="reset")&&!validPassword(secret))
+    return json(400,{error:"WEAK_PASSWORD",detail:"La contraseña debe tener entre 12 y 128 caracteres."});
   const role=body.role;
   if(action==="create"){
     if(role!=="viewer"&&role!=="buyer")return json(400,{error:"INVALID_ROLE"});
-    const secret=password();
     const {data:created,error:createError}=await admin.auth.admin.createUser({
       email,password:secret,email_confirm:true,
       app_metadata:{gc_managed:true,gc_owner_id:user.id}
@@ -93,7 +90,6 @@ Deno.serve(async request=>{
       !target.app_metadata?.gc_owner_id &&
       target.app_metadata?.gc_admin!==true;
     if(!alreadyManaged&&!oldInvitation)return json(403,{error:"NOT_A_MANAGED_USER"});
-    const secret=password();
     const {error:resetError}=await admin.auth.admin.updateUserById(target.id,{
       password:secret,email_confirm:true,
       app_metadata:{...target.app_metadata,gc_managed:true,gc_owner_id:user.id}

@@ -49,7 +49,8 @@ test("USD to DOP conversion never assumes local shop price or actual checkout",(
  const fx=r("data/fx.js"),html=r("index.html"),app=r("app.js"),sql=r("database/local-quotes.sql");
  assert.match(fx,/open\.er-api\.com\/v6\/latest\/USD/);
  assert.match(fx,/time_last_update_unix/);
- assert.match(html,/ExchangeRate-API/);
+ assert.match(html,/id="fxRate"/);
+ assert.doesNotMatch(html,/>Tasa: ExchangeRate-API</);
  assert.match(app,/localPriceDop/);
  assert.match(app,/purchaseCountry/);
  assert.match(app,/paidCurrency/);

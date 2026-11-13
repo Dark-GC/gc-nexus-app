@@ -2,6 +2,21 @@
 
 **Web para controlar las compras de maquinaria, herramientas, materiales y accesorios del negocio.**
 
+## V1.6 · Origen (12/11/2026)
+
+- Rediseño premium de tarjetas con lectura vertical en móvil, imágenes contenidas, textos sin corte y estados visuales independientes para stock, compra y recepción.
+- Alta de productos centrada en el enlace: el analizador completa únicamente metadatos verificables y deja visibles los campos manuales cuando una tienda bloquea o no publica datos.
+- Actualización automática silenciosa de cotizaciones, catálogo y tasa USD/DOP; se eliminó el botón manual de refresco y la fuente técnica dejó de ser una llamada a la acción.
+- Promociones y cuenta regresiva solo se muestran cuando la campaña y su fecha final están verificadas. No se inventan ofertas, existencias ni fechas.
+- Acceso familiar administrado con contraseña elegida por el administrador (12–128 caracteres), confirmación y medidor de fortaleza. La contraseña se entrega una sola vez y Supabase Auth conserva únicamente su hash.
+- Diálogos propios accesibles con foco controlado, cierre con Escape y botones táctiles; no se usan avisos nativos del navegador.
+
+### Límites reales
+
+- El autocompletado admite únicamente los dominios oficiales permitidos por el servicio; redirecciones y fuentes no compatibles se rechazan o pasan a carga manual segura.
+- La disponibilidad numérica solo aparece si la tienda la publica explícitamente. Amazon continuo requiere una integración autorizada y no se simula.
+- Las validaciones automatizadas cubren la interfaz, seguridad y datos semilla. La prueba física final con una cuenta familiar real debe hacerse con las credenciales privadas del propietario.
+
 ## Estado (12/11/2026)
 
 - Interfaz web responsive y personalizada para **GC GRAPHICS**.
