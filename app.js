@@ -103,14 +103,29 @@
     }:null;
     return {value,currency,label,kind,originalPrice,discountPercent:discountPercent>0?discountPercent:null,promotion};
   }
+  // A dated quotation is NOT proof that inventory remains available today.
+  // Amazon snapshots are one-time observations, never an automatic stock check.
+  function stockFeedFresh(f, now=Date.now()) {
+    if(!f || f.provider==="amazon-snapshot")return false;
+    const checked=Date.parse(f.checkedAt||"");
+    return Number.isFinite(checked)&&checked<=now+5*60*1000&&now-checked<=24*60*60*1000;
+  }
   function productStock(p) {
-    const f = feedOf(p);
-    if (f && f.stockStatus === "out_of_stock") return {text: "Agotado", kind: "out"};
-    if (f && f.stockStatus === "in_stock") {
-      return Number.isInteger(f.stockQuantity) && f.stockQuantity >= 0 ? {text: f.stockQuantity + " unid. en tienda", kind: ""} : {text: "Disponible", kind: ""};
+    const f=feedOf(p);
+    if(stockFeedFresh(f) && f.stockStatus==="out_of_stock")return {text:"Agotado · última consulta",kind:"out"};
+    if(stockFeedFresh(f) && f.stockStatus==="in_stock"){
+      if(Number.isInteger(f.stockQuantity)&&f.stockQuantity>=0)
+        return {text:f.stockQuantity+" unid. · última consulta",kind:""};
+      return {text:"Disponible · última consulta",kind:""};
     }
-    if (p.stockQty != null && Number.isInteger(p.stockQty)) return p.stockQty === 0 ? {text: "0 unid. publicadas", kind: "out"} : {text: p.stockQty + " unid. indicadas", kind: ""};
-    return {text: "Stock sin verificar", kind: "unknown"};
+    // User-entered quantity is separate from remote provider data.
+    if(p.stockQty!=null&&Number.isInteger(p.stockQty))
+      return p.stockQty===0?{text:"0 unid. indicadas manualmente",kind:"out"}:
+        {text:p.stockQty+" unid. indicadas manualmente",kind:""};
+    if(f?.provider==="amazon-snapshot")return {text:"Amazon · stock no confirmado",kind:"unknown"};
+    if(f?.stockStatus==="out_of_stock"||f?.stockStatus==="in_stock")
+      return {text:"Stock sin verificar · consulta antigua",kind:"unknown"};
+    return {text:"Stock sin verificar",kind:"unknown"};
   }
   function productImageCandidates(p) {
     const f = feedOf(p);
