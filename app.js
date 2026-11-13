@@ -184,6 +184,7 @@
     }));
     const amazonCount=Object.values(S.amazonFeed.items||{}).filter(x=>x.priceStatus==="verified").length;
     $("feedLine").textContent = "VEVOR/Creality: consultas automáticas al abrir y cada 5 min. Amazon: "+amazonCount+" precios observados en consulta puntual, con fecha; verifica el valor actual antes de comprar.";
+    window.GCGrowth?.reassertNav?.();
   }
   function setView(v) {S.view=v;S.category="Todas";$("searchInput").value="";S.query="";render();}
   function showOverlay(id) {$(id).classList.remove("hidden"); document.body.style.overflow="hidden";}
@@ -231,7 +232,8 @@
     if(!vals.name)return toast("Agrega el nombre del artículo.",true);
     if(vals.status!=="Comprada") vals.received=false;
     if(current)S.items=S.items.map(p=>p.id===current.id?safeItem(vals):p);else S.items.push(safeItem(vals));
-    save();closeOverlays();render();toast(current?"Artículo actualizado.":"Artículo agregado al inventario.");
+    save();window.GCGrowth?.recordInventoryAction?.(current?"edited":"created",vals);
+    closeOverlays();render();toast(current?"Artículo actualizado.":"Artículo agregado al inventario.");
     if(supportsLive(vals))getLiveQuote(vals);
   }
   function confirmDecision() {
@@ -239,19 +241,22 @@
     if(d.mode==="info")return closeOverlays();
     if(d.mode==="import"){
       if(!Array.isArray(S.incoming))return closeOverlays();
-      S.items=S.incoming.map(safeItem);S.incoming=null;save();closeOverlays();S.view="all";render();return toast("Inventario restaurado.");
+      S.items=S.incoming.map(safeItem);S.incoming=null;save();
+      if(S.incomingGrowth)window.GCGrowth?.restoreFromBackup?.(S.incomingGrowth);
+      S.incomingGrowth=null;closeOverlays();S.view="all";render();return toast("Inventario y bitácora restaurados cuando están disponibles en la copia.");
     }
     const p=S.items.find(x=>x.id===d.id);if(!p)return closeOverlays();
     if(d.mode==="delete")S.items=S.items.filter(x=>x.id!==p.id);
     if(d.mode==="receive")p.received=true;
     if(d.mode==="buy"){const choice=document.querySelector('input[name="purchaseReceivedChoice"]:checked')?.value;if(!choice)return toast("Selecciona si ya recibiste físicamente la compra.",true);p.status="Comprada";p.received=choice==="yes";p.purchaseDate=$("purchasedDate").value||new Date().toISOString().slice(0,10);p.paidAmount=toNum($("paidAmount").value);}
     if(d.mode!=="delete")p.editedAt=now();
-    save();closeOverlays();render();toast(d.mode==="delete"?"Artículo eliminado.":d.mode==="receive"?"Recepción registrada.":"Compra registrada correctamente.");
+    save();window.GCGrowth?.recordInventoryAction?.(d.mode,p);
+    closeOverlays();render();toast(d.mode==="delete"?"Artículo eliminado.":d.mode==="receive"?"Recepción registrada.":"Compra registrada correctamente.");
   }
   function download(name,text,type){
     const blob=new Blob([text],{type});const link=document.createElement("a");const object=URL.createObjectURL(blob);link.href=object;link.download=name;document.body.appendChild(link);link.click();link.remove();setTimeout(()=>URL.revokeObjectURL(object),1000);
   }
-  function exportJSON(){download("GC-GRAPHICS-inventario-"+new Date().toISOString().slice(0,10)+".json",JSON.stringify({schemaVersion:1,exportedAt:now(),items:S.items},null,2),"application/json");toast("Respaldo JSON descargado.");}
+  function exportJSON(){download("GC-GRAPHICS-origen-"+new Date().toISOString().slice(0,10)+".json",JSON.stringify({schemaVersion:1,exportedAt:now(),items:S.items,growth:window.GCGrowth?.getBackup?.()||null},null,2),"application/json");toast("Respaldo completo: inventario y bitácora descargados.");}
   function exportCSV(){
     const cols=["name","type","brand","code","status","received","url","manualPrice","stockQty","purchaseDate","paidAmount","notes"];
     const cell=x=>'"'+safeText(x).replace(/^[=+\-@\t\r]/,"'").replace(/"/g,'""')+'"';
@@ -260,12 +265,13 @@
   }
   async function importJSON(file){
     if(!file)return;try{
-      if(file.size>3_000_000)throw new Error("Respaldo demasiado grande (máximo 3 MB).");
+      if(file.size>6_000_000)throw new Error("Respaldo demasiado grande (máximo 6 MB).");
       const data=JSON.parse(await file.text());
       if(!data||!Array.isArray(data.items)||data.items.length>500||data.items.some(p=>!p||typeof p.name!=="string"||!p.name.trim()))throw new Error("Archivo inválido o contiene más de 500 artículos.");
       const ids=data.items.map(p=>String(p.id));
       if(new Set(ids).size!==ids.length)throw new Error("El archivo contiene IDs duplicados.");
-      S.incoming=data.items;showDecision("import");
+      if(data.growth && !window.GCGrowth?.validateBackup?.(data.growth))throw new Error("La sección de bitácora de esta copia no es válida. No se reemplazó ningún registro.");
+      S.incoming=data.items;S.incomingGrowth=data.growth||null;showDecision("import");
     }catch(e){toast(e.message||"Error al cargar respaldo.",true);}finally{$("importFile").value="";}
   }
   async function refreshFeed(silent=false){
