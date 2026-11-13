@@ -237,3 +237,20 @@ body.family-viewer .growth-pane{padding-bottom:10px}
 .local-quote strong{font-size:12px;color:#b9f1d3}
 .local-quote small{font-size:10px;color:#90bbae;overflow-wrap:anywhere}
 @media(max-width:520px){.local-quote{padding:7px}.local-quote strong{font-size:11px}.local-quote small{font-size:9px}}
+
+
+/* GC GRAPHICS · Compras familiares: controls visible only for authorized role */
+.viewer-invite{flex-wrap:wrap}
+.viewer-invite span{flex:1 1 100%;font-weight:600}
+.viewer-invite select{flex:1 1 195px;min-width:0;min-height:38px;background:#151e2c;color:#d7e4f2;border:1px solid #42536b;border-radius:9px;padding:8px;font:600 11px/1.3 inherit}
+.viewer-invite .btn{min-height:38px}
+.viewer-form select{min-height:44px;width:100%;padding:9px 10px;border-radius:10px;border:1px solid #42536b;background:#151e2c;color:#e2e9f9;font-size:12px}
+body.family-buyer .btn-bought{min-height:43px;background:linear-gradient(110deg,#7660bb,#5b4a9d);border-color:#a392ec;color:#fff;box-shadow:0 4px 17px #52409a35}
+body.family-buyer .btn-bought:hover{background:linear-gradient(110deg,#8973d5,#6454a9)}
+body.family-buyer .product-bottom .family-status{font-size:11px}
+@media(max-width:520px){
+ .viewer-invite{align-items:stretch}
+ .viewer-invite select{flex:1 1 100%;width:100%}
+ .viewer-invite .btn{flex:1 1 100%}
+ body.family-buyer .product-bottom .btn-bought{min-height:43px;font-size:11px;font-weight:800}
+}
