@@ -239,6 +239,11 @@
     $("authSignUp")?.addEventListener("click",signUp);
     $("authSignOut")?.addEventListener("click",signOut);
     $("viewerForm")?.addEventListener("submit",addViewer);
+    $("copyFamilyLink")?.addEventListener("click",async()=>{
+      const link=window.location.origin+"/data/app.html";
+      try{await navigator.clipboard.writeText(link);show("Enlace copiado. Compártelo por WhatsApp con tu madre.","ok");}
+      catch{prompt("Copia este enlace para tu familiar:",link);}
+    });
     window.addEventListener("online",()=>{if(state.ready&&!state.viewer){notify();notifyGrowth();}else if(state.ready)loadRemote(false);});
     try{
       const res=await fetch("./data/cloud-config.json",{cache:"no-store"});
