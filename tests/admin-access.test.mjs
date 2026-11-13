@@ -65,3 +65,10 @@ test("PWA offline shell includes new login UI",()=>{
  assert.match(css,/\.gc-access-brand/);
  assert.match(css,/\.gc-auth-input-wrap:focus-within/);
 });
+
+test("inventory seed is ready before any slow retailer price request",()=>{
+ const app=read("app.js");
+ assert.ok(app.indexOf('S.initialized=true;document.dispatchEvent(new Event("gc-inventory-ready"));')>0);
+ assert.ok(app.indexOf('S.initialized=true;document.dispatchEvent(new Event("gc-inventory-ready"));')
+   <app.indexOf("await refreshFeed(true)"));
+});
