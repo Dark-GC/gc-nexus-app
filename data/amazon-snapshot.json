@@ -2,7 +2,7 @@
   "schemaVersion": 1,
   "generatedAt": "2026-11-13T14:05:51.689Z",
   "provider": "Firecrawl Alexandria — Amazon.com products/prices, 3 lotes de 5 créditos",
-  "disclaimer": "Verificación puntual para Amazon US sin ZIP de entrega configurado. No equivale a precio en tiempo real ni asegura stock, descuento promocional, vencimiento, costos de envío o impuestos. Comparaciones son precios de lista, no necesariamente precios anteriores. Comprobar en Amazon antes de pagar.",
+  "disclaimer": "Observación puntual de Amazon US; la lista de Amazon NO es precio histórico ni constituye por sí sola una oferta. Sin ZIP de destino, las existencias y vendedor pueden variar; confirmar antes de pagar. No incluye envío, impuestos ni promociones con fecha de vencimiento verificada.",
   "items": {
     "gc-bettersub": {
       "sourceUrl": "https://a.co/d/0bwLNZk1",
@@ -137,7 +137,7 @@
       "checkedAt": "2026-11-13T14:05:51.689Z",
       "provider": "amazon-snapshot",
       "price": 11.99,
-      "originalPrice": 13.99,
+      "originalPrice": null,
       "currency": "USD",
       "priceStatus": "verified",
       "stockStatus": "in_stock",
@@ -149,7 +149,8 @@
       "availabilityText": "In Stock",
       "servedAsin": "B08CCT5W77",
       "marketplace": "US",
-      "deliveryZipVerified": false
+      "deliveryZipVerified": false,
+      "listPrice": 13.99
     },
     "gc-caja": {
       "sourceUrl": "https://a.co/d/0cjpCrj8",
@@ -221,7 +222,7 @@
       "checkedAt": "2026-11-13T14:05:49.265Z",
       "provider": "amazon-snapshot",
       "price": 189.9,
-      "originalPrice": 204.99,
+      "originalPrice": null,
       "currency": "USD",
       "priceStatus": "verified",
       "stockStatus": "in_stock",
@@ -233,7 +234,8 @@
       "availabilityText": "Only 3 left in stock - order soon.",
       "servedAsin": "B0D9VWCHM8",
       "marketplace": "US",
-      "deliveryZipVerified": false
+      "deliveryZipVerified": false,
+      "listPrice": 204.99
     }
   }
 }
