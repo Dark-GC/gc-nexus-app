@@ -208,6 +208,48 @@
     clearTimeout(state.backupTimer);
     state.backupTimer=setTimeout(()=>{flushGrowth();},350);
   }
+  async function familyAction(mode, details) {
+    if(!state.ready||!state.user||!state.viewer||state.familyRole!=="buyer")
+      throw new Error("No tienes permiso para confirmar compras.");
+    if(!["buy","receive"].includes(mode)||typeof details?.id!=="string"||!details.id)
+      throw new Error("Acción o artículo inválido.");
+    if(state.pending)throw new Error("Hay una actualización en curso.");
+    const epoch=state.epoch;
+    state.pending=true;
+    show("Guardando confirmación familiar…","busy");
+    try {
+      const args={
+        p_owner_id:state.ownerId,p_item_id:details.id,p_action:mode,
+        p_purchase_date:mode==="buy"?(details.purchaseDate||null):null,
+        p_paid_amount:mode==="buy"?(details.paidAmount??null):null,
+        p_paid_currency:mode==="buy"?(details.paidCurrency||"USD"):"USD",
+        p_purchase_country:mode==="buy"?(details.purchaseCountry||null):null,
+        p_received:mode==="buy"&&details.received===true
+      };
+      const {data,error}=await state.client.rpc("gc_family_purchase_action",args);
+      if(error){
+        const codes={
+          "ARTICLE_NOT_PENDING":"Este artículo ya cambió de estado. Actualiza la ficha.",
+          "ARTICLE_NOT_AWAITING_RECEIPT":"Este artículo no está pendiente de recepción.",
+          "BUYER_PERMISSION_REQUIRED":"Tu permiso de compras fue revocado.",
+          "VERIFIED_EMAIL_REQUIRED":"Primero confirma tu correo electrónico.",
+          "ARTICLE_NOT_FOUND":"La ficha ya no existe en este inventario."
+        };
+        const message=Object.keys(codes).find(k=>String(error.message||"").includes(k));
+        throw new Error(message?codes[message]:String(error.message||"No se pudo registrar.").slice(0,180));
+      }
+      state.pending=false;
+      if(epoch!==state.epoch)throw new Error("La sesión cambió durante la compra; vuelve a ingresar.");
+      await loadRemote(false);
+      show(mode==="buy"?"Compra confirmada y registrada en la bitácora de movimientos.":"Recepción física confirmada y registrada.","ok");
+      return data;
+    }catch(e){
+      state.pending=false;
+      show("No se guardó el cambio: "+errorMessage(e),"error");
+      throw e;
+    }
+  }
+
   async function beginSession(user) {
     if(!user||state.user?.id===user.id&&state.ready)return;
     await waitInventory();
