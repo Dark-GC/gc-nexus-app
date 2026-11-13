@@ -1,5 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import {readFileSync} from 'node:fs';
 import {asinFromAmazonUrl,resolveAmazonProductUrl,normaliseImmediateAmazon} from '../lib/amazon-quote.js';
 process.env.GC_NO_LISTEN='1';
 const {server}=await import('../server.js');
@@ -28,4 +29,20 @@ test('Amazon quote endpoint answers an actual CORS preflight only for the app or
     const rejected=await fetch(base+'/api/private/amazon-quotes',{method:'OPTIONS',headers:{Origin:'https://attacker.example','Access-Control-Request-Method':'POST'}});
     assert.equal(rejected.status,403);
   }finally{await new Promise(resolve=>server.close(resolve));}
+});
+
+test('quota validation uses PostgreSQL-compatible pattern and explicit 500-character limit',()=>{
+  const v2=readFileSync(new URL('../database/amazon-budget-v2.sql',import.meta.url),'utf8');
+  const initial=readFileSync(new URL('../database/private-amazon-quotes.sql',import.meta.url),'utf8');
+  for(const ddl of [v2,initial]){
+    assert.doesNotMatch(ddl,/\\{8,500\\}/);
+    assert.match(ddl,/length\\(p_key\\) not between 8 and 500/);
+    assert.match(ddl,/\\[A-Za-z0-9:,_-\\]\\+/);
+  }
+});
+test('unverified Amazon articles offer a manual retry without creating another record',()=>{
+  const app=readFileSync(new URL('../app.js',import.meta.url),'utf8');
+  assert.match(app,/data-action="quote-retry"/);
+  assert.match(app,/if\\(b\\.dataset\\.action==="quote-retry"\\)return void requestAmazonQuote\\(p\\)/);
+  assert.match(app,/if\\(!current&&isAmazonUrl\\(vals\\.url\\)\\)void requestAmazonQuote\\(vals\\)/);
 });
