@@ -29,5 +29,10 @@ jobs:
       - name: Verificar código y seed
         run: |
           node --check app.js
+          node --check data/cloud.js
+          node --check data/fx.js
+          node --check data/growth.js
+          node --check data/pwa.js
+          node --check data/sw.js
           node --check scripts/refresh-prices.mjs
           node --test tests/*.test.mjs
