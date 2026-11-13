@@ -10,6 +10,9 @@ test("PWA installation starts inside its service worker scope, not the root-only
  assert.equal(m.scope,"/data/");
  assert.equal(m.display,"standalone");
  assert.ok(m.icons.some(x=>x.type==="image/svg+xml"&&x.sizes==="any"));
+ assert.ok(m.icons.some(x=>x.type==="image/png"&&x.sizes==="192x192"));
+ assert.ok(r("index.html").includes('rel="apple-touch-icon"'));
+ assert.ok(r("data/sw.js").includes('"/data/icon-192.png"'));
  assert.ok(app.includes('<base href="../">'));
  assert.ok(app.includes('rel="manifest"'));
  assert.match(worker,/req.method!=="GET"/);
