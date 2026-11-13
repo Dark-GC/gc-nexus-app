@@ -133,11 +133,13 @@
     });
   }
   async function loadRemote(initial=false) {
-    if(!state.client||!state.user||state.pending)return;
-    const uid=state.ownerId;
+    // A cloud response must never overwrite unsaved edits or a failed write.
+    if(!state.client||!state.user||state.pending||state.inventoryError)return;
+    const uid=state.ownerId,epoch=state.epoch;
     const {data,error}=await state.client.from("inventory_items").select("*").eq("user_id",uid).order("sort_order",{ascending:true});
     if(error){show("No se pudo obtener el inventario: "+errorMessage(error),"error");return;}
-    if(!state.user||state.ownerId!==uid)return;
+    // Recheck after network latency: the user may have edited, signed out or switched sessions.
+    if(!state.user||state.ownerId!==uid||state.epoch!==epoch||state.pending||state.inventoryError)return;
     if(initial && !state.viewer && data.length===0){
       const local=backend()?.getItems?.()||[];
       if(local.length){
