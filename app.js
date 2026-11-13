@@ -349,6 +349,7 @@
     ["sideImport","mobileImport"].forEach(id=>$(id)?.addEventListener("click",()=>$("importFile").click()));
     $("importFile").addEventListener("change",e=>importJSON(e.target.files[0]));
     $("refreshFeed").addEventListener("click",()=>refreshFeed());
+    window.addEventListener("gc-fx-updated",()=>render());
     $("learnFeed").addEventListener("click",()=>showDecision("info"));
     ["formOverlay","decisionOverlay"].forEach(id=>$(id).addEventListener("click",e=>{if(e.target===$(id))closeOverlays();}));
     document.addEventListener("keydown",e=>{if(e.key==="Escape")closeOverlays();});
