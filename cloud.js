@@ -8,6 +8,8 @@
     const button=$("cloudButton"), note=$("cloudState");
     if(button)button.textContent=mode==="ok"?"☁ Sincronizado":mode==="busy"?"☁ Guardando…":mode==="error"?"☁ Sin conexión":state.viewer?"👁 Vista familiar":"☁ Conectar nube";
     if(note)note.textContent=message;
+    const connection=document.querySelector(".connection");
+    if(connection&&connection.lastChild?.nodeType===3)connection.lastChild.nodeValue=state.ready?(state.viewer?" Vista familiar · sincronizada":" Registros sincronizados · copia local"):" Sincronización pendiente";
     const extra=$("authMessage");if(extra)extra.textContent=message;
   };
   const errorMessage=e=>String(e?.message||e||"Error de conexión").slice(0,230);
@@ -70,7 +72,7 @@
     const uid=state.ownerId;
     const {data,error}=await state.client.from("inventory_items").select("*").eq("user_id",uid).order("sort_order",{ascending:true});
     if(error){show("No se pudo obtener el inventario: "+errorMessage(error),"error");return;}
-    if(!state.user||state.user.id!==uid)return;
+    if(!state.user||state.ownerId!==uid)return;
     if(initial && !state.viewer && data.length===0){
       const local=backend()?.getItems?.()||[];
       if(local.length){
@@ -82,6 +84,16 @@
       }
     }
     const items=data.map(itemFrom);
+    // Preserve a recoverable local copy before replacing it with newer cloud data.
+    try{
+      if(initial&&items.length){
+        const previous=backend()?.getItems?.()||[];
+        if(previous.length && JSON.stringify(previous.map(x=>[x.id,x.status,x.received,x.paidAmount,x.notes]))!==JSON.stringify(items.map(x=>[x.id,x.status,x.received,x.paidAmount,x.notes]))){
+          const backup={schemaVersion:1,exportedAt:new Date().toISOString(),items:previous,growth:window.GCGrowth?.getBackup?.()||null};
+          localStorage.setItem("gc_graphics_precloud_recovery",JSON.stringify(backup));
+        }
+      }
+    }catch(e){console.info("Respaldo local:",e.message);}
     state.snapshot=new Map(items.map(p=>[p.id,stable(p)]));
     state.lastItems=new Map(items.map(p=>[p.id,{status:p.status,received:p.received}]));
     backend()?.setItemsFromCloud?.(items);
@@ -215,7 +227,7 @@
     $("viewerTools")?.classList.add("hidden");
     $("authSignOut")?.classList.add("hidden");
     $("authForm")?.classList.remove("hidden");
-    show("Sesión cerrada. Puedes seguir utilizando tu copia local.","info");
+    show("Sesión cerrada. Vuelve a ingresar para consultar datos privados.","info");
     closeLogin();
   }
   async function init(){
