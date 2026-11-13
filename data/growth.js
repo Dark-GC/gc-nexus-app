@@ -7,7 +7,7 @@
  const short=(s,max=500)=>String(s??"").trim().slice(0,max);
  const now=()=>new Date().toISOString();
  const today=()=>{const d=new Intl.DateTimeFormat("en-US",{timeZone:"America/Santo_Domingo",year:"numeric",month:"2-digit",day:"2-digit"}).formatToParts(new Date());const parts=Object.fromEntries(d.map(x=>[x.type,x.value]));return [parts.year,parts.month,parts.day].join("-");};
- const money=v=>new Intl.NumberFormat("en-US",{style:"currency",currency:"USD"}).format(v);
+ const money=(v,c="USD")=>new Intl.NumberFormat(c==="DOP"?"es-DO":"en-US",{style:"currency",currency:c}).format(v);
  const fmtDate=v=>{if(!v)return "Sin fecha";try{return new Intl.DateTimeFormat("es-DO",{timeZone:"UTC",dateStyle:"medium"}).format(new Date(v.slice(0,10)+"T12:00:00Z"));}catch{return v;}};
  const categories=["Decisión","Compra","Recepción","Prueba","Aprendizaje","Hito","Nota"];
  const phaseSeeds=[
@@ -50,6 +50,7 @@
  function save(){
    try{
      localStorage.setItem(KEY,JSON.stringify({schemaVersion:1,savedAt:now(),entries:st.entries,milestones:st.milestones}));
+     window.GCCloud?.notifyGrowth?.();
      return true;
    }catch(e){
      $("growthSaveState").textContent="No se pudo guardar localmente. Exporta una copia de seguridad y revisa el espacio del navegador.";
@@ -73,7 +74,7 @@
      created:"Se incorporó al inventario. No implica que esté comprado.",
      edited:"Se modificaron los datos registrados; consulta el inventario para ver el estado vigente.",
      buy:"Compra registrada como "+(p.received?"comprada y recibida":"comprada, pendiente de recepción")+
-        ". "+(p.paidAmount!=null?"Importe pagado declarado: "+money(Number(p.paidAmount))+".":"Importe pagado no documentado."),
+        ". "+(p.paidAmount!=null?"Importe pagado declarado: "+money(Number(p.paidAmount),p.paidCurrency==="DOP"?"DOP":"USD")+".":"Importe pagado no documentado."),
      receive:"Se confirmó que el equipo o material fue recibido físicamente.",
      delete:"Se retiró la ficha del inventario. Esta bitácora conserva la referencia."
    };
@@ -89,8 +90,9 @@
    const products=items(),purchased=products.filter(p=>p.status==="Comprada"),
      received=purchased.filter(p=>p.received),
      paid=purchased.filter(p=>p.paidAmount!=null&&Number.isFinite(Number(p.paidAmount))),
-     invested=paid.reduce((sum,p)=>sum+Number(p.paidAmount),0);
-   return {products:products.length,purchased:purchased.length,received:received.length,paid:paid.length,missing:purchased.length-paid.length,invested};
+     investedUSD=paid.filter(p=>p.paidCurrency!=="DOP").reduce((sum,p)=>sum+Number(p.paidAmount),0),
+     investedDOP=paid.filter(p=>p.paidCurrency==="DOP").reduce((sum,p)=>sum+Number(p.paidAmount),0);
+   return {products:products.length,purchased:purchased.length,received:received.length,paid:paid.length,missing:purchased.length-paid.length,investedUSD,investedDOP};
  }
  function getBackup(){return {schemaVersion:1,entries:st.entries.map(e=>({...e})),milestones:st.milestones.map(m=>({...m}))};}
  function restoreFromBackup(data){
@@ -103,6 +105,7 @@
  function closeForm(){const dialog=$("growthModal");dialog?.classList.add("hidden");document.body.style.overflow=st.open?"":"";
  }
  function showForm(e=null){
+   if(window.GCCloud?.isViewer?.())return;
    st.editing=e?.id||null;
    $("growthFormTitle").textContent=e?"Editar registro":"Nuevo registro en la bitácora";
    $("growthForm").reset();
@@ -116,6 +119,7 @@
    $("growthModal").classList.remove("hidden");$("growthTitle").focus();
  }
  function saveForm(ev){
+   if(window.GCCloud?.isViewer?.()){ev.preventDefault();return;}
    ev.preventDefault();
    const old=st.entries.find(x=>x.id===st.editing);
    const e=validateEntry({id:old?.id||id(),createdAt:old?.createdAt||now(),origin:old?.origin||"manual",
@@ -126,11 +130,13 @@
    save();closeForm();render();
  }
  function deleteEntry(entryId){
+   if(window.GCCloud?.isViewer?.())return;
    const e=st.entries.find(x=>x.id===entryId);
    if(!e||!confirm("¿Eliminar de la bitácora «"+e.title+"»? Esta acción no borra el artículo del inventario."))return;
    st.entries=st.entries.filter(x=>x.id!==entryId);save();render();
  }
  function toggleMilestone(mid){
+   if(window.GCCloud?.isViewer?.())return;
    const m=st.milestones.find(x=>x.id===mid);if(!m)return;
    const finished=!m.completedAt;
    m.completedAt=finished?now():null;
@@ -139,6 +145,7 @@
    save();render();
  }
  function addMilestone(){
+   if(window.GCCloud?.isViewer?.())return;
    const field=$("growthNewMilestone"),value=short(field?.value,160);
    if(!value)return;
    if(st.milestones.length>=60){alert("Límite de 60 hitos. Puedes cerrar o editar los actuales.");return;}
@@ -152,11 +159,11 @@
    $("growthKpis").innerHTML=[
       ["ARTÍCULOS",a.products,"Inventario registrado","▦"],
       ["RECIBIDOS",a.received,"de "+a.purchased+" compras confirmadas","✓"],
-      ["INVERSIÓN DOCUMENTADA",money(a.invested),a.missing+" compras sin importe declarado","$"],
+      ["INVERSIÓN DOCUMENTADA",money(a.investedUSD)+(a.investedDOP>0?" · "+money(a.investedDOP,"DOP"):""),a.missing+" compras sin importe declarado","$"],
       ["RUTA COMPLETADA",p.pct+"%",p.done+" de "+p.total+" hitos confirmados","◇"]
    ].map(([label,value,caption,ico])=>'<div class="growth-stat"><div class="growth-stat-top">'+esc(label)+'<span>'+esc(ico)+'</span></div><strong>'+esc(value)+'</strong><small>'+esc(caption)+'</small></div>').join("");
    $("growthEntriesCount").textContent=st.entries.length+" registros";
-   $("growthSaveState").textContent="Registro personal · guardado en este navegador. Exporta copias JSON para proteger tu historial.";
+   $("growthSaveState").textContent=window.GCCloud?.isViewer?.()?"Vista familiar de solo lectura · sincronizada desde la cuenta principal.":window.GCCloud?.ready?.()?"Bitácora sincronizada en la nube · exporta copias JSON de respaldo.":"Bitácora guardada en este navegador · exporta copias JSON de respaldo.";
  }
  function renderLog(){
    const terms=st.query.toLocaleLowerCase("es");
