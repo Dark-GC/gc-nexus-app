@@ -2,11 +2,11 @@
 "use strict";
 (() => {
   const $ = id => document.getElementById(id);
-  const state = {client:null,user:null,ready:false,queue:Promise.resolve(),snapshot:new Map(),channel:null,journalChannel:null,pending:false,timer:null,booted:false,ownerId:null,viewer:false,applyingJournal:false,backupTimer:null,pendingCount:0,syncError:false,epoch:0,sessionClosing:false};
+  const state = {client:null,user:null,ready:false,queue:Promise.resolve(),snapshot:new Map(),channel:null,journalChannel:null,pending:false,timer:null,booted:false,ownerId:null,viewer:false,familyRole:null,applyingJournal:false,backupTimer:null,pendingCount:0,syncError:false,epoch:0,sessionClosing:false};
   const backend = () => window.GCInventory;
   const show = (message,mode="info") => {
     const button=$("cloudButton"), note=$("cloudState");
-    if(button)button.textContent=mode==="ok"?"☁ Sincronizado":mode==="busy"?"☁ Guardando…":mode==="error"?"☁ Sin conexión":state.viewer?"👁 Vista familiar":"☁ Conectar nube";
+    if(button)button.textContent=mode==="busy"?"☁ Guardando…":mode==="error"?"☁ Sin conexión":state.viewer?(state.familyRole==="buyer"?"🛒 Compras familiares":"👁 Vista familiar"):mode==="ok"?"☁ Sincronizado":"☁ Conectar nube";
     if(note)note.textContent=message;
     const connection=document.querySelector(".connection");
     if(connection&&connection.lastChild?.nodeType===3)connection.lastChild.nodeValue=state.ready?(state.viewer?" Vista familiar · sincronizada":" Registros sincronizados · copia local"):" Sincronización pendiente";
@@ -130,20 +130,34 @@
   }
   async function refreshViewers(){
     if(!state.client||!state.user||state.viewer)return;
-    const {data,error}=await state.client.from("inventory_viewers").select("viewer_email").eq("owner_id",state.user.id);
+    const {data,error}=await state.client.from("inventory_viewers").select("viewer_email,role").eq("owner_id",state.user.id);
     if(error){show("No se pudo consultar la lista de acceso: "+errorMessage(error),"error");return;}
     const list=$("viewerList");if(!list)return;
     list.replaceChildren();
     for(const item of data||[]){
       const row=document.createElement("div");row.className="viewer-invite";
-      const label=document.createElement("span");label.textContent="👁 "+item.viewer_email;
+      const label=document.createElement("span");label.textContent="👤 "+item.viewer_email;
+      const permission=document.createElement("select");
+      permission.setAttribute("aria-label","Permisos de "+item.viewer_email);
+      for(const [value,title] of [["buyer","Compras y recepción"],["viewer","Solo lectura"]]){
+        const option=document.createElement("option");option.value=value;option.textContent=title;permission.append(option);
+      }
+      permission.value=item.role;
+      permission.addEventListener("change",async()=>{
+        const chosen=permission.value;permission.disabled=true;
+        const {error}=await state.client.from("inventory_viewers").update({role:chosen})
+          .eq("owner_id",state.user.id).eq("viewer_email",item.viewer_email);
+        if(error){permission.value=item.role;show("No se pudieron actualizar los permisos: "+errorMessage(error),"error");}
+        else{item.role=chosen;show("Permisos familiares actualizados.","ok");}
+        permission.disabled=false;
+      });
       const remove=document.createElement("button");remove.type="button";remove.textContent="Revocar";remove.className="btn btn-secondary";
       remove.addEventListener("click",async()=>{
         if(!confirm("¿Revocar acceso de lectura a "+item.viewer_email+"?"))return;
         const r=await state.client.from("inventory_viewers").delete().eq("owner_id",state.user.id).eq("viewer_email",item.viewer_email);
         if(r.error)show("No se pudo revocar el acceso: "+errorMessage(r.error),"error");else{show("Acceso revocado.","ok");await refreshViewers();}
       });
-      row.append(label,remove);list.append(row);
+      row.append(label,permission,remove);list.append(row);
     }
     if(!data?.length)list.textContent="Todavía no se ha invitado a nadie.";
   }
@@ -153,9 +167,10 @@
     const email=$("viewerEmail").value.trim().toLowerCase();
     if(!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)||email.length>254){show("Escribe un correo válido.","error");return;}
     if(email===state.user.email?.toLowerCase()){show("Este ya es tu correo de administrador.","info");return;}
-    const {error}=await state.client.from("inventory_viewers").upsert({owner_id:state.user.id,viewer_email:email,role:"viewer",label:"Familia"},{onConflict:"owner_id,viewer_email"});
+    const role=$("viewerRole")?.value==="viewer"?"viewer":"buyer";
+    const {error}=await state.client.from("inventory_viewers").upsert({owner_id:state.user.id,viewer_email:email,role,label:"Familia"},{onConflict:"owner_id,viewer_email"});
     if(error)show("No se pudo compartir: "+errorMessage(error),"error");
-    else{$("viewerEmail").value="";show("Invitación registrada. Tu familiar debe crear su cuenta con ese correo y confirmarlo.","ok");await refreshViewers();}
+    else{$("viewerEmail").value="";show("Invitación registrada: "+(role==="buyer"?"compras y recepción":"solo consulta")+". Tu familiar debe crear su cuenta con ese correo y confirmarlo.","ok");await refreshViewers();}
   }
   async function loadGrowth(initial=false){
     if(!state.client||!state.ownerId)return;
@@ -184,6 +199,45 @@
       else show("Bitácora sincronizada entre dispositivos.","ok");
     },350);
   }
+  async function familyAction(mode, details) {
+    if(!state.ready||!state.user||!state.viewer||state.familyRole!=="buyer")
+      throw new Error("No tienes permiso para confirmar compras.");
+    if(!["buy","receive"].includes(mode)||typeof details?.id!=="string"||!details.id)
+      throw new Error("Acción o artículo inválido.");
+    if(state.pending)throw new Error("Hay una actualización en curso.");
+    state.pending=true;
+    show("Guardando confirmación familiar…","busy");
+    try {
+      const args={
+        p_owner_id:state.ownerId,p_item_id:details.id,p_action:mode,
+        p_purchase_date:mode==="buy"?(details.purchaseDate||null):null,
+        p_paid_amount:mode==="buy"?(details.paidAmount??null):null,
+        p_paid_currency:mode==="buy"?(details.paidCurrency||"USD"):"USD",
+        p_purchase_country:mode==="buy"?(details.purchaseCountry||null):null,
+        p_received:mode==="buy"&&details.received===true
+      };
+      const {data,error}=await state.client.rpc("gc_family_purchase_action",args);
+      if(error){
+        const codes={
+          "ARTICLE_NOT_PENDING":"Este artículo ya cambió de estado. Actualiza la ficha.",
+          "ARTICLE_NOT_AWAITING_RECEIPT":"Este artículo no está pendiente de recepción.",
+          "BUYER_PERMISSION_REQUIRED":"Tu permiso de compras fue revocado.",
+          "VERIFIED_EMAIL_REQUIRED":"Primero confirma tu correo electrónico.",
+          "ARTICLE_NOT_FOUND":"La ficha ya no existe en este inventario."
+        };
+        const message=Object.keys(codes).find(k=>String(error.message||"").includes(k));
+        throw new Error(message?codes[message]:String(error.message||"No se pudo registrar.").slice(0,180));
+      }
+      state.pending=false;
+      await loadRemote(false);
+      show(mode==="buy"?"Compra confirmada y registrada en la bitácora de movimientos.":"Recepción física confirmada y registrada.","ok");
+      return data;
+    }catch(e){
+      state.pending=false;
+      show("No se guardó el cambio: "+errorMessage(e),"error");
+      throw e;
+    }
+  }
   async function beginSession(user) {
     if(!user||state.user?.id===user.id&&state.ready)return;
     await waitInventory();
@@ -192,9 +246,9 @@
     show("Verificando acceso privado…","busy");
     const {data:links,error:linkError}=await state.client.from("inventory_viewers").select("owner_id,role");
     if(linkError){show("Error validando acceso: "+errorMessage(linkError),"error");return;}
-    const invited=(links||[]).find(x=>x.owner_id!==user.id&&x.role==="viewer");
-    if(invited){state.ownerId=invited.owner_id;state.viewer=true;}
-    backend()?.setReadOnly?.(state.viewer);
+    const invited=(links||[]).find(x=>x.owner_id!==user.id&&["viewer","buyer"].includes(x.role));
+    if(invited){state.ownerId=invited.owner_id;state.viewer=true;state.familyRole=invited.role;}else state.familyRole=null;
+    backend()?.setReadOnly?.(state.viewer,state.familyRole==="buyer");
     $("viewerTools")?.classList.toggle("hidden",state.viewer);
     $("authSignOut")?.classList.remove("hidden");
     $("authForm")?.classList.add("hidden");
@@ -208,7 +262,7 @@
     document.body.classList.remove("cloud-needs-auth");
     if(!state.viewer)await refreshViewers();
     closeLogin();
-    show(state.viewer?"Vista familiar conectada. Puedes consultar los avances sin modificarlos.":"Administrador: inventario y bitácora sincronizados.","ok");
+    show(state.viewer?(state.familyRole==="buyer"?"Vista familiar: puedes confirmar compras y recepciones.":"Vista familiar: solo consulta."):"Administrador: inventario y bitácora sincronizados.","ok");
   }
   async function login(event){
     event.preventDefault();
@@ -241,7 +295,7 @@
       return;
     }
     state.epoch++;state.pendingCount=0;state.pending=false;
-    state.ready=false;state.user=null;state.viewer=false;state.ownerId=null;
+    state.ready=false;state.user=null;state.viewer=false;state.familyRole=null;state.ownerId=null;
     clearTimeout(state.backupTimer);clearTimeout(state.timer);
     if(state.journalChannel){await state.client.removeChannel(state.journalChannel);state.journalChannel=null;}
     if(state.channel){await state.client.removeChannel(state.channel);state.channel=null;}
@@ -296,6 +350,6 @@
       else {show("Inicia sesión para abrir tu inventario privado.","info");openLogin();}
     }catch(e){document.body.classList.add("cloud-needs-auth");show("No se pudo conectar a la nube: "+errorMessage(e)+". Revisa internet y vuelve a abrir la aplicación.","error");openLogin();}
   }
-  window.GCCloud={notify,notifyGrowth,ready:()=>state.ready,isViewer:()=>state.viewer,ownerId:()=>state.ownerId};
+  window.GCCloud={notify,notifyGrowth,familyAction,ready:()=>state.ready,isViewer:()=>state.viewer,canPurchase:()=>state.viewer&&state.familyRole==="buyer",ownerId:()=>state.ownerId};
   if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",init);else init();
 })();
