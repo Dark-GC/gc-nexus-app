@@ -1,0 +1,148 @@
+/* GC GRAPHICS ORIGEN • isolated premium login and family-account panel */
+.gc-auth-overlay{
+  z-index:80;position:fixed;inset:0;background:rgba(3,5,13,.91);
+  backdrop-filter:blur(22px) saturate(120%);padding:clamp(12px,3vw,36px);
+  display:flex;align-items:center;justify-content:center;overflow:auto
+}
+.gc-auth-overlay .gc-access-card{
+  position:relative;isolation:isolate;display:grid;grid-template-columns:minmax(0,44%) minmax(0,56%);
+  width:min(910px,100%);max-height:min(91dvh,850px);min-height:min(610px,90dvh);
+  overflow:hidden;border-radius:25px;
+  background:#10151f;border:1px solid rgba(165,155,217,.28);
+  box-shadow:0 32px 110px #000a,0 0 0 1px #ffffff05,inset 0 1px #ffffff14;
+  color:#f5f3ff
+}
+.gc-access-brand{
+  position:relative;display:flex;flex-direction:column;justify-content:space-between;
+  min-width:0;overflow:hidden;padding:32px 36px 29px;
+  background:radial-gradient(ellipse 70% 50% at 60% 45%,#5337889c 0,transparent 83%),
+  radial-gradient(circle at -5% 15%,#3859bd4d,transparent 52%),
+  linear-gradient(150deg,#1b2345,#26183f 53%,#101d36);
+  border-right:1px solid #8e87c61c;
+}
+.gc-access-brand::before{content:"";position:absolute;inset:0;opacity:.12;
+  background-image:linear-gradient(#c4bdff44 1px,transparent 1px),linear-gradient(90deg,#c4bdff44 1px,transparent 1px);
+  background-size:34px 34px;mask-image:linear-gradient(90deg,#000,transparent 100%);pointer-events:none}
+.gc-access-brand::after{content:"✦";position:absolute;top:32%;right:-20px;font-size:140px;line-height:1;color:#e3ccff0e}
+.gc-access-brand-top{display:flex;align-items:center;gap:12px;position:relative;z-index:1}
+.gc-brand-glyph{display:inline-flex;justify-content:center;align-items:center;width:49px;height:49px;
+  border-radius:15px;background:linear-gradient(125deg,#8266f1,#c2a1ff);color:#1b1643;font-size:20px;letter-spacing:-1px;font-weight:1000;
+  box-shadow:0 8px 28px #0005, inset 0 1px #ffffff88}
+.gc-brand-glyph span{font-size:9px;align-self:flex-start;margin:8px 0 0 2px}
+.gc-brand-tag{color:#d4ccf6;font-size:10px;font-weight:900;letter-spacing:1.8px}
+.gc-access-art{position:relative;align-self:center;display:grid;place-items:center;width:100%;max-width:295px;aspect-ratio:1;
+  margin:6px auto 0;filter:drop-shadow(0 12px 35px #0905217a)}
+.gc-access-art::before{content:"";position:absolute;width:68%;height:68%;border-radius:28%;
+  background:linear-gradient(142deg,#b49bf4,#785dcb 43%,#3c2a83);
+  transform:rotate(-18deg);box-shadow:inset 3px 3px 35px #ffffff33,0 15px 70px #9c71f15c}
+.gc-access-art::after{content:"";position:absolute;width:60%;height:60%;border-radius:28%;border:1px solid #fff7;transform:rotate(23deg)}
+.gc-access-monogram{position:relative;z-index:1;color:white;font-size:clamp(56px,8vw,92px);line-height:1;font-weight:900;
+  letter-spacing:-12px;text-shadow:0 7px 24px #120b517f;padding-right:12px}
+.gc-access-orbit{position:absolute;border-radius:50%;border:1px solid #c5b0ff44;width:98%;height:98%;transform:rotate(-28deg) scaleX(.72)}
+.gc-access-orbit.orbit-two{width:113%;height:113%;transform:rotate(34deg) scaleX(.69);border-color:#e3d7ff28}
+.gc-access-brand-copy{position:relative;z-index:1;margin-top:3px}
+.gc-access-eyebrow,.gc-access-overline{font-size:10px;font-weight:900;letter-spacing:2.1px;color:#b39afa}
+.gc-access-brand-copy h2{font-weight:900;font-size:clamp(27px,3.1vw,38px);line-height:1.18;letter-spacing:-1.8px;margin:12px 0 11px}
+.gc-access-brand-copy h2 em,.gc-login-view h1 em{font-style:normal;color:#b29aff}
+.gc-access-brand-copy p{max-width:280px;color:#b2aecb;font-size:12px;line-height:1.7}
+.gc-access-brand-foot{color:#9392b9;font-size:9px;font-weight:800;letter-spacing:.4px;margin-top:20px}
+.gc-access-main{position:relative;display:flex;align-items:center;justify-content:center;min-width:0;
+  background:radial-gradient(ellipse 55% 50% at 90% 12%,#292c5059,transparent 80%),#121721;
+  padding:42px clamp(29px,4vw,55px)}
+.gc-access-close{position:absolute;top:19px;right:19px;width:34px;height:34px;border:1px solid #4e5568;
+  background:#252b3a;color:#d7dbee;border-radius:10px;cursor:pointer;font-size:21px;line-height:1}
+.gc-auth-overlay:not(.gc-authorized) .gc-access-close{display:none}
+.gc-login-view,.gc-account-view{width:100%;max-width:360px}
+.gc-mobile-brand{display:none}
+.gc-access-overline{display:flex;gap:9px;align-items:center;font-size:9px;color:#baa9ff}
+.gc-live-dot{height:7px;width:7px;background:#a996ff;border-radius:50%;box-shadow:0 0 0 4px #a996ff20}
+.gc-login-view h1{font-size:clamp(34px,4vw,44px);font-weight:900;letter-spacing:-2px;line-height:1.1;margin:17px 0 14px}
+.gc-access-intro{font-size:13px;line-height:1.7;color:#aeb5c6;max-width:345px;margin-bottom:29px}
+.gc-login-form{display:flex;flex-direction:column}
+.gc-login-form>label{font-size:11px;font-weight:800;color:#d7d8e9;margin:0 0 9px}
+.gc-auth-input-wrap{display:flex;align-items:center;height:52px;border:1px solid #40465a;background:#0b111c;
+  border-radius:12px;padding:0 13px;transition:border-color .18s ease,box-shadow .18s ease;margin-bottom:21px}
+.gc-auth-input-wrap:focus-within{border-color:#a98bff;box-shadow:0 0 0 4px #af8cff16}
+.gc-input-icon{color:#938baa;font-size:19px;width:30px;flex-shrink:0;text-align:left}
+.gc-auth-input-wrap input{border:0!important;outline:0!important;background:transparent!important;box-shadow:none!important;
+  width:100%;min-width:0;padding:0;min-height:48px;color:#f1edff;font-size:15px}
+.gc-auth-input-wrap input::placeholder{color:#707c91}
+.gc-password-eye{background:transparent;border:0;color:#bb9cff;cursor:pointer;font-size:11px;font-weight:800;min-height:42px;min-width:58px}
+.gc-password-eye:focus-visible,.gc-login-submit:focus-visible,.gc-access-close:focus-visible{outline:2px solid #c2afff;outline-offset:3px}
+.gc-auth-message{font-size:11px;color:#9eaac0;line-height:1.65;min-height:36px;margin:-4px 0 17px;overflow-wrap:anywhere}
+.gc-auth-message[data-state="error"]{color:#ffaaaa}
+.gc-auth-message[data-state="busy"]{color:#dfc3ff}
+.gc-login-submit{width:100%;min-height:54px;display:flex;justify-content:space-between;align-items:center;
+  border:1px solid #c9b3ff66;border-radius:12px;padding:0 18px;
+  color:#fff;font-size:13px;font-weight:900;cursor:pointer;background:linear-gradient(105deg,#7a5ad9,#9c72ec);
+  box-shadow:0 10px 24px #6c50a035;transition:filter .18s ease,transform .18s ease}
+.gc-login-submit:hover:not(:disabled){filter:brightness(1.13);transform:translateY(-1px)}
+.gc-login-submit:disabled{cursor:wait;opacity:.7}
+.gc-login-submit>span:last-child{font-size:24px}
+.gc-login-help{display:flex;gap:11px;align-items:flex-start;background:#1d2432a3;padding:12px;border-radius:11px;margin-top:26px;border:1px solid #323a4c}
+.gc-help-icon{display:grid;place-items:center;flex-shrink:0;width:20px;height:20px;border:1px solid #8290b3;border-radius:50%;font-size:11px;color:#bbadf0;font-weight:800}
+.gc-login-help p{font-size:10.5px;line-height:1.6;color:#abb4c6}
+.gc-login-help strong{color:#e4d8ff}
+.gc-login-bottom{display:flex;justify-content:space-between;gap:8px;color:#7e8ba1;font-size:9px;margin-top:29px;font-weight:800;letter-spacing:.4px}
+.gc-login-bottom>span:first-child{display:flex;gap:7px;align-items:center}
+.gc-safe-dot{width:6px;height:6px;border-radius:50%;background:#77dbbc}
+.gc-account-view{align-self:stretch;max-height:calc(91dvh - 85px);overflow:auto;scrollbar-width:thin}
+.gc-account-view h2{font-size:27px;letter-spacing:-1px;font-weight:900;margin:12px 0 7px}
+.gc-account-status{font-size:11px;line-height:1.5;color:#9cacc3;margin-bottom:19px}
+.gc-auth-overlay .viewer-tools{max-height:none;padding:0;background:none;border:0;overflow:visible}
+.gc-auth-overlay .viewer-tools>h3{font-size:14px;color:#efebff;margin:22px 0 7px}
+.gc-auth-overlay .viewer-tools>p{font-size:11px;color:#acb8c9;line-height:1.65;margin-bottom:15px}
+.gc-auth-overlay .viewer-form{gap:12px}
+.gc-auth-overlay .viewer-form .field input,.gc-auth-overlay .viewer-form .field select{min-height:47px;font-size:14px}
+.gc-family-submit{min-height:47px!important;font-size:12px!important;margin-top:5px}
+.gc-auth-overlay .gc-members-heading{margin:24px 0 7px!important}
+.gc-auth-overlay .viewer-invite{display:flex;flex-wrap:wrap;gap:6px;padding:12px 0}
+.gc-auth-overlay .viewer-invite>span{width:100%;font-size:12px}
+.gc-auth-overlay .viewer-invite select{min-width:140px;max-width:100%;flex:1 1 140px;min-height:38px;border-radius:8px;border:1px solid #3b4660;background:#131b28;color:#ebe9ff;padding:8px}
+.gc-auth-overlay .viewer-invite .btn{min-height:38px}
+.gc-auth-overlay .viewer-list{padding:5px 0;color:#a8b5cd}
+.gc-auth-overlay .gc-copy-link{font-size:11px;min-height:40px;margin-top:14px;width:100%}
+.gc-auth-overlay .gc-signout{margin-top:22px;width:100%;min-height:43px}
+.gc-credentials{margin-top:17px;padding:15px;border-radius:12px;background:#1b3040;border:1px solid #4f98887d}
+.gc-credentials-heading{display:flex;align-items:center;gap:10px;color:#b1f2d5;font-size:15px}
+.gc-credentials-heading span{width:22px;height:22px;display:grid;place-items:center;border-radius:50%;background:#3d9874;color:white}
+.gc-credentials p{font-size:11px;color:#b9cbd3;line-height:1.55;margin:9px 0}
+.gc-credentials textarea{width:100%;padding:11px;border-radius:9px;border:1px solid #56677d;color:#ecf6ff;background:#101d29;
+  font-family:ui-monospace,Consolas,monospace;font-size:11px;line-height:1.7;resize:vertical;min-height:140px}
+.gc-credentials-actions{display:flex;gap:7px;margin-top:10px;flex-wrap:wrap}
+.gc-credentials-actions button{flex:1 1 110px;min-height:39px;font-size:10px}
+@media(max-width:760px){
+ .gc-auth-overlay{padding:12px}
+ .gc-auth-overlay .gc-access-card{display:block;width:min(480px,100%);min-height:auto;max-height:min(94dvh,850px);border-radius:22px}
+ .gc-access-brand{display:none}
+ .gc-access-main{min-height:min(700px,90dvh);padding:clamp(30px,6vw,42px) clamp(22px,6vw,37px)}
+ .gc-mobile-brand{display:flex;gap:12px;align-items:center;margin-bottom:29px}
+ .gc-mobile-brand b{font-size:13px;letter-spacing:1.4px;color:#e1d6ff}
+ .gc-access-main:has(.gc-account-view:not(.hidden)){align-items:flex-start;min-height:auto;max-height:94dvh;overflow-y:auto}
+ .gc-auth-overlay .gc-account-view{max-height:calc(94dvh - 70px)}
+ .gc-login-view h1{font-size:36px;margin-top:10px}
+ .gc-access-intro{margin-bottom:23px}
+ .gc-login-bottom{margin-top:22px}
+ .gc-login-help{margin-top:22px}
+}
+@media(max-width:380px){
+ .gc-auth-overlay{padding:7px}
+ .gc-access-main{padding:24px 18px}
+ .gc-mobile-brand{margin-bottom:23px}
+ .gc-login-view h1{font-size:32px}
+ .gc-auth-input-wrap{margin-bottom:16px}
+ .gc-access-intro{font-size:12px}
+}
+@media(max-height:730px) and (min-width:761px){
+ .gc-auth-overlay .gc-access-card{min-height:0;max-height:96dvh}
+ .gc-access-art{max-width:180px;margin-top:0}
+ .gc-access-brand{padding:21px 29px}
+ .gc-access-main{padding:18px 34px}
+ .gc-access-brand-copy h2{font-size:29px}
+ .gc-access-intro{margin-bottom:14px}
+ .gc-login-view h1{margin:11px 0}
+ .gc-auth-input-wrap{margin-bottom:12px;height:45px}
+ .gc-login-help{margin-top:13px}
+ .gc-login-bottom{margin-top:10px}
+}
+@media(prefers-reduced-motion:reduce){.gc-auth-overlay *{transition:none!important}}
