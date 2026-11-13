@@ -36,7 +36,7 @@ test("photo fallback data is only for exact products and app handles broken phot
 });
 test("cloud config does not expose a secret key",()=>{
  const config=JSON.parse(read("data/cloud-config.json"));
- assert.equal(config.url,"");
- assert.equal(config.publishableKey,"");
+ assert.match(config.url,/^https:\/\/[a-z0-9-]+\.supabase\.co$/);
+ assert.match(config.publishableKey,/^sb_publishable_/);
  assert.ok(!JSON.stringify(config).toLowerCase().includes("service_role"));
 });
