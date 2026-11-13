@@ -10,11 +10,60 @@
     if(note)note.textContent=message;
     const connection=document.querySelector(".connection");
     if(connection&&connection.lastChild?.nodeType===3)connection.lastChild.nodeValue=state.ready?(state.viewer?" Vista familiar · sincronizada":" Registros sincronizados · copia local"):" Sincronización pendiente";
-    const extra=$("authMessage");if(extra)extra.textContent=message;
+    const extra=$("authMessage");if(extra){extra.textContent=message;extra.dataset.state=mode;}
   };
   const errorMessage=e=>String(e?.message||e||"Error de conexión").slice(0,230);
-  function openLogin(){const dialog=$("cloudOverlay");if(!dialog)return;dialog.classList.remove("hidden");$("authEmail")?.focus();}
-  function closeLogin(){$("cloudOverlay")?.classList.add("hidden");}
+  function hideCredentials(){
+    if($("familyCredentialsText"))$("familyCredentialsText").value="";
+    $("familyCredentials")?.classList.add("hidden");
+  }
+  function openLogin(){
+    const overlay=$("cloudOverlay");if(!overlay)return;
+    const loggedIn=!!(state.ready&&state.user);
+    overlay.classList.remove("hidden");
+    overlay.classList.toggle("gc-authorized",loggedIn);
+    $("gcLoginView")?.classList.toggle("hidden",loggedIn);
+    $("gcAccountView")?.classList.toggle("hidden",!loggedIn);
+    if(loggedIn){$("viewerTools")?.classList.toggle("hidden",state.viewer);if(!state.viewer)refreshViewers();}
+    else $("authEmail")?.focus();
+  }
+  function closeLogin(){
+    if(!state.ready)return; // A private inventory cannot be exposed before authentication.
+    hideCredentials();
+    $("cloudOverlay")?.classList.add("hidden");
+  }
+  function revealCredentials(data){
+    if(!data?.ok||!data.email||!data.password)return;
+    const role=data.role==="buyer"?"Compras y recepción":data.role==="viewer"?"Solo lectura":null;
+    const message="GC GRAPHICS · TU ACCESO\n\n"+
+      "Enlace: "+(data.loginUrl||location.origin+"/data/app.html")+"\n"+
+      "Correo: "+data.email+"\n"+
+      "Contraseña: "+data.password+"\n\n"+
+      "Abre el enlace, escribe tus datos y toca «Entrar a GC GRAPHICS»."+
+      (role?"\nPermiso: "+role:"");
+    $("familyCredentialsText").value=message;
+    $("familyCredentials")?.classList.remove("hidden");
+    $("familyCredentialsText")?.scrollIntoView({behavior:"smooth",block:"nearest"});
+  }
+  async function memberRequest(body){
+    const {data,error}=await state.client.functions.invoke("gc-family-access",{body});
+    if(error){
+      let code="";
+      try{const details=await error.context?.json?.();code=details?.error||details?.message||"";}catch{}
+      const descriptions={
+        "ADMIN_ONLY":"Esta cuenta no tiene permisos de administración.",
+        "USER_CREATION_FAILED":"No se pudo crear la cuenta. Revisa si el correo ya tiene una.",
+        "INVITATION_FAILED":"La cuenta no se vinculó. Vuelve a intentarlo.",
+        "PASSWORD_RESET_FAILED":"No se pudo renovar la contraseña.",
+        "NOT_YOUR_MEMBER":"Este usuario no pertenece a tu inventario.",
+        "NOT_A_MANAGED_USER":"Esta cuenta no fue creada desde este panel.",
+        "LOGIN_REQUIRED":"Tu sesión terminó. Vuelve a entrar."
+      };
+      throw new Error(descriptions[code]||"No se pudo completar la operación. Revisa tu conexión e inténtalo de nuevo.");
+    }
+    if(!data?.ok)throw new Error("El servidor no confirmó la operación.");
+    return data;
+  }
   function dataFrom(item, uid) {
     return {user_id:uid,id:item.id,sort_order:item.order||0,name:item.name,
       type:item.type,status:item.status,received:!!item.received,
@@ -131,7 +180,7 @@
   async function refreshViewers(){
     if(!state.client||!state.user||state.viewer)return;
     const {data,error}=await state.client.from("inventory_viewers").select("viewer_email,role").eq("owner_id",state.user.id);
-    if(error){show("No se pudo consultar la lista de acceso: "+errorMessage(error),"error");return;}
+    if(error){show("No se pudieron consultar las cuentas familiares.","error");return;}
     const list=$("viewerList");if(!list)return;
     list.replaceChildren();
     for(const item of data||[]){
@@ -144,33 +193,54 @@
       }
       permission.value=item.role;
       permission.addEventListener("change",async()=>{
-        const chosen=permission.value;permission.disabled=true;
+        permission.disabled=true;const chosen=permission.value;
         const {error}=await state.client.from("inventory_viewers").update({role:chosen})
           .eq("owner_id",state.user.id).eq("viewer_email",item.viewer_email);
-        if(error){permission.value=item.role;show("No se pudieron actualizar los permisos: "+errorMessage(error),"error");}
-        else{item.role=chosen;show("Permisos familiares actualizados.","ok");}
+        if(error){permission.value=item.role;show("No se pudieron cambiar los permisos.","error");}
+        else{item.role=chosen;show("Permisos actualizados.","ok");}
         permission.disabled=false;
+      });
+      const reset=document.createElement("button");reset.type="button";reset.textContent="Nueva clave";reset.className="btn btn-secondary";
+      reset.addEventListener("click",async()=>{
+        if(!confirm("¿Generar una contraseña nueva para "+item.viewer_email+"? La anterior dejará de funcionar."))return;
+        reset.disabled=true;reset.textContent="Generando…";
+        try{const result=await memberRequest({action:"reset",email:item.viewer_email});hideCredentials();revealCredentials(result);
+          show("Contraseña renovada. Copia los nuevos datos y envíaselos de forma privada.","ok");
+        }catch(e){show(e.message,"error");}
+        finally{reset.disabled=false;reset.textContent="Nueva clave";}
       });
       const remove=document.createElement("button");remove.type="button";remove.textContent="Revocar";remove.className="btn btn-secondary";
       remove.addEventListener("click",async()=>{
-        if(!confirm("¿Revocar acceso de lectura a "+item.viewer_email+"?"))return;
-        const r=await state.client.from("inventory_viewers").delete().eq("owner_id",state.user.id).eq("viewer_email",item.viewer_email);
-        if(r.error)show("No se pudo revocar el acceso: "+errorMessage(r.error),"error");else{show("Acceso revocado.","ok");await refreshViewers();}
+        if(!confirm("¿Quitar el acceso a "+item.viewer_email+"? No podrá consultar ni registrar compras."))return;
+        remove.disabled=true;
+        const {error}=await state.client.from("inventory_viewers").delete().eq("owner_id",state.user.id).eq("viewer_email",item.viewer_email);
+        if(error){show("No se pudo revocar el acceso.","error");remove.disabled=false;}
+        else{show("Acceso revocado.","ok");hideCredentials();await refreshViewers();}
       });
-      row.append(label,permission,remove);list.append(row);
+      row.append(label,permission,reset,remove);list.append(row);
     }
-    if(!data?.length)list.textContent="Todavía no se ha invitado a nadie.";
+    if(!data?.length)list.textContent="Aún no hay cuentas familiares. Crea la primera con el formulario.";
   }
   async function addViewer(event){
     event.preventDefault();
-    if(!state.client||!state.user||state.viewer)return;
+    if(!state.client||!state.user||state.viewer||state.user.app_metadata?.gc_admin!==true)return;
     const email=$("viewerEmail").value.trim().toLowerCase();
-    if(!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)||email.length>254){show("Escribe un correo válido.","error");return;}
-    if(email===state.user.email?.toLowerCase()){show("Este ya es tu correo de administrador.","info");return;}
-    const role=$("viewerRole")?.value==="viewer"?"viewer":"buyer";
-    const {error}=await state.client.from("inventory_viewers").upsert({owner_id:state.user.id,viewer_email:email,role,label:"Familia"},{onConflict:"owner_id,viewer_email"});
-    if(error)show("No se pudo compartir: "+errorMessage(error),"error");
-    else{$("viewerEmail").value="";show("Invitación registrada: "+(role==="buyer"?"compras y recepción":"solo consulta")+". Tu familiar debe crear su cuenta con ese correo y confirmarlo.","ok");await refreshViewers();}
+    if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)||email.length>254){
+      show("Escribe un correo electrónico válido.","error");return;
+    }
+    if(email===state.user.email?.toLowerCase()){
+      show("Tu cuenta administradora ya tiene acceso.","info");return;
+    }
+    const role=$("viewerRole").value==="viewer"?"viewer":"buyer";
+    const submit=$("createFamilyButton");submit.disabled=true;submit.textContent="Creando acceso seguro…";
+    try{
+      const result=await memberRequest({action:"create",email,role});
+      hideCredentials();revealCredentials(result);
+      $("viewerEmail").value="";
+      show("¡Cuenta creada! Copia sus datos para enviarlos a tu familiar.","ok");
+      await refreshViewers();
+    }catch(e){show(e.message,"error");}
+    finally{submit.disabled=false;submit.textContent="＋ Crear cuenta y contraseña";}
   }
   async function fetchFamilyEvents(){
     if(!state.client||!state.ownerId||!state.user)return;
@@ -270,11 +340,22 @@
     const {data:links,error:linkError}=await state.client.from("inventory_viewers").select("owner_id,role");
     if(linkError){show("Error validando acceso: "+errorMessage(linkError),"error");return;}
     const invited=(links||[]).find(x=>x.owner_id!==user.id&&["viewer","buyer"].includes(x.role));
+    const isAdmin=user.app_metadata?.gc_admin===true&&!!user.email_confirmed_at;
+    if(!invited&&!isAdmin){
+      state.ready=false;state.user=null;state.ownerId=null;state.viewer=false;state.familyRole=null;
+      backend()?.setItemsFromCloud?.([]);window.GCGrowth?.clearPrivateView?.();
+      backend()?.setReadOnly?.(true);document.body.classList.add("cloud-needs-auth");
+      await state.client.auth.signOut();
+      show("Este correo no tiene acceso a GC GRAPHICS. Pide al administrador que cree tu cuenta.","error");
+      openLogin();return;
+    }
     if(invited){state.ownerId=invited.owner_id;state.viewer=true;state.familyRole=invited.role;}else state.familyRole=null;
     backend()?.setReadOnly?.(state.viewer,state.familyRole==="buyer");
     $("viewerTools")?.classList.toggle("hidden",state.viewer);
     $("authSignOut")?.classList.remove("hidden");
     $("authForm")?.classList.add("hidden");
+    $("gcLoginView")?.classList.add("hidden");
+    $("gcAccountView")?.classList.remove("hidden");
     await loadRemote(true);
     if(!state.ready)return;
     await loadGrowth(true);
@@ -290,23 +371,21 @@
   }
   async function login(event){
     event.preventDefault();
-    if(!state.client)return;
-    const email=$("authEmail").value.trim(),password=$("authPassword").value;
-    if(!email||password.length<8){show("Introduce un correo válido y contraseña de 8 caracteres como mínimo.","error");return;}
-    show("Verificando credenciales…","busy");
-    const result=await state.client.auth.signInWithPassword({email,password});
-    if(result.error)show("No se pudo ingresar: "+errorMessage(result.error),"error");
-    else if(result.data?.user)await beginSession(result.data.user);
-  }
-  async function signUp(){
-    if(!state.client)return;
-    const email=$("authEmail").value.trim(),password=$("authPassword").value;
-    if(!email||password.length<12){show("Introduce un correo válido y contraseña exclusiva de al menos 12 caracteres.","error");return;}
-    show("Registrando cuenta…","busy");
-    const r=await state.client.auth.signUp({email,password,options:{emailRedirectTo:window.location.origin+"/"}});
-    if(r.error)show("No se pudo crear la cuenta: "+errorMessage(r.error),"error");
-    else if(r.data.session?.user)await beginSession(r.data.user);
-    else show("Cuenta creada. Revisa tu correo para confirmar y luego inicia sesión.","ok");
+    if(!state.client){show("No hay conexión con la base de datos. Vuelve a intentar.","error");return;}
+    const email=$("authEmail").value.trim().toLowerCase(),password=$("authPassword").value;
+    if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)||password.length<8){
+      show("Revisa tu correo y contraseña para continuar.","error");return;
+    }
+    const button=$("authLoginButton");button.disabled=true;
+    show("Verificando tu acceso…","busy");
+    try{
+      const result=await state.client.auth.signInWithPassword({email,password});
+      if(result.error){show("Correo o contraseña incorrectos. Revisa tus datos e inténtalo de nuevo.","error");return;}
+      $("authPassword").value="";
+      if(result.data?.user)await beginSession(result.data.user);
+      else show("No se pudo abrir la sesión. Vuelve a intentarlo.","error");
+    }catch(e){show("No hay conexión. Revisa internet y vuelve a intentarlo.","error");}
+    finally{button.disabled=false;}
   }
   async function signOut() {
     if(state.sessionClosing)return;
@@ -334,6 +413,8 @@
     $("viewerTools")?.classList.add("hidden");
     $("authSignOut")?.classList.add("hidden");
     $("authForm")?.classList.remove("hidden");
+    hideCredentials();
+    $("gcAccountView")?.classList.add("hidden");$("gcLoginView")?.classList.remove("hidden");
     show("Sesión cerrada. Se limpió la copia visible de este dispositivo.","info");
     state.sessionClosing=false;
     closeLogin();openLogin();
@@ -343,7 +424,19 @@
     $("cloudButton")?.addEventListener("click",openLogin);
     $("cloudClose")?.addEventListener("click",closeLogin);
     $("authForm")?.addEventListener("submit",login);
-    $("authSignUp")?.addEventListener("click",signUp);
+    $("authTogglePassword")?.addEventListener("click",()=>{
+      const input=$("authPassword"),toggle=$("authTogglePassword");
+      const reveal=input.type==="password";input.type=reveal?"text":"password";
+      toggle.textContent=reveal?"Ocultar":"Mostrar";toggle.setAttribute("aria-pressed",String(reveal));
+      toggle.setAttribute("aria-label",reveal?"Ocultar contraseña":"Mostrar contraseña");
+    });
+    $("copyFamilyCredentials")?.addEventListener("click",async()=>{
+      const value=$("familyCredentialsText")?.value;
+      if(!value)return;
+      try{await navigator.clipboard.writeText(value);show("Datos copiados. Pégalos en el chat privado con tu familiar.","ok");}
+      catch{$("familyCredentialsText")?.select();show("Selecciona y copia el mensaje para compartirlo.","info");}
+    });
+    $("hideFamilyCredentials")?.addEventListener("click",hideCredentials);
     $("authSignOut")?.addEventListener("click",signOut);
     $("viewerForm")?.addEventListener("submit",addViewer);
     $("copyFamilyLink")?.addEventListener("click",async()=>{
