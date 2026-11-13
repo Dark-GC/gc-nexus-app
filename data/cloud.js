@@ -262,6 +262,15 @@
     if(error){console.info("Movimientos familiares:",error.message);return;}
     if(owner===state.ownerId)window.GCGrowth?.setFamilyEvents?.(data||[]);
   }
+  async function requestImmediateAmazonQuote(item){
+    if(!state.ready||state.viewer||!state.user||!/^https:\/\/(?:www\.)?(?:amazon\.[^/]+|a\.co|amzn\.to)\//i.test(item?.url||""))return null;
+    const {data}=await state.client.auth.getSession();const token=data?.session?.access_token;
+    if(!token)throw new Error("Tu sesión terminó. Vuelve a entrar antes de consultar Amazon.");
+    const response=await fetch("https://gc-graphics-prices-api.onrender.com/api/private/amazon-quotes",{method:"POST",headers:{"Content-Type":"application/json",Authorization:"Bearer "+token},body:JSON.stringify({itemId:item.id,url:item.url})});
+    const result=await response.json().catch(()=>({error:"amazon_quote_unavailable"}));
+    if(!response.ok)throw new Error(result.error||"amazon_quote_unavailable");
+    return result.quote;
+  }
 
   async function loadGrowth(initial=false){
     if(!state.client||!state.ownerId)return;
@@ -494,6 +503,6 @@
       else {show("Inicia sesión para abrir tu inventario privado.","info");openLogin();}
     }catch(e){document.body.classList.add("cloud-needs-auth");show("No se pudo conectar a la nube: "+errorMessage(e)+". Revisa internet y vuelve a abrir la aplicación.","error");openLogin();}
   }
-  window.GCCloud={notify,notifyGrowth,familyAction,ready:()=>state.ready,isViewer:()=>state.viewer,canPurchase:()=>state.viewer&&state.familyRole==="buyer",ownerId:()=>state.ownerId};
+  window.GCCloud={notify,notifyGrowth,familyAction,requestImmediateAmazonQuote,ready:()=>state.ready,isViewer:()=>state.viewer,canPurchase:()=>state.viewer&&state.familyRole==="buyer",ownerId:()=>state.ownerId};
   if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",init);else init();
 })();

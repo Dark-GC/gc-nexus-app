@@ -374,6 +374,14 @@
     save();window.GCGrowth?.recordInventoryAction?.(current?"edited":"created",vals);
     closeOverlays();render();toast(current?"Artículo actualizado.":"Artículo agregado al inventario.");
     if(supportsLive(vals))getLiveQuote(vals);
+    if(!current&&/^https:\/\/(?:www\.)?(?:amazon\.[^/]+|a\.co|amzn\.to)\//i.test(vals.url)){
+      toast("Artículo guardado. Consultando Amazon de forma privada…");
+      window.GCCloud?.requestImmediateAmazonQuote?.(vals).then(quote=>{
+        if(!quote)return;
+        S.liveQuotes[vals.id]={sourceUrl:vals.url,provider:"amazon-snapshot",checkedAt:quote.checkedAt,price:quote.price,originalPrice:null,currency:quote.currency,priceStatus:quote.priceStatus,stockStatus:quote.stockStatus,stockQuantity:null,imageUrl:"",seller:quote.seller||null,error:null};
+        if(S.items.some(x=>x.id===vals.id&&x.url===vals.url)){render();toast(quote.priceStatus==="verified"?"Precio Amazon verificado y mostrado en la tarjeta.":"Amazon respondió sin un precio verificable.");}
+      }).catch(error=>toast(error.message==="amazon_quotes_not_configured"?"La consulta inmediata de Amazon aún no está habilitada en el servidor.":"No se pudo consultar Amazon ahora. El artículo quedó guardado.",true));
+    }
   }
   async function confirmDecision() {
     if(S.readOnly){

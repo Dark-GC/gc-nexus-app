@@ -2,6 +2,7 @@ import http from 'node:http';
 import { readFile } from 'node:fs/promises';
 import { fileURLToPath } from 'node:url';
 import { dirname, join } from 'node:path';
+import { resolveAmazonProductUrl, normaliseImmediateAmazon } from './lib/amazon-quote.js';
 
 const root = dirname(fileURLToPath(import.meta.url));
 const PUBLIC = join(root, 'public');
@@ -237,9 +238,48 @@ function send(res, status, data, type = 'application/json; charset=utf-8') {
   res.end(data);
 }
 
+async function jsonBody(req) {
+  let body=''; for await (const chunk of req) { body+=chunk; if(body.length>10000) throw Error('body_too_large'); }
+  try{return JSON.parse(body||'{}');}catch{throw Error('invalid_json');}
+}
+function privateConfig() {
+  const {SUPABASE_URL,SUPABASE_SERVICE_ROLE_KEY,FIRECRAWL_API_KEY}=process.env;
+  return SUPABASE_URL&&SUPABASE_SERVICE_ROLE_KEY&&FIRECRAWL_API_KEY?{SUPABASE_URL,SUPABASE_SERVICE_ROLE_KEY,FIRECRAWL_API_KEY}:null;
+}
+async function supabase(config,path,options={}) {
+  const response=await fetch(config.SUPABASE_URL+path,{...options,headers:{apikey:config.SUPABASE_SERVICE_ROLE_KEY,Authorization:'Bearer '+config.SUPABASE_SERVICE_ROLE_KEY,...options.headers}});
+  const data=await response.json().catch(()=>null); if(!response.ok) throw Error('supabase_'+response.status); return data;
+}
+async function immediateAmazonQuote(body,token) {
+  const config=privateConfig(); if(!config) return {status:503,body:{error:'amazon_quotes_not_configured'}};
+  const who=await fetch(config.SUPABASE_URL+'/auth/v1/user',{headers:{apikey:config.SUPABASE_SERVICE_ROLE_KEY,Authorization:'Bearer '+token}});
+  const user=await who.json().catch(()=>null);
+  if(!who.ok||!user?.id||user.app_metadata?.gc_admin!==true) return {status:403,body:{error:'owner_required'}};
+  if(typeof body.itemId!=='string'||!/^gc-[a-z0-9-]{3,100}$/i.test(body.itemId)) return {status:422,body:{error:'invalid_item_id'}};
+  let product;try{product=await resolveAmazonProductUrl(body.url);}catch(e){return {status:422,body:{error:String(e.message||'invalid_amazon_url')}};}
+  const requestKey='immediate:'+user.id+':'+product.asin;
+  const reserve=await supabase(config,'/rest/v1/rpc/reserve_amazon_quote',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({p_key:requestKey,p_credits:5})});
+  if(reserve!==true)return {status:429,body:{error:'monthly_budget_exhausted'}};
+  try {
+    const reply=await fetch('https://api.firecrawl.dev/v2/scrape',{method:'POST',headers:{Authorization:'Bearer '+config.FIRECRAWL_API_KEY,'Content-Type':'application/json'},body:JSON.stringify({alexandria:{provider:'amazon-com',capability:'products/prices',options:{asins:[product.asin]}}}),signal:AbortSignal.timeout(60000)});
+    const raw=await reply.json().catch(()=>null); if(!reply.ok)throw Error('firecrawl_'+reply.status);
+    const result=raw?.data?.alexandria?.find(x=>x.provider==='amazon-com'&&x.capability==='products/prices');
+    const quote=normaliseImmediateAmazon(result?.data?.results?.[0],{...product,observedAt:result?.data?.observed_at_ms}); if(!quote)throw Error('unverified_provider_response');
+    await supabase(config,'/rest/v1/rpc/gc_record_private_amazon_quote',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({p_owner_id:user.id,p_item_id:body.itemId,p_asin:quote.asin,p_price:quote.price,p_currency:quote.currency,p_stock_status:quote.stockStatus,p_seller:quote.seller,p_product_url:quote.productUrl,p_observed_url:quote.observedUrl,p_observed_at:quote.checkedAt,p_verification_status:quote.priceStatus,p_request_key:requestKey})});
+    await supabase(config,'/rest/v1/rpc/finish_amazon_quote_reservation',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({p_key:requestKey,p_success:true})});
+    return {status:200,body:{quote}};
+  }catch(error){await supabase(config,'/rest/v1/rpc/finish_amazon_quote_reservation',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({p_key:requestKey,p_success:false})}).catch(()=>{});return {status:503,body:{error:'amazon_quote_unavailable'}};}
+}
+
 export const server = http.createServer(async (req, res) => {
   try {
     const target = new URL(req.url || '/', 'http://localhost');
+    if (req.method==='POST' && target.pathname==='/api/private/amazon-quotes') {
+      const token=String(req.headers.authorization||'').replace(/^Bearer\s+/i,'');
+      if(!token)return send(res,401,JSON.stringify({error:'authentication_required'}));
+      const answer=await immediateAmazonQuote(await jsonBody(req),token);
+      return send(res,answer.status,JSON.stringify(answer.body));
+    }
     if (req.method !== 'GET') return send(res, 405, JSON.stringify({ error: 'method_not_allowed' }));
     if (target.pathname === '/api/health') return send(res, 200, JSON.stringify({ ok: true, app: 'gc-graphics-inventory', version: '1.7.4' }));
     if (target.pathname === '/api/product-preview') {
