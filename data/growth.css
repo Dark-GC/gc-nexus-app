@@ -1,0 +1,156 @@
+/* GC GRAPHICS · ORIGEN · premium and responsive, isolated from current catalog layout */
+.growth-active .content>.page-heading,
+.growth-active .content>.stat-grid,
+.growth-active .content>.info-strip,
+.growth-active .content>.catalog-header,
+.growth-active .content>.filter-panel,
+.growth-active .content>.catalog-grid,
+.growth-active .content>.empty-state{display:none!important}
+.growth-nav-link .growth-side-flag{margin-left:auto;border-radius:5px;background:#3d305e;color:#c2afff;padding:3px 6px;font-size:8px;letter-spacing:.6px}
+.growth-side-divider{margin-top:22px!important;margin-bottom:20px!important}
+.growth-side-label{color:#bb98ff}
+.growth-screen{display:grid;gap:24px;max-width:1420px;margin:0 auto 42px}
+.growth-hero{border:1px solid #464061;border-radius:23px;min-height:259px;padding:40px 46px;position:relative;overflow:hidden;display:flex;align-items:center;justify-content:space-between;gap:24px;background:radial-gradient(circle at 87% 24%,#48346b77,transparent 35%),linear-gradient(125deg,#211d37,#151927 55%,#121823);box-shadow:0 28px 65px #07091255}
+.growth-hero:before{content:"";pointer-events:none;position:absolute;width:330px;height:330px;border:1px solid #9a82df38;right:-128px;top:-113px;border-radius:50%;box-shadow:0 0 0 58px #78619c0c,0 0 0 114px #78619c06}
+.growth-hero-text{max-width:740px;position:relative;z-index:1}
+.growth-eyebrow,.growth-overline{font-size:10px;font-weight:800;letter-spacing:2px;color:#b9a3ff}
+.growth-orbit{display:inline-flex;border-radius:50%;background:#4e416f;padding:5px 8px;margin-right:6px}
+.growth-hero h1{font:800 clamp(27px,3vw,40px)/1.2 Manrope,'DM Sans',sans-serif;letter-spacing:-1.3px;margin:16px 0}
+.growth-hero h1 em{color:#c7abff;font-style:normal}
+.growth-hero p{max-width:660px;color:#abb2c6;line-height:1.75;margin:0;font-size:13px}
+.growth-hero-meta{display:flex;gap:19px;flex-wrap:wrap;margin-top:23px;font-size:10px;color:#9bbbaa;font-weight:700}
+.growth-hero-emblem{position:relative;z-index:1;width:130px;height:130px;border:1px solid #aa8cfc70;border-radius:27px;display:flex;flex-direction:column;align-items:center;justify-content:center;background:linear-gradient(150deg,#7558b844,#292240aa);box-shadow:0 0 50px #6e52b92b;flex-shrink:0}
+.growth-hero-emblem span{font:800 48px/1 Manrope;letter-spacing:-5px;color:#d3bcff}
+.growth-hero-emblem small{font-size:9px;letter-spacing:2px;color:#a9a6c7;margin-top:10px}
+.growth-kpis{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:14px}
+.growth-stat{background:linear-gradient(150deg,#1b2130,#131923);border:1px solid #30364a;border-radius:15px;padding:20px 19px;min-width:0;display:flex;flex-direction:column;gap:7px;min-height:127px}
+.growth-stat:first-child{background:linear-gradient(130deg,#2d234b,#1b2231);border-color:#57477c}
+.growth-stat-top{font-weight:800;font-size:10px;letter-spacing:1px;color:#9fa8bd;display:flex;justify-content:space-between;gap:10px}
+.growth-stat-top span{color:#ba9af3;font-size:20px;line-height:1}
+.growth-stat strong{font:800 clamp(23px,2.2vw,34px)/1.1 Manrope;letter-spacing:-1px;color:#f5f3ff;overflow-wrap:anywhere}
+.growth-stat small{color:#8e9bb1;font-size:10px}
+.growth-headline{display:flex;align-items:end;justify-content:space-between;gap:14px;margin-top:7px}
+.growth-headline h2{font:800 clamp(20px,2vw,26px) Manrope;letter-spacing:-.6px;margin:9px 0 5px}
+.growth-headline p{color:#919aae;font-size:12px;margin:0}
+.growth-headline-actions{flex-shrink:0}
+.growth-tabs{display:flex;align-items:center;border-bottom:1px solid #35394a;gap:12px;margin-top:0}
+.growth-tab{border:0;background:transparent;color:#98a2b3;font-weight:800;padding:14px 17px;min-height:45px;border-bottom:2px solid transparent;font-size:13px;display:flex;align-items:center;gap:10px}
+.growth-tab span{font-size:10px;color:#83869e;background:#282b3c;padding:3px 8px;border-radius:8px}
+.growth-tab.active{border-bottom-color:#b08eff;color:#e0d5ff}
+.growth-tab.active span{background:#3c3255;color:#d8c9ff}
+.growth-pane{min-height:280px}
+.growth-toolbar{display:flex;gap:12px;flex-wrap:wrap;padding:0 0 18px}
+.growth-search{display:flex;flex:1 1 300px;align-items:center;gap:9px;padding:10px 15px;border:1px solid #30394c;border-radius:12px;background:#151b27}
+.growth-search span{font-size:18px;color:#93a0b7}
+.growth-search input{border:0;outline:0;background:transparent;color:white;width:100%;min-width:0}
+.growth-toolbar select{color:#c5cce1;background:#151b27;border:1px solid #30394c;border-radius:11px;padding:10px 13px;min-width:165px}
+.growth-timeline{display:grid;position:relative;padding-left:0;gap:0}
+.growth-timeline:before{position:absolute;content:"";left:18px;top:25px;bottom:24px;width:2px;background:linear-gradient(#936fda,#343348 75%,transparent)}
+.growth-entry{display:flex;gap:19px;align-items:flex-start;position:relative;padding:0 0 18px}
+.growth-entry-marker{background:#3f315e;color:#d3b9ff;width:37px;height:37px;border-radius:12px;border:1px solid #73609e;display:grid;place-items:center;font-size:13px;flex-shrink:0;z-index:1}
+.growth-entry-marker.auto{background:#27443f;border-color:#3c7966;color:#82ddbe}
+.growth-entry-content{flex:1;background:linear-gradient(130deg,#1b2130,#141a25);border:1px solid #303747;padding:19px 21px;border-radius:15px;min-width:0}
+.growth-entry-top{display:flex;align-items:center;gap:11px;flex-wrap:wrap}
+.growth-kind{font-size:10px;font-weight:800;color:#c8b6fa;background:#34304b;padding:4px 9px;border-radius:7px}
+.growth-entry-top time{color:#8b97ad;font-size:10px;font-weight:700}
+.growth-origin{font-size:8px;letter-spacing:.5px;color:#79cbb0;background:#213c37;padding:5px 7px;border-radius:6px}
+.growth-entry-content h3{font:800 15px/1.5 Manrope;margin:10px 0 7px}
+.growth-entry-content p{white-space:pre-wrap;overflow-wrap:anywhere;font-size:12px;color:#a3aec0;line-height:1.65;margin:0 0 9px}
+.growth-associated{font-size:10px;color:#c4b3ef;display:block;margin-top:8px}
+.growth-entry-actions{display:flex;gap:8px;justify-content:flex-end;margin-top:11px}
+.growth-entry-actions button{background:transparent;border:1px solid #33394b;border-radius:8px;color:#929db2;font-weight:700;padding:5px 9px;font-size:10px}
+.growth-entry-actions button:hover{background:#30334c;color:#ece5ff}
+.growth-empty{text-align:center;padding:65px 22px;border:1px dashed #45425f;border-radius:16px;background:#171c2933;z-index:1}
+.growth-empty>span{font-size:45px;display:block;color:#b39cf9}
+.growth-empty h3{font:800 17px Manrope;margin:7px}
+.growth-empty p{font-size:12px;color:#9ca9c0;max-width:400px;line-height:1.65;margin:10px auto}
+.growth-road-intro{border:1px solid #36364b;background:#1c2130;border-radius:14px;padding:23px;display:flex;align-items:center;justify-content:space-between;gap:20px}
+.growth-road-intro h3{font:800 21px Manrope;margin:5px 0}
+.growth-road-intro p{font-size:12px;color:#9ca9bd;margin:0}
+.growth-road-meter{min-width:230px}
+.growth-road-meter strong{font-size:12px;color:#d0bdfc;display:block;margin-bottom:10px}
+.growth-progress{width:100%;height:9px;border-radius:99px;background:#333144;overflow:hidden}
+.growth-progress>div{height:100%;width:0;background:linear-gradient(90deg,#9565fc,#61d3b3);transition:width .25s}
+.growth-milestones{display:grid;gap:12px;margin-top:15px}
+.growth-milestone{display:flex;gap:18px;align-items:flex-start;padding:20px;border:1px solid #363948;background:linear-gradient(115deg,#1a2130,#141923);border-radius:14px}
+.growth-milestone.done{border-color:#3e6a5c;background:linear-gradient(115deg,#1b302d,#141d24)}
+.growth-milestone-count{border:1px solid #615786;border-radius:12px;background:#312943;color:#cbb5ff;flex:0 0 47px;height:47px;display:grid;place-items:center;font:800 18px Manrope}
+.growth-milestone.done .growth-milestone-count{color:#a7f8d2;background:#225343;border-color:#4a977c}
+.growth-milestone-body{min-width:0;flex:1}
+.growth-milestone-body small{font-size:9px;letter-spacing:1.5px;font-weight:800;color:#b8a4e5}
+.growth-milestone-body h3{font:800 16px Manrope;margin:6px 0}
+.growth-milestone-body p{font-size:11px;color:#99a6ba;line-height:1.5;margin:0}
+.growth-milestone-foot{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-top:15px;flex-wrap:wrap}
+.growth-milestone-foot>span{font-size:10px;color:#7f8ba1}
+.growth-milestone-foot>.growth-done{color:#9edbbb}
+.growth-milestone-foot button{background:#303047;border:1px solid #5a507a;border-radius:9px;padding:8px 12px;color:#d5c5ff;font-size:11px;font-weight:800}
+.growth-milestone.done .growth-milestone-foot button{background:#23453e;color:#9edcbe;border-color:#397462}
+.growth-new-milestone{background:#171d29;border:1px dashed #61547b;padding:23px;border-radius:14px;margin-top:16px}
+.growth-new-milestone label{display:block;font-weight:800;font-size:12px;margin-bottom:12px}
+.growth-new-milestone>div{display:flex;gap:10px}
+.growth-new-milestone input{min-width:0;flex:1;border-radius:10px;background:#101723;border:1px solid #34394b;padding:10px 14px;color:white}
+.growth-save-notice{display:flex;align-items:center;gap:10px;border:1px solid #343849;background:#1a202b;border-radius:10px;padding:13px 17px;color:#91a6b8;font-size:11px}
+.growth-save-notice>span{color:#a891e6;font-size:18px}
+.growth-save-notice p{margin:0}
+.growth-form-fields{padding:5px 26px 22px;display:grid;gap:14px}
+.growth-form-row{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+.growth-dialog{width:100%;max-width:640px}
+.growth-dialog .field input,.growth-dialog .field select,.growth-dialog .field textarea{width:100%}
+@media(max-width:1120px){.growth-kpis{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:760px){
+ .mobile-nav{grid-template-columns:repeat(5,minmax(0,1fr))}
+ .mobile-tab{font-size:9px;padding:4px 2px}
+ .mobile-tab-icon{font-size:20px}
+ .growth-screen{gap:18px;margin-bottom:20px}
+ .growth-hero{padding:25px 20px;border-radius:17px;min-height:auto;gap:14px}
+ .growth-hero h1{font-size:clamp(24px,5.6vw,32px);letter-spacing:-1.15px;margin:12px 0}
+ .growth-hero p{font-size:11px}
+ .growth-hero-meta{font-size:9px;gap:8px 15px;margin-top:15px}
+ .growth-hero-emblem{width:85px;height:85px;border-radius:19px}
+ .growth-hero-emblem span{font-size:34px;letter-spacing:-3px}
+ .growth-hero-emblem small{font-size:7px}
+ .growth-kpis{grid-template-columns:repeat(2,minmax(0,1fr));gap:9px}
+ .growth-stat{min-height:103px;padding:14px 12px}
+ .growth-stat-top{font-size:9px}
+ .growth-stat strong{font-size:clamp(19px,4vw,26px)}
+ .growth-stat small{font-size:9px}
+ .growth-headline h2{font-size:21px}
+ .growth-headline p{font-size:11px}
+ .growth-headline-actions .btn{min-height:44px}
+ .growth-toolbar{gap:9px}
+ .growth-search{flex-basis:100%}
+ .growth-search input{font-size:16px}
+ .growth-toolbar select{min-height:44px;width:100%;font-size:12px}
+ .growth-entry{gap:10px}
+ .growth-entry-marker{width:30px;height:30px;border-radius:10px}
+ .growth-timeline:before{left:15px}
+ .growth-entry-content{padding:13px 14px}
+ .growth-entry-content h3{font-size:13px}
+ .growth-entry-content p{font-size:11px}
+ .growth-road-intro{flex-direction:column;align-items:stretch;padding:15px}
+ .growth-road-meter{min-width:0}
+ .growth-milestone{padding:14px;gap:11px}
+ .growth-milestone-count{flex:0 0 36px;height:36px;font-size:14px}
+ .growth-milestone-body h3{font-size:13px}
+ .growth-milestone-body p{font-size:11px}
+ .growth-form-fields{padding:8px 17px 18px}
+ .growth-form-fields input,.growth-form-fields select,.growth-form-fields textarea{font-size:16px}
+}
+@media(max-width:430px){
+ .growth-hero{flex-direction:column;align-items:flex-start}
+ .growth-hero-emblem{position:absolute;right:15px;top:14px;opacity:.25;width:74px;height:74px}
+ .growth-hero-text{position:relative;z-index:2}
+ .growth-hero h1{max-width:330px}
+ .growth-headline{flex-direction:column;align-items:stretch}
+ .growth-headline-actions .btn{width:100%}
+ .growth-tab{padding:12px 10px;font-size:12px}
+ .growth-tab span{font-size:9px;padding:3px 5px}
+ .growth-form-row{grid-template-columns:1fr}
+ .growth-new-milestone>div{flex-direction:column}
+ .growth-new-milestone input,.growth-new-milestone button{min-height:44px}
+ .growth-kpis{gap:8px}
+ .growth-stat{padding:13px 10px}
+ .growth-stat strong{font-size:20px}
+ .mobile-tab{font-size:8px}
+ .mobile-tab-icon{font-size:19px}
+}
