@@ -3,7 +3,7 @@
   const KEY = "gc_graphics_inventory_v1";
   const CATEGORIES = ["Todas", "Maquinaria", "Accesorio", "Consumible"];
   const $ = id => document.getElementById(id);
-  const S = {items: [], feed: {items: {}}, amazonFeed:{items:{}}, promotions:{items:{}}, liveQuotes:{}, verifiedImages:{}, brokenImages:new Set(), view: "all", category: "Todas", query: "", sort: "order", editing: null, pendingPhoto: null, decision: null, incoming: null,readOnly:false,initialized:false};
+  const S = {items: [], feed: {items: {}}, amazonFeed:{items:{}}, promotions:{items:{}}, liveQuotes:{}, verifiedImages:{}, brokenImages:new Set(), view: "all", category: "Todas", query: "", sort: "order", editing: null, pendingPhoto: null, decision: null, incoming: null,readOnly:false,familyBuyer:false,familyBusy:false,initialized:false};
   const safeText = v => String(v == null ? "" : v);
   const esc = v => safeText(v).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#39;");
   const urlOK = v => /^https:\/\/[^\s]+$/i.test(safeText(v)) || /^http:\/\/[^\s]+$/i.test(safeText(v));
@@ -155,7 +155,15 @@
     const offerMeta=price.originalPrice!==null?'<div class="old-price-row"><del>'+esc(priceText(price.originalPrice,price.currency))+'</del><span>Ahorras '+esc(priceText(price.originalPrice-price.value,price.currency))+'</span></div>':"";
     const name = esc(p.name), encoded = esc(p.id), notes = esc(p.notes || "Sin descripción adicional.");
     const link = p.url ? '<a class="open-link" href="'+esc(p.url)+'" target="_blank" rel="noreferrer noopener" aria-label="Visitar tienda de '+name+'" title="Ver en tienda">↗</a>' : "";
-    const buy = S.readOnly?'<span class="family-status">'+(p.status==="Comprada"?(p.received?'✓ Ya recibido':'◷ Aún por recibir'):'◷ En lista de compras')+'</span>':p.status !== "Comprada" ? '<button type="button" class="btn btn-bought" data-action="buy" data-id="' + encoded + '">✓ Confirmar compra</button>' : (p.received ? '<button class="btn btn-secondary" disabled>✓ Recibido</button>' : '<button class="btn btn-bought" data-action="receive" data-id="'+encoded+'">✓ Marcar recibido</button>');
+    const familyCanMark=S.readOnly&&S.familyBuyer;
+    const noChangeLabel=p.status==="Cancelada"?"× Compra cancelada":p.status==="Comprada"?(p.received?"✓ Recibido":"◷ Esperando entrega"):"◷ En lista de compras";
+    const buy=(S.readOnly&&!familyCanMark)||(familyCanMark&&p.status==="Cancelada")
+      ? '<span class="family-status">'+noChangeLabel+'</span>'
+      : p.status!=="Comprada"
+        ? '<button type="button" class="btn btn-bought" data-action="buy" data-id="'+encoded+'">'+(familyCanMark?"✓ Ya lo compré":"✓ Confirmar compra")+'</button>'
+        : p.received
+          ? '<span class="family-status">✓ Comprado y recibido</span>'
+          : '<button type="button" class="btn btn-bought" data-action="receive" data-id="'+encoded+'">'+(familyCanMark?"✓ Ya llegó":"✓ Marcar recibido")+'</button>';
     return '<article class="product-card">' +
       '<div class="product-image">' + thumb + '<span class="product-flag '+ f.css +'">'+esc(f.text)+'</span>'+dealBadge+'<div class="product-menu"><button data-action="edit" data-id="'+encoded+'" title="Editar" aria-label="Editar '+name+'">✎</button><button data-action="delete" data-id="'+encoded+'" title="Eliminar" aria-label="Eliminar '+name+'">×</button></div></div>' +
       '<div class="product-body"><div class="product-meta">'+ esc(p.type) + (p.code ? " · " + esc(p.code) : "") + '</div>' +
@@ -204,7 +212,7 @@
     showOverlay("formOverlay"); $("itemName").focus();
   }
   function showDecision(mode,p) {
-    if(S.readOnly&&mode!=="info")return toast("Vista familiar de solo lectura.",true);
+    if(S.readOnly&&mode!=="info"&&!(S.familyBuyer&&["buy","receive"].includes(mode)))return toast("Esta acción está reservada al administrador.",true);
     closeOverlays();S.decision={mode,id:p?.id};$("purchaseExtra").classList.toggle("hidden",mode!=="buy");
     $("decisionKicker").textContent=mode==="delete"?"ELIMINACIÓN":mode==="buy"?"REGISTRO DE COMPRA":mode==="receive"?"RECEPCIÓN":mode==="import"?"RESTAURAR DATOS":"INFORMACIÓN";
     $("decisionTitle").textContent=mode==="delete"?"¿Eliminar este artículo?":mode==="buy"?"Confirmar compra":mode==="receive"?"Confirmar recepción":mode==="import"?"¿Restaurar la copia?":"Actualización de precios";
@@ -241,8 +249,32 @@
     closeOverlays();render();toast(current?"Artículo actualizado.":"Artículo agregado al inventario.");
     if(supportsLive(vals))getLiveQuote(vals);
   }
-  function confirmDecision() {
-    if(S.readOnly)return closeOverlays();
+  async function confirmDecision() {
+    if(S.readOnly){
+      const d=S.decision;
+      if(!S.familyBuyer||!d||!["buy","receive"].includes(d.mode))return closeOverlays();
+      if(S.familyBusy)return;
+      const details={id:d.id};
+      if(d.mode==="buy"){
+        const choice=document.querySelector('input[name="purchaseReceivedChoice"]:checked')?.value;
+        if(!choice)return toast("Indica si el artículo ya llegó físicamente.",true);
+        details.received=choice==="yes";
+        details.purchaseDate=$("purchasedDate").value||null;
+        details.paidAmount=toNum($("paidAmount").value);
+        details.paidCurrency=$("paidCurrency").value==="DOP"?"DOP":"USD";
+        details.purchaseCountry=["US","DO"].includes($("purchaseCountry").value)?$("purchaseCountry").value:null;
+      }
+      S.familyBusy=true;
+      const button=$("confirmDecision");button.disabled=true;button.textContent="Guardando…";
+      try{
+        if(!window.GCCloud?.familyAction)throw Error("No se pudo conectar a la base privada.");
+        await window.GCCloud.familyAction(d.mode,details);
+        closeOverlays();render();
+        toast(d.mode==="buy"?"¡Compra registrada! Ya pueden seguir su entrega.":"¡Recepción registrada! El equipo ya figura como recibido.");
+      }catch(e){toast(e.message||"La confirmación no se guardó.",true);}
+      finally{S.familyBusy=false;button.disabled=false;button.textContent=d.mode==="buy"?"Registrar compra":"Marcar como recibido";}
+      return;
+    }
     const d=S.decision; if(!d)return closeOverlays();
     if(d.mode==="info")return closeOverlays();
     if(d.mode==="import"){
@@ -381,7 +413,12 @@
   window.GCInventory = {
     getItems: () => S.items.map(p => ({...p})),
     ready:()=>S.initialized,
-    setReadOnly:value=>{S.readOnly=!!value;document.body.classList.toggle("family-viewer",S.readOnly);render();},
+    setReadOnly:(value,canPurchase=false)=>{
+      S.readOnly=!!value;S.familyBuyer=!!value&&!!canPurchase;
+      document.body.classList.toggle("family-viewer",S.readOnly);
+      document.body.classList.toggle("family-buyer",S.familyBuyer);
+      render();
+    },
     setItemsFromCloud: items => {
       suppressCloudSave = true;
       S.items = Array.isArray(items) ? items.map(safeItem) : S.items;
