@@ -94,3 +94,28 @@ node --test tests/*.test.mjs
 - GitHub Actions: \`node --check app.js\`, \`node --check scripts/refresh-prices.mjs\` y \`node --test tests/*.test.mjs\`, incluyendo pruebas de descuentos con fuente, caducidad, ASIN exacto y navegación móvil.
 - Render: sitio web y servicio de precios desplegados, respuesta HTTP 200.
 - Comprobación con navegador móvil: render de los 14 artículos, navegación inferior presente y 5 promociones visibles con precio actual/anterior y ahorro. No declarar QA físico Safari/Android PASS mientras no se haya ejecutado.
+
+
+---
+
+## V1.3 · GC GRAPHICS ORIGEN — Bitácora y guía del negocio (12/11/2026)
+
+**Misión:** conservar la historia verificable de cómo GC GRAPHICS adquiere, recibe, prueba y pone a funcionar sus equipos, y documentar las decisiones que hacen crecer el taller. No es todavía un ERP, POS, facturación, CRM, contabilidad, tienda ni gestor de producción.
+
+**Lo que ya funciona:**
+- «✦ Bitácora y ruta» visible en el menú de escritorio y en la barra móvil. Conserva el diseño premium existente y mantiene todas las vistas actuales del inventario.
+- Bitácora cronológica privada por navegador: entradas con fecha, categoría (Decisión, Compra, Recepción, Prueba, Aprendizaje, Hito o Nota), título, detalle, vínculo opcional a máquina, edición y eliminación confirmada.
+- Los eventos futuros al agregar, editar, comprar, recibir o eliminar una ficha del inventario generan una anotación automática de hecho; se distingue de las entradas escritas por la persona. **No se inventaron entradas históricas** sobre artículos anteriores a esta versión.
+- Ruta de 6 hitos iniciales, todos **pendientes por defecto**; cada logro se marca manualmente y genera entrada de bitácora. Se pueden añadir hitos personalizados.
+- Indicadores reales: artículos, recibidos, inversión documentada **solo con importe pagado declarado** y número de compras que aún no tienen precio pagado. Nunca sumar precios de referencia de tiendas como si fueran gastos reales.
+- Una exportación JSON ahora incluye inventario y crecimiento (bitácora + hitos). Importación de copias anteriores sin historial sigue válida y **no borra el historial existente**; copias nuevas validan la sección de bitácora antes de reemplazar información.
+- Ajuste de fechas a zona America/Santo_Domingo para entradas del negocio. Layout responsive en 390 px validado con navegador aislado: sin scroll horizontal, seis hitos renderizados y nueva entrada creada; vuelta al inventario conserva las 14 fichas.
+- Prueba de compra en navegador **aislado** confirmó anotación automática de la Topdeep como «comprada, pendiente de recepción». Esta prueba no altera el inventario real del usuario.
+
+**Persistencia y seguridad, estado real (IMPORTANTE):**
+- El inventario y la bitácora se guardan por ahora solo en el almacenamiento local del navegador. No se presupone sincronización entre dispositivos, cifrado del registro, copias fuera del navegador ni recuperación tras borrar datos. Haz una copia JSON en un segundo lugar confiable.
+- database/schema.sql y database/origen-v1.3.sql son esquemas PostgreSQL para un futuro proyecto Supabase dedicado; incluyen RLS por propietario y no usan claves secretas en el cliente. **NO están aplicados a una base activa**. Requieren confirmar la organización y activar el proyecto de costo cotizado.
+- data/cloud-config.json permanece vacío intencionalmente. El botón «Conectar nube» indica modo local hasta completar autorización, SQL, pruebas de RLS, login y migración de datos. **No conectar la base de DropTik.**
+- La transición a nube deberá probar recuperación, conflictos y respaldo del registro existente antes de declarar estabilidad. No conectar servicios externos de ventas ni integraciones que amplíen el alcance por ahora.
+
+**Ruta de producto:** mantener la app centrada en **maquinaria, herramientas, insumos iniciales, compras, evidencias, decisiones, inversión y los primeros hitos**. Evolucionar la marca y plataforma sobre un historial fiable, sin obligar al usuario a introducir datos desconocidos ni duplicar registros en Notion.
