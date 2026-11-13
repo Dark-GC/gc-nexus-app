@@ -44,7 +44,7 @@
       received: p.received === true,
       url: urlOK(p.url) ? clamp(p.url, 1500) : "",
       imageUrl: imageOK(p.imageUrl) ? safeText(p.imageUrl).slice(0, 180000) : "",
-      manualPrice: toNum(p.manualPrice), manualOriginalPrice:toNum(p.manualOriginalPrice), stockQty: p.stockQty === 0 ? 0 : (Number.isInteger(Number(p.stockQty)) && p.stockQty !== "" && p.stockQty != null && Number(p.stockQty) >= 0 ? Number(p.stockQty) : null),
+      manualPrice: toNum(p.manualPrice), manualOriginalPrice:toNum(p.manualOriginalPrice), localPriceDop:toNum(p.localPriceDop),localShopName:clamp(p.localShopName,150),localPriceCheckedAt:/^\d{4}-\d{2}-\d{2}$/.test(safeText(p.localPriceCheckedAt))?p.localPriceCheckedAt:null, stockQty: p.stockQty === 0 ? 0 : (Number.isInteger(Number(p.stockQty)) && p.stockQty !== "" && p.stockQty != null && Number(p.stockQty) >= 0 ? Number(p.stockQty) : null),
       purchaseDate: /^\d{4}-\d{2}-\d{2}$/.test(safeText(p.purchaseDate)) ? p.purchaseDate : null,
       paidAmount: toNum(p.paidAmount),paidCurrency:p.paidCurrency==="DOP"?"DOP":"USD",purchaseCountry:["US","DO"].includes(p.purchaseCountry)?p.purchaseCountry:null, notes: clamp(p.notes, 1200),
       notionUrl: urlOK(p.notionUrl) ? p.notionUrl : "",
@@ -151,6 +151,7 @@
     const thumb = image ? '<img loading="lazy" data-product-id="'+ esc(p.id) +'" referrerpolicy="no-referrer" src="' + esc(image) + '" alt="Imagen del producto '+ esc(p.name) +'">' : '<div class="product-symbol">' + esc(titleInitials(p.brand || p.name)) + '</div>';
     const converted=price.currency==="USD"&&Number.isFinite(price.value)?(window.GCFX?.convert?.(price.value)||""):"";
     const dealBadge=price.discountPercent?'<span class="deal-flag">-'+price.discountPercent+'% OFERTA</span>':"";
+    const localQuote=Number.isFinite(p.localPriceDop)?'<div class="local-quote"><strong>Precio RD: '+esc(priceText(p.localPriceDop,"DOP"))+'</strong><small>'+esc(p.localShopName||"Cotización manual")+' · '+esc(p.localPriceCheckedAt||"sin fecha")+'</small></div>':"";
     const offerMeta=price.originalPrice!==null?'<div class="old-price-row"><del>'+esc(priceText(price.originalPrice,price.currency))+'</del><span>Ahorras '+esc(priceText(price.originalPrice-price.value,price.currency))+'</span></div>':"";
     const name = esc(p.name), encoded = esc(p.id), notes = esc(p.notes || "Sin descripción adicional.");
     const link = p.url ? '<a class="open-link" href="'+esc(p.url)+'" target="_blank" rel="noreferrer noopener" aria-label="Visitar tienda de '+name+'" title="Ver en tienda">↗</a>' : "";
@@ -159,7 +160,7 @@
       '<div class="product-image">' + thumb + '<span class="product-flag '+ f.css +'">'+esc(f.text)+'</span>'+dealBadge+'<div class="product-menu"><button data-action="edit" data-id="'+encoded+'" title="Editar" aria-label="Editar '+name+'">✎</button><button data-action="delete" data-id="'+encoded+'" title="Eliminar" aria-label="Eliminar '+name+'">×</button></div></div>' +
       '<div class="product-body"><div class="product-meta">'+ esc(p.type) + (p.code ? " · " + esc(p.code) : "") + '</div>' +
       '<h3 class="product-name" title="'+name+'">'+name+'</h3><p class="product-desc">'+notes+'</p>'+
-      '<div class="product-price-row"><div><div class="price-num '+(price.value==null?'unknown':'')+'">'+(price.value==null?'Consultar precio':esc(priceText(price.value,price.currency)))+'</div>'+offerMeta+(converted?'<span class="converted-price">'+esc(converted)+' · referencia</span>':"")+'<span class="price-detail">'+esc(price.label)+'</span></div>'+
+      '<div class="product-price-row"><div><div class="price-num '+(price.value==null?'unknown':'')+'">'+(price.value==null?'Consultar precio':esc(priceText(price.value,price.currency)))+'</div>'+offerMeta+(converted?'<span class="converted-price">'+esc(converted)+' · referencia</span>':"")+'<span class="price-detail">'+esc(price.label)+'</span>'+localQuote+'</div>'+
       '<span class="stock-pill '+s.kind+'">'+esc(s.text)+'</span></div>'+
       '<div class="product-bottom">'+buy+link+'</div></div></article>';
   }
@@ -196,7 +197,7 @@
     $("formTitle").textContent=item?"Editar artículo":"Nuevo artículo";
     const form=$("itemForm");form.reset();
     const p=item||{};
-    ["name","brand","code","type","status","url","imageUrl","manualPrice","manualOriginalPrice","stockQty","notes"].forEach(k=>{
+    ["name","brand","code","type","status","url","imageUrl","manualPrice","manualOriginalPrice","localPriceDop","localShopName","localPriceCheckedAt","stockQty","notes"].forEach(k=>{
       const el=form.elements.namedItem(k); if(el) el.value=p[k] == null ? (k==="type"?"Maquinaria":k==="status"?"Pendiente":"") : p[k];
     });
     form.elements.namedItem("received").checked=!!p.received;
@@ -230,7 +231,7 @@
     if(img && !imageOK(img)) return toast("Imagen inválida: introduce una URL http(s) o sube una fotografía.",true);
     const vals={...current,id:current?.id||("gc-"+Date.now()+"-"+Math.random().toString(16).slice(2)),order:current?.order??(Math.max(0,...S.items.map(p=>p.order))+1),
       name:clamp(get("name"),140),brand:clamp(get("brand"),70),code:clamp(get("code"),35),type:get("type"),status:get("status"),
-      received:form.elements.namedItem("received").checked,url,imageUrl:img,manualPrice:toNum(get("manualPrice")),manualOriginalPrice:toNum(get("manualOriginalPrice")),
+      received:form.elements.namedItem("received").checked,url,imageUrl:img,manualPrice:toNum(get("manualPrice")),manualOriginalPrice:toNum(get("manualOriginalPrice")),localPriceDop:toNum(get("localPriceDop")),localShopName:clamp(get("localShopName"),150),localPriceCheckedAt:get("localPriceCheckedAt")||null,
       stockQty:get("stockQty")===""?null:Number.parseInt(get("stockQty"),10),
       notes:clamp(get("notes"),1200),editedAt:now()};
     if(!vals.name)return toast("Agrega el nombre del artículo.",true);
