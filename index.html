@@ -213,29 +213,57 @@
       <div class="modal-foot"><button class="btn btn-secondary" id="cancelDecision">Cancelar</button><button class="btn btn-primary" id="confirmDecision">Confirmar</button></div>
     </div>
   </div>
-  <div class="overlay hidden" id="cloudOverlay">
-    <div class="modal compact" role="dialog" aria-modal="true" aria-labelledby="cloudTitle">
-      <div class="modal-head"><div><div class="modal-kicker">ALMACENAMIENTO SEGURO</div><h2 id="cloudTitle">Sincronización privada</h2></div><button class="close-btn" id="cloudClose" aria-label="Cerrar">×</button></div>
-      <p class="decision-message" id="authMessage">Inicia sesión para sincronizar inventario entre equipos.</p>
-      <form id="authForm" class="auth-form">
-        <label class="field"><span>Correo de acceso</span><input type="email" autocomplete="email" id="authEmail" required placeholder="tu@correo.com"></label>
-        <label class="field"><span>Contraseña</span><input type="password" id="authPassword" autocomplete="current-password" minlength="8" required placeholder="Para cuenta nueva: 12 o más caracteres"></label>
-        <button type="submit" class="btn btn-primary">Ingresar</button>
-        <button id="authSignUp" type="button" class="btn btn-secondary">Crear cuenta nueva</button>
-      </form>
-      <div class="cloud-footnote" id="cloudState">Los cambios se guardan localmente mientras no haya conexión.</div>
-      <section class="viewer-tools hidden" id="viewerTools">
-        <h3>Compartir compras con mamá</h3>
-        <p>Tu mamá podrá ver el inventario y la bitácora. Con permiso de <strong>Compras y recepción</strong> podrá marcar una máquina como comprada y confirmar cuando llegue, pero no editar productos, precios ni borrar registros.</p>
-        <form id="viewerForm" class="viewer-form">
-          <label class="field"><span>Correo de tu familiar</span><input id="viewerEmail" type="email" autocomplete="off" required placeholder="correo@ejemplo.com"></label>
-          <label class="field"><span>Permisos</span><select id="viewerRole" aria-label="Permisos del familiar"><option value="buyer" selected>Compras y recepción · recomendado para mamá</option><option value="viewer">Solo lectura · ver avances</option></select></label>
-          <button type="submit" class="btn btn-primary">Compartir inventario</button>
-        </form>
-        <button type="button" class="btn btn-secondary" id="copyFamilyLink">Copiar enlace para mamá</button>
-        <div id="viewerList" class="viewer-list"></div>
-      </section>
-      <div class="modal-foot"><button class="btn btn-secondary hidden" type="button" id="authSignOut">Cerrar sesión</button></div>
+  <div class="overlay hidden gc-auth-overlay" id="cloudOverlay" role="presentation">
+    <div class="gc-access-card" role="dialog" aria-modal="true" aria-labelledby="cloudTitle">
+      <aside class="gc-access-brand" aria-hidden="true">
+        <div class="gc-access-brand-top"><span class="gc-brand-glyph">GC<span>✦</span></span><span class="gc-brand-tag">GRAPHICS / ORIGEN</span></div>
+        <div class="gc-access-art"><div class="gc-access-orbit orbit-one"></div><div class="gc-access-orbit orbit-two"></div><span class="gc-access-monogram">GC</span></div>
+        <div class="gc-access-brand-copy"><span class="gc-access-eyebrow">EL COMIENZO DE ALGO GRANDE</span><h2>Cada avance<br>cuenta una <em>historia.</em></h2><p>Máquinas, compras y sueños compartidos entre nuestra familia.</p></div>
+        <span class="gc-access-brand-foot">GC GRAPHICS · República Dominicana · 2026</span>
+      </aside>
+      <div class="gc-access-main">
+        <button class="gc-access-close" id="cloudClose" type="button" aria-label="Cerrar panel">×</button>
+        <section id="gcLoginView" class="gc-login-view">
+          <div class="gc-mobile-brand"><span class="gc-brand-glyph">GC<span>✦</span></span><b>GC GRAPHICS</b></div>
+          <div class="gc-access-overline"><span class="gc-live-dot"></span> ACCESO FAMILIAR PRIVADO</div>
+          <h1 id="cloudTitle">¡Qué bueno<br>tenerte <em>aquí!</em></h1>
+          <p class="gc-access-intro">Entra para ver nuestras máquinas, compras y el camino que estamos construyendo.</p>
+          <form id="authForm" class="gc-login-form">
+            <label for="authEmail">Tu correo electrónico</label>
+            <div class="gc-auth-input-wrap"><span class="gc-input-icon" aria-hidden="true">✉</span><input type="email" id="authEmail" name="email" autocomplete="username" inputmode="email" required placeholder="tucorreo@ejemplo.com" spellcheck="false"></div>
+            <label for="authPassword">Tu contraseña</label>
+            <div class="gc-auth-input-wrap"><span class="gc-input-icon" aria-hidden="true">⌑</span><input type="password" id="authPassword" name="password" autocomplete="current-password" minlength="8" required placeholder="Escribe tu contraseña"><button type="button" class="gc-password-eye" id="authTogglePassword" aria-label="Mostrar contraseña" aria-pressed="false">Mostrar</button></div>
+            <p class="gc-auth-message" id="authMessage" role="status" aria-live="polite">Tus datos están protegidos. Accede con las credenciales que te compartió el administrador.</p>
+            <button type="submit" class="gc-login-submit" id="authLoginButton"><span>Entrar a GC GRAPHICS</span><span aria-hidden="true">→</span></button>
+          </form>
+          <div class="gc-login-help"><span class="gc-help-icon">i</span><p>¿No tienes cuenta? El administrador crea tu acceso y te comparte tus datos. <strong>No necesitas registrarte.</strong></p></div>
+          <div class="gc-login-bottom"><span><span class="gc-safe-dot"></span> Acceso protegido</span><span>GC ORIGEN V1.5</span></div>
+        </section>
+        <section id="gcAccountView" class="gc-account-view hidden">
+          <div class="gc-access-overline"><span class="gc-live-dot"></span> TU ESPACIO PRIVADO</div>
+          <h2>Gestionar accesos</h2>
+          <p id="cloudState" class="gc-account-status">Sesión protegida.</p>
+          <section class="viewer-tools hidden" id="viewerTools">
+            <h3>Crear acceso familiar</h3>
+            <p>Tu mamá solo necesita un correo y la contraseña que generaré para ella. Elige qué puede hacer y luego copia los datos para enviárselos.</p>
+            <form id="viewerForm" class="viewer-form">
+              <label class="field" for="viewerEmail"><span>Correo de tu familiar</span><input id="viewerEmail" type="email" autocomplete="off" inputmode="email" required placeholder="correo@ejemplo.com"></label>
+              <label class="field" for="viewerRole"><span>Permisos de su cuenta</span><select id="viewerRole" aria-label="Permisos del familiar"><option value="buyer" selected>Compras y recepción · recomendado para mamá</option><option value="viewer">Solo lectura · ver avances</option></select></label>
+              <button type="submit" class="btn btn-primary gc-family-submit" id="createFamilyButton">＋ Crear cuenta y contraseña</button>
+            </form>
+            <div id="familyCredentials" class="gc-credentials hidden" aria-live="polite">
+              <div class="gc-credentials-heading"><span aria-hidden="true">✓</span><b>¡Acceso creado!</b></div>
+              <p>Envía este mensaje de forma privada. La contraseña solo aparece aquí después de crearla o renovarla.</p>
+              <textarea id="familyCredentialsText" readonly rows="6" aria-label="Credenciales para compartir"></textarea>
+              <div class="gc-credentials-actions"><button type="button" id="copyFamilyCredentials" class="btn btn-primary">Copiar datos para enviar</button><button type="button" id="hideFamilyCredentials" class="btn btn-secondary">Ocultar</button></div>
+            </div>
+            <h3 class="gc-members-heading">Cuentas familiares</h3>
+            <div id="viewerList" class="viewer-list" aria-live="polite"></div>
+            <button type="button" class="btn btn-secondary gc-copy-link" id="copyFamilyLink">Copiar enlace de la aplicación</button>
+          </section>
+          <button class="btn btn-secondary gc-signout" type="button" id="authSignOut">Cerrar sesión de forma segura</button>
+        </section>
+      </div>
     </div>
   </div>
   <input type="file" id="importFile" accept="application/json,.json" hidden>
