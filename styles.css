@@ -218,6 +218,21 @@ button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible{
 .product-bottom{margin-top:12px;padding-top:12px}.product-bottom .btn{min-height:44px;white-space:normal;line-height:1.25}
 .open-link{width:44px;height:44px;flex:0 0 44px}.deal-flag{max-width:calc(100% - 24px);white-space:normal}
 
+/* Desktop cards reserve independent regions for status, promotion and actions. */
+@media(min-width:761px){
+  #installPwa{display:none!important}
+  .topbar{height:auto;min-height:84px;align-items:center;gap:18px;padding-top:12px;padding-bottom:12px}
+  .top-actions{min-width:0;flex-wrap:wrap;justify-content:flex-end}
+  .local-pill{min-width:0;overflow-wrap:anywhere}
+  .catalog-grid{grid-template-columns:repeat(auto-fit,minmax(min(100%,300px),1fr));gap:20px}
+  .product-card{min-width:0}
+  .product-price-row{display:grid;grid-template-columns:minmax(0,1fr) minmax(94px,auto);align-items:start;gap:14px}
+  .price-block{min-width:0;overflow-wrap:anywhere}
+  .stock-pill{max-width:150px;min-width:94px;align-self:start}
+  .product-body>.deal-flag{position:static;display:inline-flex;align-self:flex-start;margin:1px 0 10px;max-width:100%;line-height:1.25}
+  .product-bottom{display:grid;grid-template-columns:minmax(0,1fr) 44px;align-items:stretch;gap:9px}
+}
+
 .url-analyzer{margin:0 0 20px;padding:18px;border:1px solid #6555a06b;border-radius:15px;
   background:radial-gradient(circle at 96% 0,#795ad322,transparent 45%),linear-gradient(145deg,#1b2030,#121824)}
 .url-analyzer-copy h3{font:800 20px/1.2 Manrope;margin:5px 0 5px;color:#f1edff}.url-analyzer-copy p{margin:0 0 15px;color:#9aa6ba;font-size:11px;line-height:1.55}

@@ -97,9 +97,11 @@
       orig=promo.originalPrice;
     const originalPrice=Number.isFinite(orig)&&Number.isFinite(value)&&orig>value&&orig<=value*10?orig:null;
     const discountPercent=originalPrice===null?null:Math.round((1-value/originalPrice)*100);
+    const campaignVerified=promo?.campaignVerified===true&&!!promo?.campaignName;
     const promotion=originalPrice!==null&&promoCurrent?{
-      label:promo.campaignVerified===true&&promo.campaignName?clamp(promo.campaignName,40):"Oferta verificada",
-      campaignVerified:promo.campaignVerified===true,source:clamp(promo.sourceName||"Tienda oficial",80),checkedAt:promo.checkedAt||S.promotions.checkedAt,
+      // A lower comparable price is useful, but it is not evidence of a named campaign.
+      label:campaignVerified?clamp(promo.campaignName,40):"Rebaja observada",
+      campaignVerified,source:clamp(promo.sourceName||"Tienda oficial",80),checkedAt:promo.checkedAt||S.promotions.checkedAt,
       validUntil:verifiedEnd?promo.validUntil:null,endsAtVerified:verifiedEnd
     }:null;
     return {value,currency,label,kind,originalPrice,discountPercent:discountPercent>0?discountPercent:null,promotion};
@@ -187,11 +189,11 @@
     const converted=price.currency==="USD"&&Number.isFinite(price.value)?(window.GCFX?.convert?.(price.value)||""):"";
     const promo=price.promotion;
     const campaignClass=promo?.campaignVerified&&/^black friday$/i.test(promo.label)?" black-friday":"";
-    const dealBadge=price.discountPercent?'<span class="deal-flag">-'+price.discountPercent+'% '+esc(promo?.label||"OFERTA")+'</span>':"";
+    const dealBadge=price.discountPercent?'<span class="deal-flag">-'+price.discountPercent+'% '+esc(promo?.label||"Precio inferior a referencia")+'</span>':"";
     const localQuote=Number.isFinite(p.localPriceDop)?'<div class="local-quote"><strong>Precio RD: '+esc(priceText(p.localPriceDop,"DOP"))+'</strong><small>'+esc(p.localShopName||"Cotización manual")+' · '+esc(p.localPriceCheckedAt||"sin fecha")+'</small></div>':"";
     const offerMeta=price.originalPrice!==null?'<div class="old-price-row"><del>'+esc(priceText(price.originalPrice,price.currency))+'</del><span>Ahorras '+esc(priceText(price.originalPrice-price.value,price.currency))+'</span></div>':"";
     const promotionMeta=promo?'<div class="promotion-line"><span class="campaign-badge'+campaignClass+'">'+esc(promo.label)+'</span>'+
-      (promo.endsAtVerified?'<span class="promo-countdown" data-promo-end="'+esc(promo.validUntil)+'">'+esc(countdownText(promo.validUntil))+'</span>':"")+'</div><span class="promotion-source">'+esc(promo.source)+' · verificada '+esc(dateText(promo.checkedAt))+(promo.endsAtVerified?' · fin confirmado':' · sin hora final confirmada')+'</span>':"";
+      (promo.endsAtVerified?'<span class="promo-countdown" data-promo-end="'+esc(promo.validUntil)+'">'+esc(countdownText(promo.validUntil))+'</span>':"")+'</div><span class="promotion-source">'+esc(promo.source)+' · '+(promo.campaignVerified?'campaña confirmada':'precio inferior a referencia')+' · '+esc(dateText(promo.checkedAt))+(promo.endsAtVerified?' · fin confirmado':' · sin hora final confirmada')+'</span>':"";
     const link = p.url ? '<a class="open-link" href="'+esc(p.url)+'" target="_blank" rel="noreferrer noopener" aria-label="Visitar tienda de '+name+'" title="Ver en tienda">↗</a>' : "";
     const familyCanMark=S.readOnly&&S.familyBuyer;
     const noChangeLabel=p.status==="Cancelada"?"× Compra cancelada":p.status==="Comprada"?(p.received?"✓ Recibido":"◷ Esperando entrega"):"◷ En lista de compras";
@@ -205,9 +207,9 @@
     const purchaseClass=p.status==="Comprada"?(p.received?"purchase-received":"purchase-awaiting"):"purchase-pending";
     const cardClass="product-card "+purchaseClass+(s.kind==="out"?" stock-out":"")+(price.discountPercent?" promo-active":"");
     return '<article class="'+cardClass+'">' +
-      '<div class="product-image">' + thumb + '<span class="product-flag '+ f.css +'">'+esc(f.text)+'</span>'+dealBadge+'<div class="product-menu"><button data-action="edit" data-id="'+encoded+'" title="Editar" aria-label="Editar '+name+'">✎</button><button data-action="delete" data-id="'+encoded+'" title="Eliminar" aria-label="Eliminar '+name+'">×</button></div></div>' +
+      '<div class="product-image">' + thumb + '<span class="product-flag '+ f.css +'">'+esc(f.text)+'</span><div class="product-menu"><button data-action="edit" data-id="'+encoded+'" title="Editar" aria-label="Editar '+name+'">✎</button><button data-action="delete" data-id="'+encoded+'" title="Eliminar" aria-label="Eliminar '+name+'">×</button></div></div>' +
       '<div class="product-body"><div class="product-meta">'+ esc(p.type) + (p.code ? " · " + esc(p.code) : "") + '</div>' +(p.brand?'<div class="product-brand">'+esc(p.brand)+'</div>':"")+
-      '<h3 class="product-name" title="'+name+'">'+name+'</h3><p class="product-desc">'+notes+'</p>'+
+      '<h3 class="product-name" title="'+name+'">'+name+'</h3><p class="product-desc">'+notes+'</p>'+dealBadge+
       '<div class="product-price-row"><div class="price-block"><div class="price-num '+(price.value==null?'unknown':'')+'">'+(price.value==null?'Consultar precio':esc(priceText(price.value,price.currency)))+'</div>'+offerMeta+promotionMeta+(converted?'<span class="converted-price">'+esc(converted)+' · referencia</span>':"")+'<span class="price-detail">'+esc(price.label)+'</span>'+localQuote+'</div>'+
       '<span class="stock-pill '+s.kind+'">'+esc(s.text)+'</span></div>'+
       '<div class="product-bottom">'+buy+link+'</div></div></article>';
@@ -218,7 +220,7 @@
       b.classList.toggle("active",b.dataset.view === S.view);
       if(b.classList.contains("mobile-tab"))b.setAttribute("aria-current",b.dataset.view===S.view?"page":"false");
     });
-    const names = {all:["Todos los artículos","Equipos, materiales y accesorios en un solo lugar."],pending:["Pendientes de compra","Artículos que todavía necesitamos adquirir."],purchased:["Comprados","Compras confirmadas y productos recibidos."],out:["Sin existencias","Artículos con agotamiento confirmado o cantidad manual igual a cero."],deals:["Ofertas verificadas","Promociones con precio anterior y ahorro comprobables en el proveedor."]};
+    const names = {all:["Todos los artículos","Equipos, materiales y accesorios en un solo lugar."],pending:["Pendientes de compra","Artículos que todavía necesitamos adquirir."],purchased:["Comprados","Compras confirmadas y productos recibidos."],out:["Sin existencias","Artículos con agotamiento confirmado o cantidad manual igual a cero."],deals:["Rebajas y campañas confirmadas","Solo comparaciones fechadas o campañas con evidencia del proveedor."]};
     $("sectionTitle").firstChild.textContent = names[S.view][0] + " ";
     $("sectionSubtitle").textContent=names[S.view][1];
     const current = visibleItems();
