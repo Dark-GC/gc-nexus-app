@@ -2,7 +2,7 @@
 "use strict";
 (() => {
   const $ = id => document.getElementById(id);
-  const state = {client:null,user:null,ready:false,queue:Promise.resolve(),snapshot:new Map(),channel:null,journalChannel:null,pending:false,timer:null,booted:false,ownerId:null,viewer:false,familyRole:null,applyingJournal:false,backupTimer:null,pendingCount:0,syncError:false,epoch:0,sessionClosing:false};
+  const state = {client:null,user:null,ready:false,queue:Promise.resolve(),snapshot:new Map(),channel:null,journalChannel:null,pending:false,timer:null,booted:false,ownerId:null,viewer:false,familyRole:null,applyingJournal:false,backupTimer:null,pendingCount:0,syncError:false,inventoryError:false,journalError:false,epoch:0,sessionClosing:false};
   const backend = () => window.GCInventory;
   const show = (message,mode="info") => {
     const button=$("cloudButton"), note=$("cloudState");
@@ -71,12 +71,12 @@
       if(epoch!==state.epoch)return;
       state.pendingCount=Math.max(0,state.pendingCount-1);
       state.pending=state.pendingCount>0;
-      if(!state.pending){state.syncError=false;show("Inventario y movimientos guardados en la nube.","ok");}
+      if(!state.pending){state.inventoryError=false;state.syncError=state.inventoryError||state.journalError;show(state.syncError?"Inventario guardado; la bitácora necesita sincronización.":"Inventario y movimientos guardados en la nube.",state.syncError?"error":"ok");}
     }).catch(e=>{
       if(epoch!==state.epoch)return;
       state.pendingCount=Math.max(0,state.pendingCount-1);
       state.pending=state.pendingCount>0;
-      state.syncError=true;
+      state.inventoryError=true;state.syncError=true;
       show("Atención: hay cambios locales no sincronizados. "+errorMessage(e),"error");
       console.error("GC GRAPHICS sync:",e);
     });
@@ -188,60 +188,30 @@
       try{window.GCGrowth.restoreFromBackup(data.document);}finally{state.applyingJournal=false;}
     }
   }
-  function notifyGrowth(){
-    if(!state.ready||!state.user||state.viewer||state.applyingJournal)return;
+  async function flushGrowth(){
+    if(!state.ready||!state.user||state.viewer||state.applyingJournal)return true;
     clearTimeout(state.backupTimer);
-    state.backupTimer=setTimeout(async()=>{
-      const backup=window.GCGrowth?.getBackup?.();
-      if(!backup)return;
-      const {error}=await state.client.from("inventory_journal_state").upsert({user_id:state.ownerId,document:backup},{onConflict:"user_id"});
-      if(error)show("Bitácora guardada localmente, aún no en la nube: "+errorMessage(error),"error");
-      else show("Bitácora sincronizada entre dispositivos.","ok");
-    },350);
-  }
-  async function familyAction(mode, details) {
-    if(!state.ready||!state.user||!state.viewer||state.familyRole!=="buyer")
-      throw new Error("No tienes permiso para confirmar compras.");
-    if(!["buy","receive"].includes(mode)||typeof details?.id!=="string"||!details.id)
-      throw new Error("Acción o artículo inválido.");
-    if(state.pending)throw new Error("Hay una actualización en curso.");
-    state.pending=true;
-    show("Guardando confirmación familiar…","busy");
-    try {
-      const args={
-        p_owner_id:state.ownerId,p_item_id:details.id,p_action:mode,
-        p_purchase_date:mode==="buy"?(details.purchaseDate||null):null,
-        p_paid_amount:mode==="buy"?(details.paidAmount??null):null,
-        p_paid_currency:mode==="buy"?(details.paidCurrency||"USD"):"USD",
-        p_purchase_country:mode==="buy"?(details.purchaseCountry||null):null,
-        p_received:mode==="buy"&&details.received===true
-      };
-      const {data,error}=await state.client.rpc("gc_family_purchase_action",args);
-      if(error){
-        const codes={
-          "ARTICLE_NOT_PENDING":"Este artículo ya cambió de estado. Actualiza la ficha.",
-          "ARTICLE_NOT_AWAITING_RECEIPT":"Este artículo no está pendiente de recepción.",
-          "BUYER_PERMISSION_REQUIRED":"Tu permiso de compras fue revocado.",
-          "VERIFIED_EMAIL_REQUIRED":"Primero confirma tu correo electrónico.",
-          "ARTICLE_NOT_FOUND":"La ficha ya no existe en este inventario."
-        };
-        const message=Object.keys(codes).find(k=>String(error.message||"").includes(k));
-        throw new Error(message?codes[message]:String(error.message||"No se pudo registrar.").slice(0,180));
-      }
-      state.pending=false;
-      await loadRemote(false);
-      show(mode==="buy"?"Compra confirmada y registrada en la bitácora de movimientos.":"Recepción física confirmada y registrada.","ok");
-      return data;
+    const owner=state.ownerId,epoch=state.epoch,backup=window.GCGrowth?.getBackup?.();
+    if(!backup)return true;
+    try{
+      const {error}=await state.client.from("inventory_journal_state").upsert({user_id:owner,document:backup},{onConflict:"user_id"});
+      if(error)throw error;
+      if(epoch===state.epoch){state.journalError=false;state.syncError=state.inventoryError||state.journalError;show("Bitácora guardada en la nube.","ok");}
+      return true;
     }catch(e){
-      state.pending=false;
-      show("No se guardó el cambio: "+errorMessage(e),"error");
-      throw e;
+      if(epoch===state.epoch){state.journalError=true;state.syncError=true;show("Atención: bitácora pendiente de sincronizar. "+errorMessage(e),"error");}
+      return false;
     }
+  }
+  function notifyGrowth(){
+    if(!state.ready||!state.user||state.viewer||state.applyingJournal||state.sessionClosing)return;
+    clearTimeout(state.backupTimer);
+    state.backupTimer=setTimeout(()=>{flushGrowth();},350);
   }
   async function beginSession(user) {
     if(!user||state.user?.id===user.id&&state.ready)return;
     await waitInventory();
-    state.epoch++;state.pendingCount=0;state.pending=false;state.syncError=false;state.sessionClosing=false;
+    state.epoch++;state.pendingCount=0;state.pending=false;state.syncError=false;state.inventoryError=false;state.journalError=false;state.sessionClosing=false;
     state.ready=false;state.user=user;state.ownerId=user.id;state.viewer=false;
     show("Verificando acceso privado…","busy");
     const {data:links,error:linkError}=await state.client.from("inventory_viewers").select("owner_id,role");
@@ -289,6 +259,7 @@
     state.sessionClosing=true;
     backend()?.setReadOnly?.(true);
     if(state.pendingCount>0){show("Finalizando sincronización antes de salir…","busy");await state.queue;}
+    if(!state.viewer)await flushGrowth();
     if(state.syncError){
       state.sessionClosing=false;backend()?.setReadOnly?.(state.viewer);
       show("No se puede cerrar sesión todavía: hay movimientos sin respaldo en la nube. Descarga primero una copia JSON del inventario y vuelve a intentar guardar.","error");
