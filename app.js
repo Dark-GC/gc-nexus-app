@@ -11,6 +11,11 @@
   const priceText = (v, c) => Number.isFinite(v) ? new Intl.NumberFormat("en-US", {style: "currency", currency: c || "USD", maximumFractionDigits: 2}).format(v) : "";
   const dateText = v => {try {return v ? new Intl.DateTimeFormat("es-DO", {dateStyle: "medium"}).format(new Date(v)) : "";} catch {return "";}};
   const now = () => new Date().toISOString();
+  // Device-local calendar date (Boston or Dominican Republic), not UTC midnight.
+  const localDay = () => {
+    const d=new Date(),pad=n=>String(n).padStart(2,"0");
+    return d.getFullYear()+"-"+pad(d.getMonth()+1)+"-"+pad(d.getDate());
+  };
   const clamp = (v, max = 1200) => safeText(v).trim().slice(0, max);
   const toNum = value => value === "" || value == null ? null : (Number.isFinite(Number(value)) && Number(value) >= 0 ? Number(value) : null);
   const icon = type => type === "Consumible" ? "◫" : type === "Accesorio" ? "◇" : "▤";
@@ -219,7 +224,14 @@
     $("decisionMessage").textContent=mode==="delete"?"Se eliminará «"+p.name+"» del catálogo de este navegador. Antes puedes exportar una copia JSON.":mode==="buy"?"¿Confirmas la compra de «"+p.name+"»? Se registrará como comprado, con opción de indicar la recepción.":mode==="receive"?"¿Confirmas que recibiste físicamente «"+p.name+"»?":mode==="import"?"Se reemplazarán los artículos actuales por "+(S.incoming?.length || 0)+" artículos de la copia seleccionada.": "El sistema publica capturas de proveedores con fecha y procedencia. Amazon y algunas tiendas pueden bloquear las consultas. Nunca mostramos cifras supuestas como precios o cantidades reales; para nuevos datos debe ejecutarse la actualización automática en GitHub.";
     const confirm=$("confirmDecision");confirm.textContent=mode==="delete"?"Eliminar":mode==="buy"?"Registrar compra":mode==="receive"?"Marcar como recibido":mode==="import"?"Restaurar inventario":"Entendido";
     confirm.className="btn "+(mode==="delete"?"btn-danger":"btn-primary");
-    if(mode==="buy"){$("purchasedDate").value=new Date().toISOString().slice(0,10);$("paidAmount").value="";$("paidCurrency").value="USD";$("purchaseCountry").value="";document.querySelectorAll('input[name="purchaseReceivedChoice"]').forEach(x=>x.checked=false);}
+    if(mode==="buy"){
+      $("purchasedDate").value=localDay();
+      $("paidAmount").value="";
+      $("paidCurrency").value="USD";
+      $("purchaseCountry").value=S.familyBuyer?"US":"";
+      document.querySelectorAll('input[name="purchaseReceivedChoice"]').forEach(x=>x.checked=S.familyBuyer&&x.value==="no");
+      if(S.familyBuyer)$("decisionMessage").textContent="¿Confirmas que compraste «"+p.name+"»? Quedará como comprada y pendiente de entrega; cuando llegue, podrás pulsar «Ya llegó».";
+    }
     showOverlay("decisionOverlay");
   }
   async function shrinkImage(file) {
@@ -286,7 +298,7 @@
     const p=S.items.find(x=>x.id===d.id);if(!p)return closeOverlays();
     if(d.mode==="delete")S.items=S.items.filter(x=>x.id!==p.id);
     if(d.mode==="receive")p.received=true;
-    if(d.mode==="buy"){const choice=document.querySelector('input[name="purchaseReceivedChoice"]:checked')?.value;if(!choice)return toast("Selecciona si ya recibiste físicamente la compra.",true);p.status="Comprada";p.received=choice==="yes";p.purchaseDate=$("purchasedDate").value||new Date().toISOString().slice(0,10);p.paidAmount=toNum($("paidAmount").value);p.paidCurrency=$("paidCurrency").value==="DOP"?"DOP":"USD";p.purchaseCountry=["US","DO"].includes($("purchaseCountry").value)?$("purchaseCountry").value:null;}
+    if(d.mode==="buy"){const choice=document.querySelector('input[name="purchaseReceivedChoice"]:checked')?.value;if(!choice)return toast("Selecciona si ya recibiste físicamente la compra.",true);p.status="Comprada";p.received=choice==="yes";p.purchaseDate=$("purchasedDate").value||localDay();p.paidAmount=toNum($("paidAmount").value);p.paidCurrency=$("paidCurrency").value==="DOP"?"DOP":"USD";p.purchaseCountry=["US","DO"].includes($("purchaseCountry").value)?$("purchaseCountry").value:null;}
     if(d.mode!=="delete")p.editedAt=now();
     save();window.GCGrowth?.recordInventoryAction?.(d.mode,p);
     closeOverlays();render();toast(d.mode==="delete"?"Artículo eliminado.":d.mode==="receive"?"Recepción registrada.":"Compra registrada correctamente.");
