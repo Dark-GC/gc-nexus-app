@@ -264,6 +264,14 @@
   }
   async function requestImmediateAmazonQuote(item){
     if(!state.ready||state.viewer||!state.user||!/^https:\/\/(?:www\.)?(?:amazon\.[^/]+|a\.co|amzn\.to)\//i.test(item?.url||""))return null;
+    // Saving a new item runs through notify() asynchronously. The quote endpoint
+    // checks the owner/ASIN in Supabase, so do not race ahead of that write.
+    const epoch=state.epoch, owner=state.user.id;
+    await state.queue;
+    if(state.epoch!==epoch||!state.ready||state.viewer||state.user?.id!==owner)
+      throw new Error("La sesión cambió antes de consultar Amazon.");
+    if(state.inventoryError||!state.snapshot.has(item.id))
+      throw new Error("El artículo todavía no está guardado en la nube. Reintenta tras sincronizar.");
     const {data}=await state.client.auth.getSession();const token=data?.session?.access_token;
     if(!token)throw new Error("Tu sesión terminó. Vuelve a entrar antes de consultar Amazon.");
     const response=await fetch("https://gc-graphics-prices-api.onrender.com/api/private/amazon-quotes",{method:"POST",headers:{"Content-Type":"application/json",Authorization:"Bearer "+token},body:JSON.stringify({itemId:item.id,url:item.url})});
