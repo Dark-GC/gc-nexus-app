@@ -14,6 +14,7 @@
   <link rel="stylesheet" href="./data/growth.css">
   <script src="./app.js" defer></script>
   <script src="./data/pwa.js" defer></script>
+  <script src="./data/fx.js" defer></script>
   <script src="./data/growth.js" defer></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.118.0" defer></script>
   <script src="./data/cloud.js" defer></script>
@@ -108,6 +109,7 @@
           <button class="btn btn-primary add-top" id="addItem"><span class="btn-plus">＋</span> Agregar artículo</button>
         </section>
         <section id="statGrid" class="stat-grid" aria-label="Indicadores de inventario"></section>
+        <div class="exchange-caption"><span id="fxStatus">Consultando referencia de cambio US$ / RD$…</span><a href="https://www.exchangerate-api.com" target="_blank" rel="noopener noreferrer">Tasa: ExchangeRate-API</a></div>
         <section class="info-strip">
           <div class="info-icon">↗</div>
           <div><strong>Precios verificados, nunca estimados.</strong><span id="feedLine">Comprobando capturas de proveedores...</span></div>
@@ -146,6 +148,7 @@
     <button type="button" class="mobile-tab" data-view="pending" aria-label="Pendientes de compra"><span class="mobile-tab-icon">◷</span><span>Pendientes</span></button>
     <button type="button" class="mobile-tab" data-view="purchased" aria-label="Artículos comprados"><span class="mobile-tab-icon">✓</span><span>Comprados</span></button>
     <button type="button" class="mobile-tab" data-view="deals" aria-label="Ofertas verificadas"><span class="mobile-tab-icon">%</span><span>Ofertas</span></button>
+    <button type="button" class="mobile-tab" data-growth-nav aria-label="Bitácora de crecimiento"><span class="mobile-tab-icon">✦</span><span>Camino</span></button>
     <button type="button" class="mobile-tab" data-growth-nav aria-label="Bitácora y ruta del negocio"><span class="mobile-tab-icon">✦</span><span>Bitácora</span></button>
   </nav>
 
@@ -194,7 +197,8 @@
       <p class="decision-message" id="decisionMessage"></p>
       <div id="purchaseExtra" class="purchase-extra hidden">
         <label class="field"><span>Fecha de compra</span><input id="purchasedDate" type="date"></label>
-        <label class="field"><span>Importe pagado (USD, opcional)</span><input id="paidAmount" type="number" min="0" step="0.01" placeholder="Sin registrar"></label>
+        <label class="field"><span>Importe realmente pagado (opcional)</span><input id="paidAmount" type="number" min="0" step="0.01" placeholder="Sin registrar"></label>
+        <div class="receipt-choices purchase-currency"><label class="field"><span>Moneda</span><select id="paidCurrency"><option value="USD">US$ · Dólar estadounidense</option><option value="DOP">RD$ · Peso dominicano</option></select></label><label class="field"><span>Comprado en</span><select id="purchaseCountry"><option value="">Sin especificar</option><option value="US">Estados Unidos</option><option value="DO">República Dominicana</option></select></label></div>
         <fieldset class="receipt-field"><legend>¿Ya recibiste físicamente este artículo? *</legend>
           <div class="receipt-choices">
             <label><input type="radio" name="purchaseReceivedChoice" value="yes"><span>✓ Sí, recibido</span></label>
@@ -216,6 +220,12 @@
         <button id="authSignUp" type="button" class="btn btn-secondary">Crear cuenta nueva</button>
       </form>
       <div class="cloud-footnote" id="cloudState">Los cambios se guardan localmente mientras no haya conexión.</div>
+      <section class="viewer-tools hidden" id="viewerTools">
+        <h3>Compartir con mamá</h3>
+        <p>Invita su correo para que vea las compras, recepciones, precios y nuestra bitácora. Su acceso será de <strong>solo lectura</strong>.</p>
+        <form id="viewerForm" class="viewer-form"><label class="field"><span>Correo de tu familiar</span><input id="viewerEmail" type="email" autocomplete="off" required placeholder="correo@ejemplo.com"></label><button type="submit" class="btn btn-primary">Dar acceso de lectura</button></form>
+        <div id="viewerList" class="viewer-list"></div>
+      </section>
       <div class="modal-foot"><button class="btn btn-secondary hidden" type="button" id="authSignOut">Cerrar sesión</button></div>
     </div>
   </div>
