@@ -6,7 +6,7 @@
   const backend = () => window.GCInventory;
   const show = (message,mode="info") => {
     const button=$("cloudButton"), note=$("cloudState");
-    if(button)button.textContent=mode==="busy"?"☁ Guardando…":mode==="error"?"☁ Sin conexión":state.viewer?(state.familyRole==="buyer"?"🛒 Compras familiares":"👁 Vista familiar"):mode==="ok"?"☁ Sincronizado":"☁ Conectar nube";
+    if(button)button.textContent=mode==="busy"?"☁ Guardando…":mode==="error"?"⚠ Revisar acceso":state.viewer?(state.familyRole==="buyer"?"🛒 Compras familiares":"👁 Vista familiar"):state.ready?"👥 Cuentas familiares":"🔒 Ingresar";
     if(note)note.textContent=message;
     const connection=document.querySelector(".connection");
     if(connection&&connection.lastChild?.nodeType===3)connection.lastChild.nodeValue=state.ready?(state.viewer?" Vista familiar · sincronizada":" Registros sincronizados · copia local"):" Sincronización pendiente";
@@ -204,7 +204,7 @@
         else{item.role=chosen;show("Permisos actualizados.","ok");}
         permission.disabled=false;
       });
-      const reset=document.createElement("button");reset.type="button";reset.textContent="Nueva clave";reset.className="btn btn-secondary";
+      const reset=document.createElement("button");reset.type="button";reset.textContent="Activar / nueva clave";reset.className="btn btn-secondary";
       reset.addEventListener("click",async()=>{
         if(!confirm("¿Generar una contraseña nueva para "+item.viewer_email+"? La anterior dejará de funcionar."))return;
         reset.disabled=true;reset.textContent="Generando…";
