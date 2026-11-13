@@ -62,3 +62,13 @@ test("family buyer has a declared RPC action, not merely a reference on window",
  assert.match(client,/await loadRemote\(false\)/);
  assert.match(app,/window\.GCCloud\?\.familyAction/);
 });
+
+test("family purchase receipts surface as server-authored, noneditable diary entries",()=>{
+ const cloud=r("data/cloud.js"),growth=r("data/growth.js");
+ assert.match(cloud,/async function fetchFamilyEvents\s*\(/);
+ assert.match(cloud,/await fetchFamilyEvents\(\)/);
+ assert.match(growth,/function setFamilyEvents\s*\(/);
+ assert.match(growth,/e\.detail\?\.actor_role!=="buyer"/);
+ assert.match(growth,/e\.server\?'\s*'/);
+ assert.match(growth,/st\.familyEvents/);
+});
