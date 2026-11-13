@@ -1,0 +1,26 @@
+{
+  "id": "/data/app.html",
+  "name": "GC GRAPHICS · Origen",
+  "short_name": "GC ORIGEN",
+  "description": "Inventario privado y bitácora del crecimiento de GC GRAPHICS",
+  "start_url": "/data/app.html",
+  "scope": "/data/",
+  "display": "standalone",
+  "background_color": "#0b0e16",
+  "theme_color": "#0b0e16",
+  "lang": "es-DO",
+  "icons": [
+    {
+      "src": "/data/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/favicon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}
