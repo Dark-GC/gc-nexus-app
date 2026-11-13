@@ -229,3 +229,6 @@ body.family-viewer .growth-pane{padding-bottom:10px}
  #installPwa{max-width:95px}
 }
 @media(max-width:370px){.mobile-tab{font-size:8px}.cloud-button{font-size:9px}#installPwa{max-width:81px;padding-left:6px;padding-right:6px}}
+
+/* Prevent cramped header controls on 320-430px phones */
+@media(max-width:520px){.topbar{justify-content:flex-end}.topbar .crumbs{display:none}.top-actions{width:100%;justify-content:space-between;gap:6px}.top-actions .cloud-button{flex:0 1 auto;white-space:nowrap}.exchange-caption{font-size:10px}.family-status{font-size:10px}}
