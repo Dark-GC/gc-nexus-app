@@ -243,7 +243,7 @@
    $("growthModal").addEventListener("click",e=>{if(e.target===$("growthModal"))closeForm();});
    document.addEventListener("keydown",e=>{if(e.key==="Escape")closeForm();});
  }
- window.GCGrowth={getBackup,restoreFromBackup,validateBackup:validBackup,recordInventoryAction,isOpen:()=>st.open,reassertNav:()=>{
+ window.GCGrowth={getBackup,restoreFromBackup,validateBackup:validBackup,recordInventoryAction,clearPrivateView:()=>{st.entries=[];st.milestones=defaults();try{localStorage.removeItem(KEY);}catch{}if(st.open)render();},isOpen:()=>st.open,reassertNav:()=>{
    if(st.open)document.querySelectorAll("[data-view]").forEach(b=>b.classList.remove("active"));
  }};
  if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",init);else init();
