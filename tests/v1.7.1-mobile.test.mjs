@@ -13,3 +13,9 @@ test("Amazon stays an observed snapshot without automated scraping or live-stock
  assert.match(app,/amazon-snapshot/);assert.match(app,/stock no confirmado/);assert.match(server,/const ALLOWED_SITES/);
  assert.doesNotMatch(server,/amazon.*fetchPage/i);
 });
+test("V1.7.2 isolates standalone gesture prevention and structurally contains the purchase date",()=>{
+ const pwa=read("data/pwa.js"),html=read("index.html"),app=read("app.js"),css=read("styles.css");
+ assert.match(pwa,/display-mode:standalone/);assert.match(pwa,/gesturestart/);assert.match(pwa,/insideViewer/);
+ assert.match(html,/id="purchasedDate" type="text" inputmode="numeric"/);assert.match(html,/id="purchaseToday"/);
+ assert.match(app,/validPurchaseDate/);assert.match(css,/\.purchase-date-control\{display:flex;min-width:0;width:100%/);
+});

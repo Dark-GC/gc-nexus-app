@@ -16,6 +16,7 @@
     const d=new Date(),pad=n=>String(n).padStart(2,"0");
     return d.getFullYear()+"-"+pad(d.getMonth()+1)+"-"+pad(d.getDate());
   };
+  const validPurchaseDate=value=>{const v=safeText(value).trim();if(!v)return null;const m=/^(\d{4})-(\d{2})-(\d{2})$/.exec(v);if(!m)return null;const date=new Date(Date.UTC(+m[1],+m[2]-1,+m[3]));return date.getUTCFullYear()===+m[1]&&date.getUTCMonth()===+m[2]-1&&date.getUTCDate()===+m[3]?v:null;};
   const clamp = (v, max = 1200) => safeText(v).trim().slice(0, max);
   const toNum = value => value === "" || value == null ? null : (Number.isFinite(Number(value)) && Number(value) >= 0 ? Number(value) : null);
   const icon = type => type === "Consumible" ? "◫" : type === "Accesorio" ? "◇" : "▤";
@@ -382,7 +383,7 @@
         const choice=document.querySelector('input[name="purchaseReceivedChoice"]:checked')?.value;
         if(!choice)return toast("Indica si el artículo ya llegó físicamente.",true);
         details.received=choice==="yes";
-        details.purchaseDate=$("purchasedDate").value||null;
+        details.purchaseDate=validPurchaseDate($("purchasedDate").value);if($("purchasedDate").value&&!details.purchaseDate)return toast("Escribe una fecha válida en formato AAAA-MM-DD.",true);
         details.paidAmount=toNum($("paidAmount").value);
         details.paidCurrency=$("paidCurrency").value==="DOP"?"DOP":"USD";
         details.purchaseCountry=["US","DO"].includes($("purchaseCountry").value)?$("purchaseCountry").value:null;
@@ -409,7 +410,7 @@
     const p=S.items.find(x=>x.id===d.id);if(!p)return closeOverlays();
     if(d.mode==="delete")S.items=S.items.filter(x=>x.id!==p.id);
     if(d.mode==="receive")p.received=true;
-    if(d.mode==="buy"){const choice=document.querySelector('input[name="purchaseReceivedChoice"]:checked')?.value;if(!choice)return toast("Selecciona si ya recibiste físicamente la compra.",true);p.status="Comprada";p.received=choice==="yes";p.purchaseDate=$("purchasedDate").value||localDay();p.paidAmount=toNum($("paidAmount").value);p.paidCurrency=$("paidCurrency").value==="DOP"?"DOP":"USD";p.purchaseCountry=["US","DO"].includes($("purchaseCountry").value)?$("purchaseCountry").value:null;}
+    if(d.mode==="buy"){const choice=document.querySelector('input[name="purchaseReceivedChoice"]:checked')?.value;if(!choice)return toast("Selecciona si ya recibiste físicamente la compra.",true);const purchaseDate=validPurchaseDate($("purchasedDate").value)||localDay();if($("purchasedDate").value&&!validPurchaseDate($("purchasedDate").value))return toast("Escribe una fecha válida en formato AAAA-MM-DD.",true);p.status="Comprada";p.received=choice==="yes";p.purchaseDate=purchaseDate;p.paidAmount=toNum($("paidAmount").value);p.paidCurrency=$("paidCurrency").value==="DOP"?"DOP":"USD";p.purchaseCountry=["US","DO"].includes($("purchaseCountry").value)?$("purchaseCountry").value:null;}
     if(d.mode!=="delete")p.editedAt=now();
     save();window.GCGrowth?.recordInventoryAction?.(d.mode,p);
     closeOverlays();render();toast(d.mode==="delete"?"Artículo eliminado.":d.mode==="receive"?"Recepción registrada.":"Compra registrada correctamente.");
@@ -501,6 +502,7 @@
     ["closeForm","cancelForm","closeDecision","cancelDecision","imageViewerClose"].forEach(id=>$(id)?.addEventListener("click",closeOverlays));
     $("itemForm").addEventListener("submit",recordForm);$("confirmDecision").addEventListener("click",confirmDecision);
     $("analyzeProduct").addEventListener("click",analyzeProductUrl);
+    $("purchaseToday")?.addEventListener("click",()=>{$("purchasedDate").value=localDay();});
     $("itemUrl").addEventListener("paste",()=>{setAnalyzeStatus("Enlace recibido. Iniciando análisis seguro…","busy");setTimeout(analyzeProductUrl,0);});
     $("itemUrl").addEventListener("input",()=>{$("urlPreview").classList.add("hidden");if(!$("itemUrl").value)setAnalyzeStatus("Pega un enlace. El formulario manual permanece disponible.","idle");});
     $("uploadPhoto").addEventListener("change",async e=>{if(!e.target.files?.length)return;try{S.pendingPhoto=await shrinkImage(e.target.files[0]);toast("Foto optimizada y lista para guardar.");}catch(err){toast(err.message,true);}});

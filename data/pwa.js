@@ -6,7 +6,16 @@ if(promptEvent){await promptEvent["prompt"]();promptEvent=null;return;}
 await window.GCDialog?.notice?.({title:"Instalar GC GRAPHICS",kicker:"APLICACIÓN PRIVADA",message:/iPhone|iPad|iPod/.test(navigator.userAgent)?
 "Abre esta página en Safari, toca Compartir y después «Añadir a pantalla de inicio».":
 "En el menú de tu navegador, selecciona «Instalar aplicación» o «Añadir a pantalla de inicio»."});}
-function init(){document.getElementById("installPwa")?.addEventListener("click",install);
+function installStandaloneGesturePolicy(){
+ const standalone=matchMedia("(display-mode:standalone)").matches||navigator.standalone===true;if(!standalone)return;
+ document.documentElement.classList.add("gc-standalone");
+ const insideViewer=target=>Boolean(target.closest?.("#imageOverlay:not(.hidden) .image-viewer-stage"));
+ document.addEventListener("gesturestart",e=>{if(!insideViewer(e.target))e.preventDefault();},{passive:false});
+ document.addEventListener("gesturechange",e=>{if(!insideViewer(e.target))e.preventDefault();},{passive:false});
+ document.addEventListener("touchmove",e=>{if(e.touches.length>1&&!insideViewer(e.target))e.preventDefault();},{passive:false});
+ let lastTap=0;document.addEventListener("touchend",e=>{const t=Date.now();if(t-lastTap<280&&!insideViewer(e.target))e.preventDefault();lastTap=t;},{passive:false});
+}
+function init(){document.getElementById("installPwa")?.addEventListener("click",install);installStandaloneGesturePolicy();
 if(embedded&&"serviceWorker" in navigator)navigator.serviceWorker.register("/data/sw.js",{scope:"/data/"}).catch(console.info);
 if(matchMedia("(display-mode:standalone)").matches||navigator.standalone===true)document.getElementById("installPwa")?.setAttribute("hidden","");
 }
