@@ -19,6 +19,8 @@ jobs:
     timeout-minutes: 12
     env:
       FIRECRAWL_API_KEY: ${{ secrets.FIRECRAWL_API_KEY }}
+      SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+      SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
     steps:
       - uses: actions/checkout@v4
         with:
@@ -31,12 +33,12 @@ jobs:
         id: credential
         shell: bash
         run: |
-          if [ -n "$FIRECRAWL_API_KEY" ]; then
+          if [ -n "$FIRECRAWL_API_KEY" ] && [ -n "$SUPABASE_URL" ] && [ -n "$SUPABASE_SERVICE_ROLE_KEY" ]; then
             echo "configured=yes" >> "$GITHUB_OUTPUT"
             echo "Firecrawl secret present. Proceeding under the 500-credit monthly automation cap."
           else
             echo "configured=no" >> "$GITHUB_OUTPUT"
-            echo "::warning::BLOCKED: configure FIRECRAWL_API_KEY in GitHub Actions secrets to activate automatic Amazon checks."
+            echo "::warning::BLOCKED: configure Firecrawl plus private Supabase service credentials to activate the shared Amazon budget."
           fi
       - name: Test price normalisation without provider requests
         if: steps.credential.outputs.configured == 'yes'

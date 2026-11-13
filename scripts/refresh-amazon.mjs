@@ -94,7 +94,7 @@ async function retrieve(asins, key) {
   return {records: item.data.results, timestamp: item.data.observed_at_ms, credits: data.data.creditsCost ?? PER_BATCH_CREDITS};
 }
 
-export async function refreshAmazon({key, date = new Date(), fetchBatch = retrieve} = {}) {
+export async function refreshAmazon({key, date = new Date(), fetchBatch = retrieve, budget = null} = {}) {
   if (!key) throw new Error('FIRECRAWL_API_KEY missing: no requests executed');
   const day = date.toISOString().slice(0,10);
   const month = calendarMonth(date);
@@ -133,8 +133,19 @@ export async function refreshAmazon({key, date = new Date(), fetchBatch = retrie
     const keyForBatch = batchKey(batch);
     if (run.completedBatchKeys.includes(keyForBatch)) continue;
     if (ledger.spent + PER_BATCH_CREDITS > MONTHLY_CAP) break;
+    const centralKey='daily:'+month+':'+keyForBatch;
+    if(budget){
+      const reservation=await budget.reserve(centralKey,PER_BATCH_CREDITS,'daily',month);
+      if(!reservation?.accepted)throw new Error('Central monthly budget cap reached');
+      if(!reservation.new){
+        if(reservation.state==='committed'){run.completedBatchKeys.push(keyForBatch);continue;}
+        throw new Error('Central reservation '+reservation.state+' requires review');
+      }
+    }
     const ids = batch.map(([,v]) => v.asin);
-    const result = await fetchBatch(ids, key);
+    let result;
+    try { result = await fetchBatch(ids, key); }
+    catch(error){ if(budget)await budget.finalize(centralKey,'unknown'); throw error; }
     // Treat price quoted by the provider as the upper bound for this request.
     const credits = Number(result.credits);
     if (!Number.isInteger(credits) || credits < 0 || credits > PER_BATCH_CREDITS) throw new Error('Unexpected provider credit charge');
@@ -142,6 +153,7 @@ export async function refreshAmazon({key, date = new Date(), fetchBatch = retrie
     spentThisRun += credits;
     run.chargedCredits += credits;
     await writeAtomic(LEDGER, ledger); // Preserve spent credit accounting across failures.
+    if(budget)await budget.finalize(centralKey,'committed');
     if (result.records.length !== batch.length) throw new Error('Incomplete batch response');
     for (const [id, previous] of batch) {
       const row = result.records.find(r => r.asin === previous.asin);
@@ -169,8 +181,17 @@ export async function refreshAmazon({key, date = new Date(), fetchBatch = retrie
   return {status:'checked',day,checked,unavailable,rejected,spentThisRun,monthSpent:ledger.spent};
 }
 
+export function supabaseBudget(url,key) {
+  if(!url||!key)throw new Error('SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY required for central budget');
+  const call=async(name,body)=>{
+    const res=await fetch(url+'/rest/v1/rpc/'+name,{method:'POST',headers:{apikey:key,Authorization:'Bearer '+key,'Content-Type':'application/json'},body:JSON.stringify(body)});
+    const json=await res.json().catch(()=>null);if(!res.ok)throw Error('central_budget_'+res.status);return json;
+  };
+  return {reserve:(p_key,p_credits,p_source,month)=>call('gc_reserve_amazon_quote',{p_key,p_credits,p_source,p_month:month+'-01'}),finalize:(p_key,p_state)=>call('gc_finalize_amazon_quote',{p_key,p_state})};
+}
+
 if (process.argv[1] && fileURLToPath(import.meta.url) === resolve(process.argv[1])) {
-  refreshAmazon({key:process.env.FIRECRAWL_API_KEY}).then(result => {
+  refreshAmazon({key:process.env.FIRECRAWL_API_KEY,budget:supabaseBudget(process.env.SUPABASE_URL,process.env.SUPABASE_SERVICE_ROLE_KEY)}).then(result => {
     console.log(JSON.stringify(result));
     if (result.status === 'checked' && !result.checked) process.exitCode = 1;
   }).catch(error => { console.error('GC Amazon refresh blocked:', error.message); process.exitCode = 1; });

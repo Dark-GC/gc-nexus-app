@@ -224,9 +224,10 @@ const files = {
   '/favicon.svg': ['favicon.svg', 'image/svg+xml']
 };
 
+const APP_ORIGIN='https://gc-graphics-inventory.onrender.com';
 function send(res, status, data, type = 'application/json; charset=utf-8') {
   res.writeHead(status, {
-    'Access-Control-Allow-Origin': 'https://gc-graphics-inventory.onrender.com',
+    'Access-Control-Allow-Origin': APP_ORIGIN,
     'Vary': 'Origin',
     'Content-Type': type,
     'Cache-Control': 'no-store',
@@ -257,9 +258,14 @@ async function immediateAmazonQuote(body,token) {
   if(!who.ok||!user?.id||user.app_metadata?.gc_admin!==true) return {status:403,body:{error:'owner_required'}};
   if(typeof body.itemId!=='string'||!/^gc-[a-z0-9-]{3,100}$/i.test(body.itemId)) return {status:422,body:{error:'invalid_item_id'}};
   let product;try{product=await resolveAmazonProductUrl(body.url);}catch(e){return {status:422,body:{error:String(e.message||'invalid_amazon_url')}};}
+  const saved=await supabase(config,'/rest/v1/inventory_items?select=product_url&user_id=eq.'+encodeURIComponent(user.id)+'&id=eq.'+encodeURIComponent(body.itemId));
+  if(!Array.isArray(saved)||saved.length!==1)return {status:404,body:{error:'inventory_item_not_found'}};
+  let savedProduct;try{savedProduct=await resolveAmazonProductUrl(saved[0].product_url);}catch{return {status:422,body:{error:'stored_item_not_amazon'}};}
+  if(savedProduct.asin!==product.asin)return {status:409,body:{error:'asin_does_not_match_stored_item'}};
   const requestKey='immediate:'+user.id+':'+product.asin;
-  const reserve=await supabase(config,'/rest/v1/rpc/reserve_amazon_quote',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({p_key:requestKey,p_credits:5})});
-  if(reserve!==true)return {status:429,body:{error:'monthly_budget_exhausted'}};
+  const reserve=await supabase(config,'/rest/v1/rpc/gc_reserve_amazon_quote',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({p_key:requestKey,p_credits:5,p_source:'immediate'})});
+  if(!reserve?.accepted)return {status:429,body:{error:'monthly_budget_exhausted'}};
+  if(!reserve.new)return {status:reserve.state==='committed'?409:503,body:{error:reserve.state==='committed'?'quote_already_recorded':'quote_pending_review'}};
   await supabase(config,'/rest/v1/rpc/gc_mark_private_amazon_request',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({p_owner_id:user.id,p_item_id:body.itemId,p_asin:product.asin,p_product_url:product.url,p_request_key:requestKey,p_status:'running'})});
   try {
     const reply=await fetch('https://api.firecrawl.dev/v2/scrape',{method:'POST',headers:{Authorization:'Bearer '+config.FIRECRAWL_API_KEY,'Content-Type':'application/json'},body:JSON.stringify({alexandria:{provider:'amazon-com',capability:'products/prices',options:{asins:[product.asin]}}}),signal:AbortSignal.timeout(60000)});
@@ -267,14 +273,15 @@ async function immediateAmazonQuote(body,token) {
     const result=raw?.data?.alexandria?.find(x=>x.provider==='amazon-com'&&x.capability==='products/prices');
     const quote=normaliseImmediateAmazon(result?.data?.results?.[0],{...product,observedAt:result?.data?.observed_at_ms}); if(!quote)throw Error('unverified_provider_response');
     await supabase(config,'/rest/v1/rpc/gc_record_private_amazon_quote',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({p_owner_id:user.id,p_item_id:body.itemId,p_asin:quote.asin,p_price:quote.price,p_currency:quote.currency,p_stock_status:quote.stockStatus,p_seller:quote.seller,p_product_url:quote.productUrl,p_observed_url:quote.observedUrl,p_observed_at:quote.checkedAt,p_verification_status:quote.priceStatus,p_request_key:requestKey})});
-    await supabase(config,'/rest/v1/rpc/finish_amazon_quote_reservation',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({p_key:requestKey,p_success:true})});
+    await supabase(config,'/rest/v1/rpc/gc_finalize_amazon_quote',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({p_key:requestKey,p_state:'committed'})});
     return {status:200,body:{quote}};
   }catch(error){
     await supabase(config,'/rest/v1/rpc/gc_mark_private_amazon_request',{
       method:'POST',headers:{'Content-Type':'application/json'},
       body:JSON.stringify({p_owner_id:user.id,p_item_id:body.itemId,p_asin:product.asin,p_product_url:product.url,p_request_key:requestKey,p_status:'failed',p_error:String(error.message||'provider_error').slice(0,120)})
     }).catch(()=>{});
-    await supabase(config,'/rest/v1/rpc/finish_amazon_quote_reservation',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({p_key:requestKey,p_success:false})}).catch(()=>{});
+    // A network/provider failure may still have been charged. Preserve it as unknown; never silently release spend.
+    await supabase(config,'/rest/v1/rpc/gc_finalize_amazon_quote',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({p_key:requestKey,p_state:'unknown'})}).catch(()=>{});
     return {status:503,body:{error:'amazon_quote_unavailable'}};
   }
 }
@@ -282,6 +289,10 @@ async function immediateAmazonQuote(body,token) {
 export const server = http.createServer(async (req, res) => {
   try {
     const target = new URL(req.url || '/', 'http://localhost');
+    if (target.pathname==='/api/private/amazon-quotes' && req.method==='OPTIONS') {
+      if(req.headers.origin!==APP_ORIGIN)return send(res,403,JSON.stringify({error:'origin_not_allowed'}));
+      res.writeHead(204,{'Access-Control-Allow-Origin':APP_ORIGIN,'Access-Control-Allow-Methods':'POST, OPTIONS','Access-Control-Allow-Headers':'Authorization, Content-Type','Access-Control-Max-Age':'600','Vary':'Origin','Cache-Control':'no-store'});return res.end();
+    }
     if (req.method==='POST' && target.pathname==='/api/private/amazon-quotes') {
       const token=String(req.headers.authorization||'').replace(/^Bearer\s+/i,'');
       if(!token)return send(res,401,JSON.stringify({error:'authentication_required'}));
