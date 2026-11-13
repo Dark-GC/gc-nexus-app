@@ -56,8 +56,10 @@ test("only a scoped invitation can permit password reset of a managed family acc
 });
 test("PWA offline shell includes new login UI",()=>{
  const sw=read("data/sw.js"),css=read("data/login.css");
- assert.match(sw,/gc-origen-pwa-v5/);
+ assert.match(sw,/gc-origen-pwa-v6/);
  assert.match(sw,/\/data\/login\.css/);
+ assert.match(sw,/self\.skipWaiting/);
+ assert.match(sw,/NETWORK_FIRST/);
  assert.match(css,/@media\(max-width:760px\)/);
  assert.match(css,/@media\(max-width:760px\) and \(max-height:730px\)/);
  assert.match(css,/\.gc-access-brand/);
