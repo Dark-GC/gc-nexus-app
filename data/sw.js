@@ -1,5 +1,5 @@
-/* GC GRAPHICS ORIGEN — PWA v7. Shell-only cache; private APIs never cached. */
-const CACHE="gc-origen-pwa-v7";
+/* GC GRAPHICS ORIGEN — PWA v8. Shell-only cache; private APIs never cached. */
+const CACHE="gc-origen-pwa-v8";
 const STATIC=[
   "/data/app.html","/index.html","/app.js","/styles.css",
   "/favicon.svg","/data/icon-192.png",

@@ -1,6 +1,6 @@
 {
   "name": "gc-graphics-inventory",
-  "version": "1.6.1",
+  "version": "1.7.0",
   "private": true,
   "description": "Inventario de compras de GC GRAPHICS",
   "type": "module",

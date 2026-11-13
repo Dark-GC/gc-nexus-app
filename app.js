@@ -177,11 +177,12 @@
   function countdownText(value){
     const remaining=Math.max(0,Date.parse(value)-Date.now());
     const total=Math.floor(remaining/1000),days=Math.floor(total/86400),hours=Math.floor(total%86400/3600),minutes=Math.floor(total%3600/60),seconds=total%60;
-    return days+"d "+String(hours).padStart(2,"0")+"h "+String(minutes).padStart(2,"0")+"m "+String(seconds).padStart(2,"0")+"s";
+    return String(days).padStart(2,"0")+" días · "+String(hours).padStart(2,"0")+" h · "+String(minutes).padStart(2,"0")+" min · "+String(seconds).padStart(2,"0")+" s";
   }
   function productCard(p) {
     const s = productStock(p), f = flag(p), price = productPrice(p), image = productImage(p);
-    const thumb = image ? '<img loading="lazy" data-product-id="'+ esc(p.id) +'" referrerpolicy="no-referrer" src="' + esc(image) + '" alt="Imagen del producto '+ esc(p.name) +'">' : '<div class="product-symbol">' + esc(titleInitials(p.brand || p.name)) + '</div>';
+    const name = esc(p.name), encoded = esc(p.id), notes = esc(p.notes || "Sin descripción adicional.");
+    const thumb = image ? '<button type="button" class="product-image-open" data-action="view-image" data-id="'+encoded+'" aria-label="Ampliar imagen de '+esc(p.name)+'"><img loading="lazy" data-product-id="'+ esc(p.id) +'" referrerpolicy="no-referrer" src="' + esc(image) + '" alt="Imagen completa del producto '+ esc(p.name) +'"></button>' : '<div class="product-symbol">' + esc(titleInitials(p.brand || p.name)) + '</div>';
     const converted=price.currency==="USD"&&Number.isFinite(price.value)?(window.GCFX?.convert?.(price.value)||""):"";
     const promo=price.promotion;
     const campaignClass=promo?.campaignVerified&&/^black friday$/i.test(promo.label)?" black-friday":"";
@@ -190,7 +191,6 @@
     const offerMeta=price.originalPrice!==null?'<div class="old-price-row"><del>'+esc(priceText(price.originalPrice,price.currency))+'</del><span>Ahorras '+esc(priceText(price.originalPrice-price.value,price.currency))+'</span></div>':"";
     const promotionMeta=promo?'<div class="promotion-line"><span class="campaign-badge'+campaignClass+'">'+esc(promo.label)+'</span>'+
       (promo.endsAtVerified?'<span class="promo-countdown" data-promo-end="'+esc(promo.validUntil)+'">'+esc(countdownText(promo.validUntil))+'</span>':"")+'</div><span class="promotion-source">'+esc(promo.source)+' · verificada '+esc(dateText(promo.checkedAt))+(promo.endsAtVerified?' · fin confirmado':' · sin hora final confirmada')+'</span>':"";
-    const name = esc(p.name), encoded = esc(p.id), notes = esc(p.notes || "Sin descripción adicional.");
     const link = p.url ? '<a class="open-link" href="'+esc(p.url)+'" target="_blank" rel="noreferrer noopener" aria-label="Visitar tienda de '+name+'" title="Ver en tienda">↗</a>' : "";
     const familyCanMark=S.readOnly&&S.familyBuyer;
     const noChangeLabel=p.status==="Cancelada"?"× Compra cancelada":p.status==="Comprada"?(p.received?"✓ Recibido":"◷ Esperando entrega"):"◷ En lista de compras";
@@ -248,7 +248,22 @@
   function scheduleCountdowns(){if(countdownTimer)return;countdownTimer=setInterval(updateCountdowns,1000);}
   function setView(v) {S.view=v;S.category="Todas";$("searchInput").value="";S.query="";render();}
   function showOverlay(id) {$(id).classList.remove("hidden"); document.body.style.overflow="hidden";}
-  function closeOverlays() {["formOverlay","decisionOverlay"].forEach(id=>$(id).classList.add("hidden"));document.body.style.overflow=""; S.editing=null; S.pendingPhoto=null; S.decision=null;}
+  function closeOverlays() {["formOverlay","decisionOverlay","imageOverlay"].forEach(id=>$(id)?.classList.add("hidden"));document.body.style.overflow=""; S.editing=null; S.pendingPhoto=null; S.decision=null;}
+  function showImage(p){
+    const image=productImage(p);if(!image)return;
+    const img=$("imageViewerImg");img.src=image;img.alt="Imagen completa de "+p.name;img.style.transform="translate(0px,0px) scale(1)";
+    $("imageViewerTitle").textContent=p.name;showOverlay("imageOverlay");$("imageViewerClose").focus();
+  }
+  function bindImageZoom(){
+    const stage=$("imageViewerStage"),img=$("imageViewerImg");if(!stage||!img||!window.PointerEvent)return;
+    const touches=new Map();let scale=1,startScale=1,startDistance=0,x=0,y=0,lastX=0,lastY=0;
+    const paint=()=>img.style.transform="translate("+x+"px,"+y+"px) scale("+scale+")";
+    const distance=()=>{const pts=[...touches.values()];return pts.length>1?Math.hypot(pts[0].x-pts[1].x,pts[0].y-pts[1].y):0;};
+    stage.addEventListener("pointerdown",e=>{touches.set(e.pointerId,{x:e.clientX,y:e.clientY});stage.setPointerCapture?.(e.pointerId);if(touches.size===1){lastX=e.clientX;lastY=e.clientY;}else{startScale=scale;startDistance=distance();}});
+    stage.addEventListener("pointermove",e=>{if(!touches.has(e.pointerId))return;touches.set(e.pointerId,{x:e.clientX,y:e.clientY});if(touches.size>1&&startDistance){scale=Math.max(1,Math.min(3,startScale*distance()/startDistance));paint();}else if(scale>1){x+=e.clientX-lastX;y+=e.clientY-lastY;lastX=e.clientX;lastY=e.clientY;paint();}});
+    const end=e=>{touches.delete(e.pointerId);if(!touches.size&&scale===1){x=0;y=0;paint();}};stage.addEventListener("pointerup",end);stage.addEventListener("pointercancel",end);
+    stage.addEventListener("dblclick",()=>{scale=scale>1?1:2;x=0;y=0;paint();});
+  }
   function showForm(item=null) {
     if(S.readOnly)return toast("Vista familiar: este inventario es de solo lectura.",true);
     closeOverlays();S.editing=item ? item.id : null;S.pendingPhoto=null;
@@ -473,13 +488,14 @@
     $("productGrid").addEventListener("click",e=>{
       const b=e.target.closest("button[data-action]");if(!b)return;
       const p=S.items.find(x=>x.id===b.dataset.id);if(!p)return;
+      if(b.dataset.action==="view-image")return showImage(p);
       if(b.dataset.action==="edit")showForm(p);
       if(b.dataset.action==="buy"||b.dataset.action==="delete"||b.dataset.action==="receive")showDecision(b.dataset.action,p);
     });
     $("searchInput").addEventListener("input",e=>{S.query=e.target.value;render();});
     $("sortSelect").addEventListener("change",e=>{S.sort=e.target.value;render();});
     ["addItem","sideAdd","emptyAdd"].forEach(id=>$(id).addEventListener("click",()=>showForm()));
-    ["closeForm","cancelForm","closeDecision","cancelDecision"].forEach(id=>$(id).addEventListener("click",closeOverlays));
+    ["closeForm","cancelForm","closeDecision","cancelDecision","imageViewerClose"].forEach(id=>$(id)?.addEventListener("click",closeOverlays));
     $("itemForm").addEventListener("submit",recordForm);$("confirmDecision").addEventListener("click",confirmDecision);
     $("analyzeProduct").addEventListener("click",analyzeProductUrl);
     $("itemUrl").addEventListener("paste",()=>{setAnalyzeStatus("Enlace recibido. Iniciando análisis seguro…","busy");setTimeout(analyzeProductUrl,0);});
@@ -491,11 +507,11 @@
     $("importFile").addEventListener("change",e=>importJSON(e.target.files[0]));
     window.addEventListener("gc-fx-updated",()=>render());
     $("learnFeed").addEventListener("click",()=>showDecision("info"));
-    ["formOverlay","decisionOverlay"].forEach(id=>$(id).addEventListener("click",e=>{if(e.target===$(id))closeOverlays();}));
+    ["formOverlay","decisionOverlay","imageOverlay"].forEach(id=>$(id)?.addEventListener("click",e=>{if(e.target===$(id))closeOverlays();}));
     document.addEventListener("keydown",e=>{if(e.key==="Escape")closeOverlays();});
   }
   async function init(){
-    bind();
+    bind();bindImageZoom();
     let stored=null;try{stored=JSON.parse(localStorage.getItem(KEY)||"null");}catch{}
     if(stored&&Array.isArray(stored.items)){S.items=stored.items.map(safeItem);}
     else{

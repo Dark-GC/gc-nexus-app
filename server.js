@@ -241,7 +241,7 @@ export const server = http.createServer(async (req, res) => {
   try {
     const target = new URL(req.url || '/', 'http://localhost');
     if (req.method !== 'GET') return send(res, 405, JSON.stringify({ error: 'method_not_allowed' }));
-    if (target.pathname === '/api/health') return send(res, 200, JSON.stringify({ ok: true, app: 'gc-graphics-inventory', version: '1.6.1' }));
+    if (target.pathname === '/api/health') return send(res, 200, JSON.stringify({ ok: true, app: 'gc-graphics-inventory', version: '1.7.0' }));
     if (target.pathname === '/api/product-preview') {
       const link = target.searchParams.get('url');
       if (!allowedProductUrl(link)) {

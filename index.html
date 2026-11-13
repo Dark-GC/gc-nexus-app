@@ -221,6 +221,13 @@
       <div class="modal-foot"><button class="btn btn-secondary" id="cancelDecision">Cancelar</button><button class="btn btn-primary" id="confirmDecision">Confirmar</button></div>
     </div>
   </div>
+  <div class="overlay hidden image-overlay" id="imageOverlay" role="presentation">
+    <section class="image-viewer" role="dialog" aria-modal="true" aria-labelledby="imageViewerTitle">
+      <div class="image-viewer-head"><h2 id="imageViewerTitle">Imagen del artículo</h2><button type="button" class="close-btn" id="imageViewerClose" aria-label="Cerrar imagen">×</button></div>
+      <div class="image-viewer-stage" id="imageViewerStage"><img id="imageViewerImg" src="" alt=""></div>
+      <p>Usa el pellizco del navegador para ampliar y arrastra para recorrer la imagen.</p>
+    </section>
+  </div>
   <div class="overlay hidden gc-auth-overlay" id="cloudOverlay" role="presentation">
     <div class="gc-access-card" role="dialog" aria-modal="true" aria-labelledby="cloudTitle">
       <aside class="gc-access-brand" aria-hidden="true">
@@ -245,7 +252,7 @@
             <button type="submit" class="gc-login-submit" id="authLoginButton"><span>Entrar a GC GRAPHICS</span><span aria-hidden="true">→</span></button>
           </form>
           <div class="gc-login-help"><span class="gc-help-icon">i</span><p>¿No tienes cuenta? El administrador crea tu acceso y te comparte tus datos. <strong>No necesitas registrarte.</strong></p></div>
-          <div class="gc-login-bottom"><span><span class="gc-safe-dot"></span> Acceso protegido</span><span>GC ORIGEN V1.6</span></div>
+          <div class="gc-login-bottom"><span><span class="gc-safe-dot"></span> Acceso protegido</span><span>GC ORIGEN V1.7</span></div>
         </section>
         <section id="gcAccountView" class="gc-account-view hidden">
           <div class="gc-access-overline"><span class="gc-live-dot"></span> TU ESPACIO PRIVADO</div>
