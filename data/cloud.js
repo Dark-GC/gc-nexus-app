@@ -24,7 +24,11 @@
     overlay.classList.toggle("gc-authorized",loggedIn);
     $("gcLoginView")?.classList.toggle("hidden",loggedIn);
     $("gcAccountView")?.classList.toggle("hidden",!loggedIn);
-    if(loggedIn){$("viewerTools")?.classList.toggle("hidden",state.viewer);if(!state.viewer)refreshViewers();}
+    if(loggedIn){
+      if($("gcAccountHeading"))$("gcAccountHeading").textContent=state.viewer?"Tu cuenta":"Gestionar accesos";
+      $("viewerTools")?.classList.toggle("hidden",state.viewer);
+      if(!state.viewer)refreshViewers();
+    }
     else $("authEmail")?.focus();
   }
   function closeLogin(){
