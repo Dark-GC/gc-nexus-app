@@ -1,11 +1,11 @@
 {
   "schemaVersion": 1,
-  "generatedAt": "2026-11-13T11:14:01.142Z",
+  "generatedAt": "2026-11-13T19:51:18.038Z",
   "items": {
     "gc-bettersub": {
       "sourceUrl": "https://a.co/d/0bwLNZk1",
       "provider": "amazon",
-      "checkedAt": "2026-11-13T11:14:01.142Z",
+      "checkedAt": "2026-11-13T19:51:18.038Z",
       "price": null,
       "originalPrice": null,
       "currency": null,
@@ -18,7 +18,7 @@
     "gc-epson": {
       "sourceUrl": "https://a.co/d/06O8MAgi",
       "provider": "amazon",
-      "checkedAt": "2026-11-13T11:14:01.142Z",
+      "checkedAt": "2026-11-13T19:51:18.038Z",
       "price": null,
       "originalPrice": null,
       "currency": null,
@@ -31,7 +31,7 @@
     "gc-buyounger": {
       "sourceUrl": "https://a.co/d/0bnGnkkK",
       "provider": "amazon",
-      "checkedAt": "2026-11-13T11:14:01.142Z",
+      "checkedAt": "2026-11-13T19:51:18.038Z",
       "price": null,
       "originalPrice": null,
       "currency": null,
@@ -44,7 +44,7 @@
     "gc-topdeep": {
       "sourceUrl": "https://a.co/d/00mUP4nA",
       "provider": "amazon",
-      "checkedAt": "2026-11-13T11:14:01.142Z",
+      "checkedAt": "2026-11-13T19:51:18.038Z",
       "price": null,
       "originalPrice": null,
       "currency": null,
@@ -57,7 +57,7 @@
     "gc-vevor": {
       "sourceUrl": "https://www.vevor.com/vinyl-cutter-c_11151/vevor-cutting-machine-vinyl-cutter-machine-automatic-edge-detection-2-blade-type-p_010610190808",
       "provider": "vevor",
-      "checkedAt": "2026-11-13T11:14:01.142Z",
+      "checkedAt": "2026-11-13T19:51:18.038Z",
       "price": null,
       "originalPrice": null,
       "currency": null,
@@ -70,7 +70,7 @@
     "gc-colemoly": {
       "sourceUrl": "https://a.co/d/02iIZjEH",
       "provider": "amazon",
-      "checkedAt": "2026-11-13T11:14:01.142Z",
+      "checkedAt": "2026-11-13T19:51:18.038Z",
       "price": null,
       "originalPrice": null,
       "currency": null,
@@ -83,7 +83,7 @@
     "gc-mebmik": {
       "sourceUrl": "https://a.co/d/0baoOFbE",
       "provider": "amazon",
-      "checkedAt": "2026-11-13T11:14:01.142Z",
+      "checkedAt": "2026-11-13T19:51:18.038Z",
       "price": null,
       "originalPrice": null,
       "currency": null,
@@ -96,7 +96,7 @@
     "gc-dispensador": {
       "sourceUrl": "https://a.co/d/0dxKicGG",
       "provider": "amazon",
-      "checkedAt": "2026-11-13T11:14:01.142Z",
+      "checkedAt": "2026-11-13T19:51:18.038Z",
       "price": null,
       "originalPrice": null,
       "currency": null,
@@ -109,7 +109,7 @@
     "gc-caja": {
       "sourceUrl": "https://a.co/d/0cjpCrj8",
       "provider": "amazon",
-      "checkedAt": "2026-11-13T11:14:01.142Z",
+      "checkedAt": "2026-11-13T19:51:18.038Z",
       "price": null,
       "originalPrice": null,
       "currency": null,
@@ -122,7 +122,7 @@
     "gc-ptfe": {
       "sourceUrl": "https://a.co/d/037cijDs",
       "provider": "amazon",
-      "checkedAt": "2026-11-13T11:14:01.142Z",
+      "checkedAt": "2026-11-13T19:51:18.038Z",
       "price": null,
       "originalPrice": null,
       "currency": null,
@@ -135,7 +135,7 @@
     "gc-cinta": {
       "sourceUrl": "https://a.co/d/0gYDXPdp",
       "provider": "amazon",
-      "checkedAt": "2026-11-13T11:14:01.142Z",
+      "checkedAt": "2026-11-13T19:51:18.038Z",
       "price": null,
       "originalPrice": null,
       "currency": null,
@@ -148,7 +148,7 @@
     "gc-falcon10": {
       "sourceUrl": "https://www.amazon.com/dp/B0D9VWCHM8",
       "provider": "amazon",
-      "checkedAt": "2026-11-13T11:14:01.142Z",
+      "checkedAt": "2026-11-13T19:51:18.038Z",
       "price": null,
       "originalPrice": null,
       "currency": null,
@@ -161,7 +161,7 @@
     "gc-cubierta": {
       "sourceUrl": "https://www.crealityfalcon.com/products/protective-cover-for-laser-engraver",
       "provider": "creality",
-      "checkedAt": "2026-11-13T11:14:01.142Z",
+      "checkedAt": "2026-11-13T19:51:18.038Z",
       "price": 49,
       "originalPrice": 99,
       "currency": "USD",
@@ -174,7 +174,7 @@
     "gc-colmena": {
       "sourceUrl": "https://www.crealityfalcon.com/products/honeycomb-workbench-for-laser-engraver-500mm-500mm",
       "provider": "creality",
-      "checkedAt": "2026-11-13T11:14:01.142Z",
+      "checkedAt": "2026-11-13T19:51:18.038Z",
       "price": 99.99,
       "originalPrice": 139,
       "currency": "USD",
