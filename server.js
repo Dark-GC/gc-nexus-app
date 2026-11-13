@@ -260,6 +260,7 @@ async function immediateAmazonQuote(body,token) {
   const requestKey='immediate:'+user.id+':'+product.asin;
   const reserve=await supabase(config,'/rest/v1/rpc/reserve_amazon_quote',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({p_key:requestKey,p_credits:5})});
   if(reserve!==true)return {status:429,body:{error:'monthly_budget_exhausted'}};
+  await supabase(config,'/rest/v1/rpc/gc_mark_private_amazon_request',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({p_owner_id:user.id,p_item_id:body.itemId,p_asin:product.asin,p_product_url:product.url,p_request_key:requestKey,p_status:'running'})});
   try {
     const reply=await fetch('https://api.firecrawl.dev/v2/scrape',{method:'POST',headers:{Authorization:'Bearer '+config.FIRECRAWL_API_KEY,'Content-Type':'application/json'},body:JSON.stringify({alexandria:{provider:'amazon-com',capability:'products/prices',options:{asins:[product.asin]}}}),signal:AbortSignal.timeout(60000)});
     const raw=await reply.json().catch(()=>null); if(!reply.ok)throw Error('firecrawl_'+reply.status);
@@ -268,7 +269,7 @@ async function immediateAmazonQuote(body,token) {
     await supabase(config,'/rest/v1/rpc/gc_record_private_amazon_quote',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({p_owner_id:user.id,p_item_id:body.itemId,p_asin:quote.asin,p_price:quote.price,p_currency:quote.currency,p_stock_status:quote.stockStatus,p_seller:quote.seller,p_product_url:quote.productUrl,p_observed_url:quote.observedUrl,p_observed_at:quote.checkedAt,p_verification_status:quote.priceStatus,p_request_key:requestKey})});
     await supabase(config,'/rest/v1/rpc/finish_amazon_quote_reservation',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({p_key:requestKey,p_success:true})});
     return {status:200,body:{quote}};
-  }catch(error){await supabase(config,'/rest/v1/rpc/finish_amazon_quote_reservation',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({p_key:requestKey,p_success:false})}).catch(()=>{});return {status:503,body:{error:'amazon_quote_unavailable'}};}
+  }catch(error){await supabase(config,'/rest/v1/rpc/gc_mark_private_amazon_request',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({p_owner_id:user.id,p_item_id:body.itemId,p_asin:product.asin,p_product_url:product.url,p_request_key:requestKey,p_status:'failed',p_error:String(error.message||'provider_error').slice(0,120)}).catch(()=>{});await supabase(config,'/rest/v1/rpc/finish_amazon_quote_reservation',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({p_key:requestKey,p_success:false})}).catch(()=>{});return {status:503,body:{error:'amazon_quote_unavailable'}};}
 }
 
 export const server = http.createServer(async (req, res) => {

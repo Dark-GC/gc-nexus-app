@@ -65,4 +65,13 @@ begin
 end $$;
 revoke all on function public.gc_record_private_amazon_quote(uuid,text,text,numeric,text,text,text,text,text,timestamptz,text,text) from public,anon,authenticated;
 grant execute on function public.gc_record_private_amazon_quote(uuid,text,text,numeric,text,text,text,text,text,timestamptz,text,text) to service_role;
+create or replace function public.gc_mark_private_amazon_request(p_owner_id uuid,p_item_id text,p_asin text,p_product_url text,p_request_key text,p_status text,p_error text default null)
+returns void language plpgsql security definer set search_path='' as $$
+begin
+  insert into private.amazon_quote_requests(owner_id,item_id,asin,product_url,request_key,status,error_code)
+  values(p_owner_id,p_item_id,p_asin,p_product_url,p_request_key,p_status,p_error)
+  on conflict(request_key) do update set status=excluded.status,error_code=excluded.error_code,updated_at=now();
+end $$;
+revoke all on function public.gc_mark_private_amazon_request(uuid,text,text,text,text,text,text) from public,anon,authenticated;
+grant execute on function public.gc_mark_private_amazon_request(uuid,text,text,text,text,text,text) to service_role;
 commit;
