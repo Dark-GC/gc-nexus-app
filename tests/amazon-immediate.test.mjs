@@ -35,14 +35,14 @@ test('quota validation uses PostgreSQL-compatible pattern and explicit 500-chara
   const v2=readFileSync(new URL('../database/amazon-budget-v2.sql',import.meta.url),'utf8');
   const initial=readFileSync(new URL('../database/private-amazon-quotes.sql',import.meta.url),'utf8');
   for(const ddl of [v2,initial]){
-    assert.doesNotMatch(ddl,/\\{8,500\\}/);
-    assert.match(ddl,/length\\(p_key\\) not between 8 and 500/);
-    assert.match(ddl,/\\[A-Za-z0-9:,_-\\]\\+/);
+    assert.ok(!ddl.includes('{8,500}'));
+    assert.ok(ddl.includes('length(p_key) not between 8 and 500'));
+    assert.ok(ddl.includes('[A-Za-z0-9:,_-]+'));
   }
 });
 test('unverified Amazon articles offer a manual retry without creating another record',()=>{
   const app=readFileSync(new URL('../app.js',import.meta.url),'utf8');
-  assert.match(app,/data-action="quote-retry"/);
-  assert.match(app,/if\\(b\\.dataset\\.action==="quote-retry"\\)return void requestAmazonQuote\\(p\\)/);
-  assert.match(app,/if\\(!current&&isAmazonUrl\\(vals\\.url\\)\\)void requestAmazonQuote\\(vals\\)/);
+  assert.ok(app.includes('data-action="quote-retry"'));
+  assert.ok(app.includes('if(b.dataset.action==="quote-retry")return void requestAmazonQuote(p);'));
+  assert.ok(app.includes('if(!current&&isAmazonUrl(vals.url))void requestAmazonQuote(vals);'));
 });
