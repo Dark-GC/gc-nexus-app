@@ -168,3 +168,18 @@ node --test tests/*.test.mjs
 **Próxima prueba real:** iniciar sesión con la cuenta propietaria actual, abrir Cuentas familiares, activar la invitación existente o crear una nueva, compartir el acceso, y confirmar que mamá entra con contraseña desde su teléfono y registra compra/recepción sin poder editar fichas. Sin pedir ni almacenar contraseñas reales en este chat.
 
 [Aplicación PWA](https://gc-graphics-inventory.onrender.com/data/app.html) · [Issue #2](https://github.com/Dark-GC/gc-nexus-app/issues/2).
+
+---
+
+## V1.6.1 · Precisión y consistencia de compras (continuación después de Work)
+
+**Punto de continuidad obligatorio:** [99 — Migración y continuidad entre chats · GC GRAPHICS ORIGEN](https://app.notion.com/p/4174b81e8b228162903fd9907026b228). Este apartado está preparado para futuras migraciones, **no** implica cambiar de conversación ahora.
+
+- El catálogo nunca afirma que una captura única de Amazon confirma stock en tiempo real. Las consultas oficiales sobre disponibilidad vencen a las 24 horas; si la información es antigua, el estado visible es `Stock sin verificar`. Los precios fechados se conservan como referencia.
+- El historial de compras del propietario se registra mediante el trigger PostgreSQL `gc_owner_item_atomic_audit` en la misma transacción que `INSERT/UPDATE/DELETE` de la ficha, sin un segundo INSERT desde el cliente que pudiera perderse o duplicarse.
+- El RPC del familiar comprador conserva su auditoría exclusiva; el trigger del propietario no duplica sus eventos.
+- Migración aplicada: `database/owner-atomic-audit.sql`. Pruebas SQL temporales con `ROLLBACK`: compra del propietario, confirmación de recepción, reversión y eliminación (4 eventos); compra + recepción desde rol familiar (2 eventos exactos). No se tocaron los registros reales.
+- Pruebas automatizadas agregadas: `tests/stock-freshness.test.mjs` y `tests/owner-audit.test.mjs`.
+- Validación: [GitHub Actions PASS (HEAD dc3f7a8)](https://github.com/Dark-GC/gc-nexus-app/actions/runs/43360533566). Despliegue estático Render LIVE en ese commit. Los 14 artículos, los cuatro recibidos, 2 usuarios, 1 invitación y la bitácora se conservan.
+- **Pendientes reales:** impedir registro directo en Supabase Auth (`disable_signup=false` según último chequeo de Work; requiere configuración autorizada del proyecto), prueba de dos sesiones familiares reales, QA físico iPhone/Android y límites de precio Amazon. No declarar `COMPLETE` mientras sigan abiertos.
+
