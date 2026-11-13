@@ -1,0 +1,1 @@
+alter table public.inventory_items add column if not exists local_price_dop numeric(12,2) check(local_price_dop>=0), add column if not exists local_price_checked_at date, add column if not exists local_shop_name text not null default '' check(length(local_shop_name)<=150);
