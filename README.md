@@ -87,7 +87,7 @@ node --test tests/*.test.mjs
 
 **Backend de precios:** \`/api/product-preview\` en [Render](https://gc-graphics-prices-api.onrender.com/api/health) consulta precios públicos oficiales compatibles cuando abre la web y cada 5 minutos mientras está visible; la caché dura 3 minutos. La información puede ir retrasada por disponibilidad y límites del proveedor: *no existe un flujo streaming en tiempo real garantizado*. Amazon requiere credenciales/API autorizada o proveedor de datos contractualizado para actualizaciones continuas.
 
-**Sincronización:** NO está activada: el proyecto Supabase cotizado a US$0 necesita aún autorización adicional del propietario, y no se creó. Los cambios del inventario siguen siendo locales a cada navegador; siempre exportar copia JSON si se van a borrar datos del navegador o cambiar de dispositivo. Los ficheros de esquema SQL y cliente de autenticación son preparatorios, no prueba de puesta en producción.
+**Sincronización (actualización 12/11/2026):** base dedicada Supabase `gc-graphics-inventory` creada y configurada con clave publicable, RLS y autenticación; no hay todavía usuarios reales registrados ni productos migrados. El catálogo local se sube al iniciar sesión por primera vez con la cuenta administradora. Es necesario crear y verificar la cuenta antes de confiar en la sincronización entre dispositivos.
 
 ### Validación de V1.2
 
@@ -112,10 +112,24 @@ node --test tests/*.test.mjs
 - Ajuste de fechas a zona America/Santo_Domingo para entradas del negocio. Layout responsive en 390 px validado con navegador aislado: sin scroll horizontal, seis hitos renderizados y nueva entrada creada; vuelta al inventario conserva las 14 fichas.
 - Prueba de compra en navegador **aislado** confirmó anotación automática de la Topdeep como «comprada, pendiente de recepción». Esta prueba no altera el inventario real del usuario.
 
-**Persistencia y seguridad, estado real (IMPORTANTE):**
-- El inventario y la bitácora se guardan por ahora solo en el almacenamiento local del navegador. No se presupone sincronización entre dispositivos, cifrado del registro, copias fuera del navegador ni recuperación tras borrar datos. Haz una copia JSON en un segundo lugar confiable.
-- database/schema.sql y database/origen-v1.3.sql son esquemas PostgreSQL para un futuro proyecto Supabase dedicado; incluyen RLS por propietario y no usan claves secretas en el cliente. **NO están aplicados a una base activa**. Requieren confirmar la organización y activar el proyecto de costo cotizado.
-- data/cloud-config.json permanece vacío intencionalmente. El botón «Conectar nube» indica modo local hasta completar autorización, SQL, pruebas de RLS, login y migración de datos. **No conectar la base de DropTik.**
-- La transición a nube deberá probar recuperación, conflictos y respaldo del registro existente antes de declarar estabilidad. No conectar servicios externos de ventas ni integraciones que amplíen el alcance por ahora.
+**Persistencia y seguridad — estado actualizado:**
+- Proyecto independiente Supabase `gc-graphics-inventory` activo. RLS protege productos, movimientos, invitaciones y bitácora compartida; clave pública en `data/cloud-config.json`, ningún secreto ni acceso de servicio en frontend. No reutiliza datos ni claves de DropTik.
+- El cliente ya soporta inicio de sesión, guardado y sincronización, acceso familiar `viewer` o `buyer`. Para compras familiares, la función PostgreSQL restringida registra compra/recepción y sus eventos atómicamente, sin conceder edición general. Las pruebas SQL de tres identidades temporales (dueño, familiar y desconocido) pasaron y se deshicieron mediante `ROLLBACK`.
+- A fecha de activación no existe todavía ninguna cuenta real de Auth ni inventario del usuario subido (0 cuentas, 0 productos). **No declarar sincronización personal completamente validada** hasta que el propietario cree cuenta, confirme el correo y se pruebe acceso con la madre.
+- El cliente conserva copias locales y exportación JSON; bloquea el cierre voluntario si faltan guardados. La URL de confirmación de email en Supabase Auth necesita comprobarse/configurarse para producción (Site URL/Redirect URLs, no disponible en el conector actual). No prometer funcionamiento offline total o backups automáticos externos.
+- `database/origen-v1.3.sql` contiene un modelo alternativo de tablas separadas de hitos y entradas que **no se ha desplegado**; el modelo efectivo de bitácora es `public.inventory_journal_state` más `inventory_events`.
 
 **Ruta de producto:** mantener la app centrada en **maquinaria, herramientas, insumos iniciales, compras, evidencias, decisiones, inversión y los primeros hitos**. Evolucionar la marca y plataforma sobre un historial fiable, sin obligar al usuario a introducir datos desconocidos ni duplicar registros en Notion.
+
+
+---
+
+## V1.4 · Familia, precios duales y PWA (12/11/2026)
+
+- **Uso real:** una persona en RD busca los productos, un familiar en EE. UU. puede consultar o confirmar compra y recepción. La cuenta propietaria sigue administrando fichas, catálogo, notas y bitácora. Roles `viewer` y `buyer` diferenciados; invitaciones al correo confirmado, revocables.
+- **Precio y gasto:** precio en US$ con fuente/fecha; conversión de referencia a RD$ con cambio público fechado; cotización local en RD$ independiente y con tienda/fecha; importe realmente pagado y moneda/country al registrar compra. No confundir conversión con precio en República Dominicana ni asumir impuestos/envíos.
+- **Bitácora:** ingresos de compra/recepción del familiar se consultan desde `inventory_events` y aparecen como registros no editables en la línea del tiempo de origen. Diarios y hitos propios se sincronizan a `inventory_journal_state`, protegida por RLS.
+- **PWA:** [Abrir e instalar](https://gc-graphics-inventory.onrender.com/data/app.html) · manifest `data/manifest.json` con MIME application/json, SVG y PNG original de marca (192 px), service worker en scope `/data/`, safe area móvil y navegación de cinco pestañas. La información protegida exige sesión: no prometer acceso offline completo sin caché autenticada.
+- **Pruebas:** SQL RLS con invitado lector, compradora y extraño, bloqueo de escrituras no autorizadas y RPC de compra/recepción + eventos; transacciones de prueba revertidas. Auditoría de seguridad Supabase sin avisos. Render LIVE, PWA móvil 390px sin scroll horizontal; manifest y SW registrados. GitHub Actions QA: pruebas de sintaxis, roles, PWA, FX, historial y catálogo.
+- **Pendiente imprescindible para activar uso familiar real:** crear y verificar cuenta del propietario, configurar/verificar URL Auth de confirmación email en Supabase (Site URL + Redirect URLs), invitar cuenta del familiar y hacer prueba real con dos dispositivos. En este punto la base puede estar vacía aunque existan 14 fichas iniciales como plantilla en el frontend.
+- **Límite de precios:** Amazon sigue con snapshot fechado, no precio continuo sin API/proveedor autorizado; nunca etiquetar captura antigua como precio actual en tiempo real. VEVOR/Creality se consultan automáticamente con las limitaciones públicas respectivas.
