@@ -301,7 +301,7 @@
   async function signUp(){
     if(!state.client)return;
     const email=$("authEmail").value.trim(),password=$("authPassword").value;
-    if(!email||password.length<8){show("Introduce un correo válido y contraseña de 8 caracteres como mínimo.","error");return;}
+    if(!email||password.length<12){show("Introduce un correo válido y contraseña exclusiva de al menos 12 caracteres.","error");return;}
     show("Registrando cuenta…","busy");
     const r=await state.client.auth.signUp({email,password,options:{emailRedirectTo:window.location.origin+"/"}});
     if(r.error)show("No se pudo crear la cuenta: "+errorMessage(r.error),"error");
