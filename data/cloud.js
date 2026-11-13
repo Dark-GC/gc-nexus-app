@@ -2,7 +2,7 @@
 "use strict";
 (() => {
   const $ = id => document.getElementById(id);
-  const state = {client:null,user:null,ready:false,queue:Promise.resolve(),snapshot:new Map(),channel:null,journalChannel:null,pending:false,timer:null,booted:false,ownerId:null,viewer:false,applyingJournal:false,backupTimer:null};
+  const state = {client:null,user:null,ready:false,queue:Promise.resolve(),snapshot:new Map(),channel:null,journalChannel:null,pending:false,timer:null,booted:false,ownerId:null,viewer:false,applyingJournal:false,backupTimer:null,pendingCount:0,syncError:false,epoch:0,sessionClosing:false};
   const backend = () => window.GCInventory;
   const show = (message,mode="info") => {
     const button=$("cloudButton"), note=$("cloudState");
@@ -33,12 +33,13 @@
     notes:x.notes,notionUrl:x.notion_url,editedAt:x.updated_at};}
   function stable(x){return JSON.stringify(dataFrom(x,""));}
   function notify() {
-    if(!state.ready||!state.user||state.viewer)return;
-    state.pending=true;show("Guardando cambios en la base de datos…","busy");
+    if(!state.ready||!state.user||state.viewer||state.sessionClosing)return;
+    const epoch=state.epoch,uid=state.ownerId,userId=state.user.id;
+    state.pendingCount++;state.pending=true;
+    show("Guardando cambios del inventario…","busy");
     state.queue=state.queue.catch(()=>{}).then(async()=>{
+      if(epoch!==state.epoch||!state.ready||state.viewer||state.user?.id!==userId)return;
       const desired=backend()?.getItems?.()||[];
-      if(!state.user||!state.ready)return;
-      const uid=state.ownerId;
       const desiredMap=new Map(desired.map(p=>[p.id,p]));
       const put=desired.filter(p=>state.snapshot.get(p.id)!==stable(p));
       const remove=[...state.snapshot.keys()].filter(id=>!desiredMap.has(id));
@@ -50,21 +51,33 @@
         const {error}=await state.client.from("inventory_items").delete().eq("user_id",uid).in("id",remove);
         if(error)throw error;
       }
-      // Registra movimientos de compra, recepción y eliminación en bitácora.
       const events=[];
-      for(const p of put) {
+      for(const p of put){
         const prev=state.lastItems?.get(p.id);
-        if(p.status==="Comprada"&&prev?.status!=="Comprada")events.push({user_id:uid,item_id:p.id,event_type:"purchase_confirmed",detail:{purchase_date:p.purchaseDate,paid_amount:p.paidAmount}});
-        if(p.received&&!prev?.received)events.push({user_id:uid,item_id:p.id,event_type:"received_confirmed",detail:{}});
+        if(p.status==="Comprada"&&prev?.status!=="Comprada")
+          events.push({user_id:uid,item_id:p.id,event_type:"purchase_confirmed",detail:{purchase_date:p.purchaseDate,paid_amount:p.paidAmount,paid_currency:p.paidCurrency||"USD"}});
+        if(p.received&&!prev?.received)
+          events.push({user_id:uid,item_id:p.id,event_type:"received_confirmed",detail:{}});
       }
       for(const id of remove)events.push({user_id:uid,item_id:id,event_type:"deleted",detail:{}});
-      if(events.length)state.client.from("inventory_events").insert(events).then(({error})=>{if(error)console.warn("Bitácora:",error.message);});
+      // The inventory write succeeded. Record its corresponding history before saying all is saved.
       state.snapshot=new Map(desired.map(p=>[p.id,stable(p)]));
       state.lastItems=new Map(desired.map(p=>[p.id,{status:p.status,received:p.received}]));
-      state.pending=false;show("Guardado en la nube. Los cambios se propagan automáticamente.","ok");
+      if(events.length){
+        const {error}=await state.client.from("inventory_events").insert(events);
+        if(error)throw new Error("Inventario guardado; movimiento de bitácora pendiente: "+errorMessage(error));
+      }
+    }).then(()=>{
+      if(epoch!==state.epoch)return;
+      state.pendingCount=Math.max(0,state.pendingCount-1);
+      state.pending=state.pendingCount>0;
+      if(!state.pending){state.syncError=false;show("Inventario y movimientos guardados en la nube.","ok");}
     }).catch(e=>{
-      state.pending=false;
-      show("Cambios locales guardados, pero falta sincronización: "+errorMessage(e),"error");
+      if(epoch!==state.epoch)return;
+      state.pendingCount=Math.max(0,state.pendingCount-1);
+      state.pending=state.pendingCount>0;
+      state.syncError=true;
+      show("Atención: hay cambios locales no sincronizados. "+errorMessage(e),"error");
       console.error("GC GRAPHICS sync:",e);
     });
   }
@@ -174,6 +187,7 @@
   async function beginSession(user) {
     if(!user||state.user?.id===user.id&&state.ready)return;
     await waitInventory();
+    state.epoch++;state.pendingCount=0;state.pending=false;state.syncError=false;state.sessionClosing=false;
     state.ready=false;state.user=user;state.ownerId=user.id;state.viewer=false;
     show("Verificando acceso privado…","busy");
     const {data:links,error:linkError}=await state.client.from("inventory_viewers").select("owner_id,role");
@@ -217,19 +231,33 @@
     else show("Cuenta creada. Revisa tu correo para confirmar y luego inicia sesión.","ok");
   }
   async function signOut() {
+    if(state.sessionClosing)return;
+    state.sessionClosing=true;
+    backend()?.setReadOnly?.(true);
+    if(state.pendingCount>0){show("Finalizando sincronización antes de salir…","busy");await state.queue;}
+    if(state.syncError){
+      state.sessionClosing=false;backend()?.setReadOnly?.(state.viewer);
+      show("No se puede cerrar sesión todavía: hay movimientos sin respaldo en la nube. Descarga primero una copia JSON del inventario y vuelve a intentar guardar.","error");
+      return;
+    }
+    state.epoch++;state.pendingCount=0;state.pending=false;
     state.ready=false;state.user=null;state.viewer=false;state.ownerId=null;
+    clearTimeout(state.backupTimer);clearTimeout(state.timer);
     if(state.journalChannel){await state.client.removeChannel(state.journalChannel);state.journalChannel=null;}
     if(state.channel){await state.client.removeChannel(state.channel);state.channel=null;}
-    await state.client.auth.signOut();
+    const {error}=await state.client.auth.signOut();
+    if(error){state.sessionClosing=false;show("No se pudo cerrar sesión: "+errorMessage(error),"error");return;}
     state.snapshot.clear();state.lastItems=new Map();
     backend()?.setItemsFromCloud?.([]);
+    window.GCGrowth?.clearPrivateView?.();
     backend()?.setReadOnly?.(true);
     document.body.classList.add("cloud-needs-auth");
     $("viewerTools")?.classList.add("hidden");
     $("authSignOut")?.classList.add("hidden");
     $("authForm")?.classList.remove("hidden");
-    show("Sesión cerrada. Vuelve a ingresar para consultar datos privados.","info");
-    closeLogin();
+    show("Sesión cerrada. Se limpió la copia visible de este dispositivo.","info");
+    state.sessionClosing=false;
+    closeLogin();openLogin();
   }
   async function init(){
     if(state.booted)return;state.booted=true;
@@ -255,13 +283,18 @@
       if(!window.supabase?.createClient)throw new Error("No se pudo cargar el cliente de base de datos.");
       state.client=window.supabase.createClient(config.url,config.publishableKey,{auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:true}});
       state.client.auth.onAuthStateChange((event,session)=>{
-        if(event==="SIGNED_OUT"&&state.user){state.ready=false;state.user=null;show("Sesión cerrada.","info");}
+        if(event==="SIGNED_OUT"&&state.user){
+          state.epoch++;state.ready=false;state.user=null;state.viewer=false;state.ownerId=null;
+          backend()?.setItemsFromCloud?.([]);window.GCGrowth?.clearPrivateView?.();
+          backend()?.setReadOnly?.(true);document.body.classList.add("cloud-needs-auth");
+          show("La sesión terminó. Inicia sesión de nuevo para acceder.","info");openLogin();
+        }
       });
       const {data,error}=await state.client.auth.getUser();
       if(error && !/session/i.test(errorMessage(error)))console.warn(errorMessage(error));
       if(data?.user)await beginSession(data.user);
       else {show("Inicia sesión para abrir tu inventario privado.","info");openLogin();}
-    }catch(e){show("Modo local seguro. "+errorMessage(e),"info");}
+    }catch(e){document.body.classList.add("cloud-needs-auth");show("No se pudo conectar a la nube: "+errorMessage(e)+". Revisa internet y vuelve a abrir la aplicación.","error");openLogin();}
   }
   window.GCCloud={notify,notifyGrowth,ready:()=>state.ready,isViewer:()=>state.viewer,ownerId:()=>state.ownerId};
   if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",init);else init();
