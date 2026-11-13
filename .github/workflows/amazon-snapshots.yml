@@ -1,0 +1,62 @@
+name: Amazon price snapshots (Firecrawl)
+on:
+  schedule:
+    # 11:17 Atlantic Standard Time (Dominican Republic); GitHub may run later.
+    - cron: '17 15 * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: gc-amazon-observations
+  cancel-in-progress: false
+
+jobs:
+  refresh:
+    name: Verify Amazon buy-box observations
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    env:
+      FIRECRAWL_API_KEY: ${{ secrets.FIRECRAWL_API_KEY }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: true
+          ref: panda
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - name: Check for private provider credential
+        id: credential
+        shell: bash
+        run: |
+          if [ -n "$FIRECRAWL_API_KEY" ]; then
+            echo "configured=yes" >> "$GITHUB_OUTPUT"
+            echo "Firecrawl secret present. Proceeding under the 500-credit monthly automation cap."
+          else
+            echo "configured=no" >> "$GITHUB_OUTPUT"
+            echo "::warning::BLOCKED: configure FIRECRAWL_API_KEY in GitHub Actions secrets to activate automatic Amazon checks."
+          fi
+      - name: Test price normalisation without provider requests
+        if: steps.credential.outputs.configured == 'yes'
+        run: node --test tests/amazon-refresh.test.js
+      - name: Fetch and verify observations
+        if: steps.credential.outputs.configured == 'yes'
+        run: node scripts/refresh-amazon.mjs
+      - name: Commit successful observations and credit ledger
+        if: ${{ always() && steps.credential.outputs.configured == 'yes' }}
+        shell: bash
+        run: |
+          git config user.name "gc-graphics-bot"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add data/amazon-snapshot.json
+          if [ -f .automation/amazon-budget.json ]; then
+            git add .automation/amazon-budget.json
+          fi
+          if git diff --cached --quiet; then
+            echo "No changes to publish."
+          else
+            git commit -m "data: record checked Amazon observations and automation credits"
+            git push origin HEAD:panda
+          fi
