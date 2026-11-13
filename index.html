@@ -223,9 +223,13 @@
       </form>
       <div class="cloud-footnote" id="cloudState">Los cambios se guardan localmente mientras no haya conexión.</div>
       <section class="viewer-tools hidden" id="viewerTools">
-        <h3>Compartir con mamá</h3>
-        <p>Invita su correo para que vea las compras, recepciones, precios y nuestra bitácora. Su acceso será de <strong>solo lectura</strong>.</p>
-        <form id="viewerForm" class="viewer-form"><label class="field"><span>Correo de tu familiar</span><input id="viewerEmail" type="email" autocomplete="off" required placeholder="correo@ejemplo.com"></label><button type="submit" class="btn btn-primary">Dar acceso de lectura</button></form>
+        <h3>Compartir compras con mamá</h3>
+        <p>Tu mamá podrá ver el inventario y la bitácora. Con permiso de <strong>Compras y recepción</strong> podrá marcar una máquina como comprada y confirmar cuando llegue, pero no editar productos, precios ni borrar registros.</p>
+        <form id="viewerForm" class="viewer-form">
+          <label class="field"><span>Correo de tu familiar</span><input id="viewerEmail" type="email" autocomplete="off" required placeholder="correo@ejemplo.com"></label>
+          <label class="field"><span>Permisos</span><select id="viewerRole" aria-label="Permisos del familiar"><option value="buyer" selected>Compras y recepción · recomendado para mamá</option><option value="viewer">Solo lectura · ver avances</option></select></label>
+          <button type="submit" class="btn btn-primary">Compartir inventario</button>
+        </form>
         <button type="button" class="btn btn-secondary" id="copyFamilyLink">Copiar enlace para mamá</button>
         <div id="viewerList" class="viewer-list"></div>
       </section>
