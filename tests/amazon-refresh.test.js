@@ -1,12 +1,22 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {calendarMonth,splitBatches,normaliseAmazonRow} from '../scripts/refresh-amazon.mjs';
+import {batchKey,calendarMonth,completedRun,pendingBatches,splitBatches,normaliseAmazonRow} from '../scripts/refresh-amazon.mjs';
 
 test('11 Amazon ASINs require exactly three batches without duplicates', () => {
   const batches=splitBatches(Array.from({length:11},(_,i)=>i));
   assert.deepEqual(batches.map(batch=>batch.length),[5,5,1]);
   assert.equal(new Set(batches.flat()).size,11);
   assert.equal(calendarMonth(new Date('2026-11-13T04:00:00Z')),'2026-11');
+});
+
+test('an interrupted daily run resumes only the unpaid batches',()=>{
+  const groups=splitBatches(Array.from({length:11},(_,i)=>['item-'+i,{asin:'B0D9VWC'+String(i).padStart(3,'0')} ]));
+  const first=batchKey(groups[0]);
+  const run={day:'2026-11-13',status:'in_progress',completedBatchKeys:[first]};
+  assert.deepEqual(pendingBatches(groups,run).map(batchKey),groups.slice(1).map(batchKey));
+  assert.equal(completedRun(run),false);
+  assert.equal(completedRun({day:run.day,status:'completed',chargedCredits:15}),true);
+  assert.equal(completedRun({day:run.day,chargedCredits:15}),true); // Legacy ledger format.
 });
 
 test('Amazon buy-box offer matches the exact ASIN and preserves the original user link',()=>{

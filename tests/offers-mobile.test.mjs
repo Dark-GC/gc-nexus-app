@@ -10,7 +10,7 @@ const images=JSON.parse(read("data/verified-images.json"));
 test("exact-ASIN snapshots cover eleven catalog items with no guessed stock",()=>{
   assert.equal(catalog.length,14);
   assert.equal(Object.keys(amazon.items).length,11);
-  assert.equal(Object.values(amazon.items).filter(x=>x.priceStatus==="verified").length,10);
+  assert.equal(Object.values(amazon.items).filter(x=>x.priceStatus==="verified").length,11);
   for(const [id,data] of Object.entries(amazon.items)){
     const item=catalog.find(p=>p.id===id);
     assert.ok(item,id);

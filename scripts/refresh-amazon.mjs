@@ -22,6 +22,15 @@ const MAX_ASINS = 25; // Explicit safety limit for this private inventory.
 export const calendarMonth = (date) => date.toISOString().slice(0, 7);
 export const splitBatches = (arr, size = MAX_BATCH) =>
   Array.from({length: Math.ceil(arr.length / size)}, (_, i) => arr.slice(i * size, (i + 1) * size));
+export const batchKey = batch => batch.map(([, item]) => item.asin).join(',');
+// Old ledgers did not have a status. A recorded chargedCredits entry is a completed
+// run from that format, never a reason to issue the same day's requests again.
+export const completedRun = run => run?.status === 'completed' ||
+  (run && !run.status && Number.isFinite(run.chargedCredits));
+export const pendingBatches = (groups, run) => {
+  const completed = new Set(Array.isArray(run?.completedBatchKeys) ? run.completedBatchKeys : []);
+  return groups.filter(batch => !completed.has(batchKey(batch)));
+};
 
 export function normaliseAmazonRow(row, previous, timestamp) {
   if (!row || !previous || row.asin !== previous.asin || row.served_asin !== previous.asin) {
@@ -100,14 +109,29 @@ export async function refreshAmazon({key, date = new Date(), fetchBatch = retrie
   const groups = splitBatches(products);
   const old = await readJSON(LEDGER, {month, spent:0, runs:[]});
   const ledger = old.month === month ? old : {month, spent:0, runs:[]};
-  if (ledger.runs.some(run => run.day === day)) {
+  let run = ledger.runs.find(item => item.day === day);
+  if (completedRun(run)) {
     return {status:'already_checked_today',day,checked:0,spent:ledger.spent};
   }
-  const reserved = groups.length * PER_BATCH_CREDITS;
+  if (!run) {
+    run = {day, status:'in_progress', chargedCredits:0, checked:0, unavailable:0, rejected:0, completedBatchKeys:[]};
+    ledger.runs.push(run);
+    await writeAtomic(LEDGER, ledger);
+  } else {
+    run.status = 'in_progress';
+    run.chargedCredits = Number.isFinite(run.chargedCredits) ? run.chargedCredits : 0;
+    run.checked = Number.isFinite(run.checked) ? run.checked : 0;
+    run.unavailable = Number.isFinite(run.unavailable) ? run.unavailable : 0;
+    run.rejected = Number.isFinite(run.rejected) ? run.rejected : 0;
+    run.completedBatchKeys = Array.isArray(run.completedBatchKeys) ? run.completedBatchKeys : [];
+  }
+  const reserved = pendingBatches(groups, run).length * PER_BATCH_CREDITS;
   if (ledger.spent + reserved > MONTHLY_CAP) throw new Error('Monthly automation credit cap reached');
   let checked = 0, unavailable = 0, rejected = 0;
   let spentThisRun = 0;
   for (const batch of groups) {
+    const keyForBatch = batchKey(batch);
+    if (run.completedBatchKeys.includes(keyForBatch)) continue;
     if (ledger.spent + PER_BATCH_CREDITS > MONTHLY_CAP) break;
     const ids = batch.map(([,v]) => v.asin);
     const result = await fetchBatch(ids, key);
@@ -116,26 +140,30 @@ export async function refreshAmazon({key, date = new Date(), fetchBatch = retrie
     if (!Number.isInteger(credits) || credits < 0 || credits > PER_BATCH_CREDITS) throw new Error('Unexpected provider credit charge');
     ledger.spent += credits;
     spentThisRun += credits;
+    run.chargedCredits += credits;
     await writeAtomic(LEDGER, ledger); // Preserve spent credit accounting across failures.
     if (result.records.length !== batch.length) throw new Error('Incomplete batch response');
     for (const [id, previous] of batch) {
       const row = result.records.find(r => r.asin === previous.asin);
       const next = normaliseAmazonRow(row, previous, result.timestamp);
-      if (!next) {rejected++;continue;}
+      if (!next) {rejected++;run.rejected++;continue;}
       snapshot.items[id] = next;
       const previousEvents = Array.isArray(history.items[id]) ? history.items[id] : [];
       history.items[id] = [...previousEvents.filter(x => x.checkedAt !== next.checkedAt), {
         asin:next.asin,checkedAt:next.checkedAt,price:next.price,currency:next.currency,
         priceStatus:next.priceStatus,listPrice:next.listPrice,seller:next.seller,stockStatus:next.stockStatus
       }].slice(-90);
-      checked++;
-      if (next.priceStatus !== 'verified') unavailable++;
+      checked++;run.checked++;
+      if (next.priceStatus !== 'verified') {unavailable++;run.unavailable++;}
     }
     snapshot.generatedAt = new Date(result.timestamp).toISOString();
     await writeAtomic(SNAPSHOT, snapshot); // Partial successful batches retained if the next fails.
     await writeAtomic(HISTORY, history);
+    run.completedBatchKeys.push(keyForBatch);
+    await writeAtomic(LEDGER, ledger);
   }
-  ledger.runs.push({day, chargedCredits:spentThisRun, checked, unavailable, rejected});
+  run.status = 'completed';
+  run.completedAt = new Date().toISOString();
   ledger.runs = ledger.runs.slice(-45);
   await writeAtomic(LEDGER, ledger);
   return {status:'checked',day,checked,unavailable,rejected,spentThisRun,monthSpent:ledger.spent};

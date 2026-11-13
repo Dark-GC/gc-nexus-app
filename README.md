@@ -46,7 +46,7 @@ python -m http.server 8080
 |---|---|---|
 | Creality Falcon | Shopify product JSON público | Precio de variante si es único y disponible. Stock numérico solo si la API lo publica explícitamente. |
 | VEVOR | JSON-LD y metaetiquetas del sitio oficial | Puede omitir precio, stock o imagen si no hay datos confiables; no se infieren unidades. |
-| Amazon / a.co | Consulta puntual de ASINs mediante proveedor externo | `data/amazon-snapshot.json` registra 10 precios observados para 11 productos (12/11/2026), con marca temporal; sin actualización automática ni stock numérico. Una API autorizada sigue pendiente. |
+| Amazon / a.co | Observación diaria de ASINs mediante Firecrawl Alexandria | `data/amazon-snapshot.json` conserva 11 ASIN exactos con fecha, vendedor y precio cuando existe. La ejecución del 13/11/2026 consumió 15 créditos en tres lotes; el stock sigue siendo una observación fechada, no una garantía en tiempo real. |
 | Nuevos productos añadidos solo en el navegador | Sin actualización automática | Deben conectarse a un backend/sincronización para integrarse en el monitor de proveedores. Se pueden usar precio e imagen manuales mientras tanto. |
 
 La captura automatizada de VEVOR/Creality se escribe en \`data/price-cache.json\`; las consultas puntuales de Amazon se mantienen aparte. cada entrada incluye el enlace exacto, fecha, estado del dato y procedencia. El botón «↻» descarga la última captura publicada, **no ejecuta una consulta directa a las tiendas**. La frecuencia programada es cada 3 h, pero GitHub puede retrasar o suspender las ejecuciones automáticas.
@@ -185,18 +185,13 @@ node --test tests/*.test.mjs
 
 
 
-## Amazon programado — Firecrawl Alexandria (PREPARADO, NO ACTIVADO)
+## Amazon programado — Firecrawl Alexandria (ACTIVO Y VERIFICADO)
 
 Se añadió el flujo `.github/workflows/amazon-snapshots.yml` y el script `scripts/refresh-amazon.mjs`.
-Por defecto, la ejecución programada **no consulta Amazon** hasta que el propietario configure el secreto privado `FIRECRAWL_API_KEY` en **Settings → Secrets and variables → Actions → New repository secret** de este repositorio.
-
-1. Accede a la cuenta Firecrawl que tenga habilitado Alexandria, abre el panel **API Keys** y crea/copia una clave propia para GC GRAPHICS. No la compartas en chats ni en el repositorio.
-2. Guarda esa clave únicamente en GitHub Actions Secrets con el nombre exacto `FIRECRAWL_API_KEY`.
-3. En GitHub Actions ejecuta manualmente **Amazon price snapshots (Firecrawl)** para la primera validación.
-4. Comprueba la nueva fecha en `data/amazon-snapshot.json`, los registros `.automation/amazon-budget.json`, los resultados de CI y el despliegue de Render.
+El secreto privado `FIRECRAWL_API_KEY` ya está configurado únicamente en GitHub Actions. La primera ejecución verificada completó 11/11 ASIN y publicó el snapshot, el historial y el libro de créditos. No se guarda ni se expone ninguna clave en la web, el repositorio ni la PWA.
 
 La tarea se programa a las **15:17 UTC** (~11:17 hora República Dominicana). No existe dependencia de Cron Jobs pagos en Render. Opera sobre un máximo explícito de 25 ASIN, lotes de 1–5 (5 créditos cada uno) y un presupuesto de **500 créditos por mes UTC calendario** dedicado a esta tarea. El cupo de 500 NO cubre llamadas manuales hechas fuera del proceso; revisar también el saldo de toda la cuenta en Firecrawl. No activar recarga automática ni contratar planes sin autorización.
 
-Se validan ASIN solicitado y servido; se rechazan variantes distintas; las observaciones Amazon nunca cambian el importe de compra. El precio de lista se conserva como referencia, pero **no** crea por sí solo una etiqueta de oferta verificada. Los datos sin precio confirmado quedan marcados como no disponibles, y ningún plazo de entrega se transforma en vencimiento de promoción. Las cuentas regresivas y la detección de eventos como Black Friday necesitan una fuente con fecha de expiración corroborada; aún no forman parte de este proceso.
+Se validan ASIN solicitado y servido; se rechazan variantes distintas; las observaciones Amazon nunca cambian el importe de compra. El progreso de cada lote queda persistido: tras un fallo parcial, un reintento del mismo día solo consulta los lotes aún pendientes. El precio de lista se conserva como referencia, pero **no** crea por sí solo una etiqueta de oferta verificada. Los datos sin precio confirmado quedan marcados como no disponibles, y ningún plazo de entrega se transforma en vencimiento de promoción. Las cuentas regresivas y la detección de eventos como Black Friday necesitan una fuente con fecha de expiración corroborada; aún no forman parte de este proceso.
 
-Las pruebas de `tests/amazon-refresh.test.js` no consumen créditos. **No declarar la automatización PASS en producción hasta comprobar una ejecución exitosa con una clave real** y validar después los 11 artículos en la PWA.
+Las pruebas de `tests/amazon-refresh.test.js` no consumen créditos. La ejecución real registrada se validó con los 11 ASIN; la comprobación visual final de cada observación sigue siendo una tarea humana antes de comprar.
