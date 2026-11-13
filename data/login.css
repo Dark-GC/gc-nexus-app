@@ -121,6 +121,7 @@
  .gc-access-main:has(.gc-account-view:not(.hidden)){align-items:flex-start;min-height:auto;max-height:94dvh;overflow-y:auto}
  .gc-auth-overlay .gc-account-view{max-height:calc(94dvh - 70px)}
  .gc-login-view h1{font-size:36px;margin-top:10px}
+ .gc-auth-input-wrap input{font-size:16px}
  .gc-access-intro{margin-bottom:23px}
  .gc-login-bottom{margin-top:22px}
  .gc-login-help{margin-top:22px}
