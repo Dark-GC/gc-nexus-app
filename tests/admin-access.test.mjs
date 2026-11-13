@@ -49,7 +49,8 @@ test("only a scoped invitation can permit password reset of a managed family acc
  const edge=read("supabase/functions/gc-family-access/index.ts");
  assert.match(edge,/action==="reset"/);
  assert.match(edge,/eq\("owner_id",user\.id\)/);
- assert.match(edge,/gc_owner_id!==user\.id/);
+ assert.match(edge,/const alreadyManaged=target\.app_metadata\?\.gc_owner_id===user\.id/);
+ assert.match(edge,/const oldInvitation=!target\.email_confirmed_at/);
  assert.match(edge,/NOT_YOUR_MEMBER/);
  assert.match(edge,/NOT_A_MANAGED_USER/);
 });
