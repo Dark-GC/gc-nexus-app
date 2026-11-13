@@ -6,7 +6,7 @@
  const esc=value=>String(value??"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;").replace(/'/g,"&#39;");
  const short=(s,max=500)=>String(s??"").trim().slice(0,max);
  const now=()=>new Date().toISOString();
- const today=()=>new Date().toLocaleDateString("en-CA",{timeZone:"America/Santo_Domingo"});
+ const today=()=>{const d=new Intl.DateTimeFormat("en-US",{timeZone:"America/Santo_Domingo",year:"numeric",month:"2-digit",day:"2-digit"}).formatToParts(new Date());const parts=Object.fromEntries(d.map(x=>[x.type,x.value]));return [parts.year,parts.month,parts.day].join("-");};
  const money=v=>new Intl.NumberFormat("en-US",{style:"currency",currency:"USD"}).format(v);
  const fmtDate=v=>{if(!v)return "Sin fecha";try{return new Intl.DateTimeFormat("es-DO",{timeZone:"UTC",dateStyle:"medium"}).format(new Date(v.slice(0,10)+"T12:00:00Z"));}catch{return v;}};
  const categories=["Decisión","Compra","Recepción","Prueba","Aprendizaje","Hito","Nota"];
