@@ -1,0 +1,226 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <base href="../">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#0b0e16">
+  <meta name="description" content="GC GRAPHICS Origen · Inventario de equipos, registro de inversiones y bitácora de crecimiento del negocio">
+  <title>GC GRAPHICS — Origen e Inventario</title>
+  <link rel="icon" href="./favicon.svg" type="image/svg+xml">
+  <link rel="manifest" href="./data/manifest.webmanifest">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <link rel="stylesheet" href="./styles.css">
+  <link rel="stylesheet" href="./data/growth.css">
+  <script src="./app.js" defer></script>
+  <script src="./data/pwa.js" defer></script>
+  <script src="./data/growth.js" defer></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.118.0" defer></script>
+  <script src="./data/cloud.js" defer></script>
+</head>
+<body>
+  <div class="shell">
+    <aside class="sidebar">
+      <div class="logo-lockup">
+        <div class="logo-symbol"><span>GC</span><i></i></div>
+        <div class="logo-text"><strong>GC GRAPHICS</strong><small>INVENTORY SYSTEM</small></div>
+      </div>
+      <div class="nav-label">ESPACIO DE TRABAJO</div>
+      <nav aria-label="Navegación de inventario" id="sideNav">
+        <button class="nav-link active" data-view="all"><span class="nav-icon">▦</span> Panel de control <span class="nav-count" id="navAll">–</span></button>
+        <button class="nav-link" data-view="pending"><span class="nav-icon">◷</span> Por comprar <span class="nav-count" id="navPending">–</span></button>
+        <button class="nav-link" data-view="purchased"><span class="nav-icon">✓</span> Comprados <span class="nav-count" id="navPurchased">–</span></button>
+        <button class="nav-link" data-view="out"><span class="nav-icon">⊘</span> Sin existencias <span class="nav-count" id="navOut">–</span></button>
+        <button class="nav-link" data-view="deals"><span class="nav-icon">%</span> Ofertas <span class="nav-count" id="navDeals">–</span></button>
+      </nav>
+      <div class="side-divider growth-side-divider"></div>
+      <div class="nav-label growth-side-label">NUESTRO CAMINO</div>
+      <nav aria-label="Historia del negocio">
+        <button class="nav-link growth-nav-link" data-growth-nav type="button"><span class="nav-icon">✦</span> Bitácora y ruta <span class="growth-side-flag">NUEVO</span></button>
+      </nav>
+      <div class="side-divider"></div>
+      <div class="nav-label">GESTIÓN</div>
+      <nav>
+        <button class="nav-link" id="sideAdd"><span class="nav-icon">＋</span> Nuevo producto</button>
+        <button class="nav-link" id="sideExport"><span class="nav-icon">↓</span> Respaldar inventario</button>
+        <button class="nav-link" id="sideImport"><span class="nav-icon">⇧</span> Restaurar copia</button>
+      </nav>
+      <div class="sidebar-bottom">
+        <div class="connection"><span class="connection-dot"></span> Datos guardados en este navegador</div>
+        <p>GC GRAPHICS · República Dominicana</p>
+        <p class="version">Origen V1.3 · Construimos nuestro camino</p>
+      </div>
+    </aside>
+    <main class="main">
+      <header class="topbar">
+        <div class="crumbs">WORKSPACE <span>/</span> <b>INVENTARIO</b></div>
+        <div class="top-actions">
+          <button type="button" id="installPwa" class="cloud-button" title="Instalar GC GRAPHICS como aplicación">↗ Instalar app</button>
+          <button id="cloudButton" class="cloud-button" type="button">☁ Conectar nube</button><div class="local-pill"><span class="tiny-dot"></span> INVENTARIO GC</div>
+          <button class="icon-btn" id="refreshFeed" title="Comprobar últimas capturas de precios" aria-label="Actualizar precios">↻</button>
+          <div class="avatar">GC</div>
+        </div>
+      </header>
+      <div class="content">
+
+        <section id="growthScreen" class="growth-screen hidden" aria-labelledby="growthHeading">
+          <div class="growth-hero">
+            <div class="growth-hero-text">
+              <div class="growth-eyebrow"><span class="growth-orbit">✦</span> GC GRAPHICS / ORIGEN</div>
+              <h1 id="growthHeading">Cada paso construye <em>nuestro futuro.</em></h1>
+              <p>La bitácora real de nuestras máquinas, inversiones, decisiones y aprendizajes. Aquí guardamos cómo comenzó todo y hacia dónde queremos avanzar.</p>
+              <div class="growth-hero-meta"><span>◆ Registro de hechos, no suposiciones</span><span>◆ Crecimiento a nuestro ritmo</span></div>
+            </div>
+            <div class="growth-hero-emblem" aria-hidden="true"><span>GC</span><small>EST. 2026</small></div>
+          </div>
+          <div class="growth-kpis" id="growthKpis" aria-label="Indicadores documentados"></div>
+          <div class="growth-headline">
+            <div><span class="growth-overline">MEMORIA · ORIGEN · EVOLUCIÓN</span><h2>El camino que estamos construyendo</h2>
+              <p>Una cronología verificable y una hoja de ruta que actualizamos con cada avance.</p></div>
+            <div class="growth-headline-actions"><button id="growthAddEntry" class="btn btn-primary" type="button">＋ Registrar avance</button></div>
+          </div>
+          <div class="growth-tabs" role="group" aria-label="Secciones de crecimiento">
+            <button type="button" id="growthTabJournal" class="growth-tab active">✎ Bitácora <span id="growthEntriesCount">0 registros</span></button>
+            <button type="button" id="growthTabRoadmap" class="growth-tab">◇ Nuestra ruta</button>
+          </div>
+          <div id="growthJournalPane" class="growth-pane">
+            <div class="growth-toolbar">
+              <div class="growth-search"><span>⌕</span><input type="search" id="growthSearch" placeholder="Buscar decisiones, pruebas o aprendizajes" aria-label="Buscar en bitácora"></div>
+              <select id="growthKindFilter" aria-label="Filtrar tipo de registro">
+                <option>Todos</option><option>Decisión</option><option>Compra</option><option>Recepción</option><option>Prueba</option><option>Aprendizaje</option><option>Hito</option><option>Nota</option>
+              </select>
+            </div>
+            <div class="growth-timeline" id="growthEntries" aria-live="polite"></div>
+          </div>
+          <div id="growthRoadmapPane" class="growth-pane hidden">
+            <div class="growth-road-intro"><div><span class="growth-overline">RUTA ABIERTA</span><h3>Nuestros hitos, a nuestro ritmo</h3><p>No son logros automáticos: tú confirmas cada paso cuando realmente se ha cumplido.</p></div><div class="growth-road-meter"><strong id="growthRoadLabel">0 de 6 hitos</strong><div class="growth-progress"><div id="growthRoadProgress"></div></div></div></div>
+            <div class="growth-milestones" id="growthMilestones"></div>
+            <div class="growth-new-milestone"><label for="growthNewMilestone">Agregar un hito propio</label><div><input type="text" id="growthNewMilestone" maxlength="160" placeholder="Ej. Dejar lista la mesa de sublimación"><button class="btn btn-secondary" id="growthNewMilestoneBtn" type="button">＋ Agregar</button></div></div>
+          </div>
+          <div class="growth-save-notice"><span>◇</span><p id="growthSaveState">Registro personal guardado localmente. Exporta copias JSON para mayor seguridad.</p></div>
+        </section>
+        <section class="page-heading">
+          <div>
+            <div class="eyebrow"><span class="eyebrow-line"></span> CENTRO DE OPERACIONES</div>
+            <h1>Inventario <span>&amp; Compras</span></h1>
+            <p>Controla cada equipo, compara proveedores y registra tus adquisiciones.</p>
+          </div>
+          <button class="btn btn-primary add-top" id="addItem"><span class="btn-plus">＋</span> Agregar artículo</button>
+        </section>
+        <section id="statGrid" class="stat-grid" aria-label="Indicadores de inventario"></section>
+        <section class="info-strip">
+          <div class="info-icon">↗</div>
+          <div><strong>Precios verificados, nunca estimados.</strong><span id="feedLine">Comprobando capturas de proveedores...</span></div>
+          <button class="link-button" id="learnFeed">¿Cómo funciona?</button>
+        </section>
+        <section class="catalog-header">
+          <div>
+            <h2 id="sectionTitle">Todos los artículos <span id="resultTotal"></span></h2>
+            <p id="sectionSubtitle">Equipos, materiales y accesorios en un solo lugar.</p>
+          </div>
+          <div class="catalog-actions">
+            <button class="btn btn-secondary" id="exportCsv">↓ Exportar CSV</button>
+            <button class="btn btn-secondary mobile-backup" id="exportJson">↓ Respaldo</button><button class="btn btn-secondary mobile-import" id="mobileImport" type="button">⇧ Importar</button>
+          </div>
+        </section>
+        <div class="filter-panel">
+          <div class="search-box"><span>⌕</span><input id="searchInput" type="search" placeholder="Buscar producto, marca, equipo..." autocomplete="off" aria-label="Buscar artículos"></div>
+          <div class="filter-divider"></div>
+          <div id="filterChips" class="category-chips" aria-label="Filtrar categorías"></div>
+          <select id="sortSelect" aria-label="Orden del catálogo">
+            <option value="order">Orden original</option>
+            <option value="name">Nombre A–Z</option>
+            <option value="status">Estado de compra</option>
+            <option value="recent">Editados recientemente</option>
+          </select>
+        </div>
+        <div class="catalog-grid" id="productGrid" aria-live="polite"></div>
+        <div class="empty-state hidden" id="emptyState"><div>▢</div><h3>No hay artículos en esta vista</h3><p>Prueba otro filtro o agrega un artículo nuevo.</p><button class="btn btn-primary" id="emptyAdd">＋ Agregar artículo</button></div>
+        <footer class="footer"><span>© 2026 GC GRAPHICS · Inventory</span><span>Los precios y la disponibilidad dependen de los proveedores.</span></footer>
+      </div>
+    </main>
+  </div>
+
+  <nav class="mobile-nav" aria-label="Navegación móvil" id="mobileNav">
+    <button type="button" class="mobile-tab active" data-view="all" aria-label="Todos los artículos"><span class="mobile-tab-icon">▦</span><span>Inicio</span></button>
+    <button type="button" class="mobile-tab" data-view="pending" aria-label="Pendientes de compra"><span class="mobile-tab-icon">◷</span><span>Pendientes</span></button>
+    <button type="button" class="mobile-tab" data-view="purchased" aria-label="Artículos comprados"><span class="mobile-tab-icon">✓</span><span>Comprados</span></button>
+    <button type="button" class="mobile-tab" data-view="deals" aria-label="Ofertas verificadas"><span class="mobile-tab-icon">%</span><span>Ofertas</span></button>
+    <button type="button" class="mobile-tab" data-growth-nav aria-label="Bitácora y ruta del negocio"><span class="mobile-tab-icon">✦</span><span>Bitácora</span></button>
+  </nav>
+
+  <div class="overlay hidden" id="growthModal" role="presentation">
+    <div class="modal compact growth-dialog" role="dialog" aria-modal="true" aria-labelledby="growthFormTitle">
+      <div class="modal-head"><div><div class="modal-kicker">GC GRAPHICS / ORIGEN</div><h2 id="growthFormTitle">Nuevo registro en la bitácora</h2></div><button type="button" id="growthCloseModal" class="close-btn" aria-label="Cerrar">×</button></div>
+      <form id="growthForm">
+        <div class="growth-form-fields">
+          <div class="growth-form-row"><label class="field"><span>Fecha del acontecimiento</span><input type="date" id="growthDate" required></label><label class="field"><span>Tipo de registro</span><select id="growthCategory"><option>Nota</option><option>Decisión</option><option>Compra</option><option>Recepción</option><option>Prueba</option><option>Aprendizaje</option><option>Hito</option></select></label></div>
+          <label class="field"><span>¿Qué ocurrió? *</span><input type="text" id="growthTitle" required maxlength="150" placeholder="Ej. Primera prueba de sublimación completada"></label>
+          <label class="field"><span>Equipo relacionado (opcional)</span><select id="growthProduct"><option value="">Sin equipo asociado</option></select></label>
+          <label class="field"><span>Detalles, resultados o aprendizaje</span><textarea id="growthDescription" rows="5" maxlength="2400" placeholder="Qué hicimos, qué salió bien o mal y qué haremos después."></textarea></label>
+        </div>
+        <div class="modal-foot"><button type="button" class="btn btn-secondary" id="growthCancelModal">Cancelar</button><button type="submit" class="btn btn-primary">Guardar en bitácora</button></div>
+      </form>
+    </div>
+  </div>
+  <div class="overlay hidden" id="formOverlay" role="presentation">
+    <div class="modal large" role="dialog" aria-modal="true" aria-labelledby="formTitle">
+      <div class="modal-head"><div><div class="modal-kicker">GESTIÓN DE INVENTARIO</div><h2 id="formTitle">Nuevo artículo</h2></div><button class="close-btn" id="closeForm" aria-label="Cerrar formulario">×</button></div>
+      <form id="itemForm">
+        <div class="form-scroll">
+          <div class="form-two">
+            <label class="field span-2"><span>Nombre del artículo *</span><input name="name" id="itemName" required maxlength="140" placeholder="Ej. Epson EcoTank ET-2800"></label>
+            <label class="field"><span>Marca</span><input name="brand" maxlength="70" placeholder="Ej. Epson"></label>
+            <label class="field"><span>Código interno</span><input name="code" maxlength="35" placeholder="Ej. EQ-008"></label>
+            <label class="field"><span>Tipo</span><select name="type" id="itemType"><option value="Maquinaria">Maquinaria</option><option value="Accesorio">Accesorio</option><option value="Consumible">Consumible</option></select></label>
+            <label class="field"><span>Estado de compra</span><select name="status" id="itemStatus"><option value="Pendiente">Pendiente</option><option value="Comprada">Comprada</option><option value="Revisar">Revisar</option><option value="Cancelada">Cancelada</option></select></label>
+            <label class="field span-2"><span>Enlace al producto</span><input name="url" type="url" placeholder="https://www.amazon.com/..."></label>
+            <label class="field span-2"><span>Enlace de imagen (opcional)</span><input name="imageUrl" type="text" placeholder="https://.../imagen.jpg"><small>También puedes subir una foto. Usaremos la miniatura de la tienda cuando esté disponible.</small></label>
+            <label class="field span-2 image-upload"><span>Foto propia del artículo</span><input id="uploadPhoto" type="file" accept="image/png,image/jpeg,image/webp"><small>Se comprime y guarda solo en este navegador.</small></label>
+            <label class="field"><span>Precio de referencia (USD)</span><input name="manualPrice" type="number" inputmode="decimal" min="0" step="0.01" placeholder="Sin registrar"></label>
+            <label class="field"><span>Precio anterior (USD, opcional)</span><input name="manualOriginalPrice" type="number" inputmode="decimal" min="0" step="0.01" placeholder="Solo cuando hay descuento"></label>
+            <label class="field"><span>Unidades disponibles publicadas</span><input name="stockQty" type="number" min="0" step="1" placeholder="No informado"><small>Solo si la tienda indica una cantidad.</small></label>
+            <label class="field span-2"><span>Notas / descripción</span><textarea name="notes" rows="3" maxlength="1200" placeholder="Modelo, compatibilidad, proveedor, observaciones..."></textarea></label>
+          </div>
+          <div class="checkline"><label><input type="checkbox" name="received"><span>Compra recibida físicamente</span></label></div>
+        </div>
+        <div class="modal-foot"><button type="button" class="btn btn-secondary" id="cancelForm">Cancelar</button><button type="submit" class="btn btn-primary" id="saveItem">Guardar artículo</button></div>
+      </form>
+    </div>
+  </div>
+  <div class="overlay hidden" id="decisionOverlay">
+    <div class="modal compact" role="dialog" aria-modal="true" aria-labelledby="decisionTitle">
+      <div class="modal-head"><div><div class="modal-kicker" id="decisionKicker">CONFIRMACIÓN</div><h2 id="decisionTitle">Confirmar acción</h2></div><button class="close-btn" id="closeDecision" aria-label="Cerrar">×</button></div>
+      <p class="decision-message" id="decisionMessage"></p>
+      <div id="purchaseExtra" class="purchase-extra hidden">
+        <label class="field"><span>Fecha de compra</span><input id="purchasedDate" type="date"></label>
+        <label class="field"><span>Importe pagado (USD, opcional)</span><input id="paidAmount" type="number" min="0" step="0.01" placeholder="Sin registrar"></label>
+        <fieldset class="receipt-field"><legend>¿Ya recibiste físicamente este artículo? *</legend>
+          <div class="receipt-choices">
+            <label><input type="radio" name="purchaseReceivedChoice" value="yes"><span>✓ Sí, recibido</span></label>
+            <label><input type="radio" name="purchaseReceivedChoice" value="no"><span>◷ No, pendiente</span></label>
+          </div>
+        </fieldset>
+      </div>
+      <div class="modal-foot"><button class="btn btn-secondary" id="cancelDecision">Cancelar</button><button class="btn btn-primary" id="confirmDecision">Confirmar</button></div>
+    </div>
+  </div>
+  <div class="overlay hidden" id="cloudOverlay">
+    <div class="modal compact" role="dialog" aria-modal="true" aria-labelledby="cloudTitle">
+      <div class="modal-head"><div><div class="modal-kicker">ALMACENAMIENTO SEGURO</div><h2 id="cloudTitle">Sincronización privada</h2></div><button class="close-btn" id="cloudClose" aria-label="Cerrar">×</button></div>
+      <p class="decision-message" id="authMessage">Inicia sesión para sincronizar inventario entre equipos.</p>
+      <form id="authForm" class="auth-form">
+        <label class="field"><span>Correo de acceso</span><input type="email" autocomplete="email" id="authEmail" required placeholder="tu@correo.com"></label>
+        <label class="field"><span>Contraseña</span><input type="password" id="authPassword" autocomplete="current-password" minlength="8" required placeholder="8 caracteres mínimo"></label>
+        <button type="submit" class="btn btn-primary">Ingresar</button>
+        <button id="authSignUp" type="button" class="btn btn-secondary">Crear cuenta nueva</button>
+      </form>
+      <div class="cloud-footnote" id="cloudState">Los cambios se guardan localmente mientras no haya conexión.</div>
+      <div class="modal-foot"><button class="btn btn-secondary hidden" type="button" id="authSignOut">Cerrar sesión</button></div>
+    </div>
+  </div>
+  <input type="file" id="importFile" accept="application/json,.json" hidden>
+  <div id="toast" class="toast hidden" role="status"></div>
+</body>
+</html>
