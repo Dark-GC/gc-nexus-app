@@ -133,3 +133,23 @@ node --test tests/*.test.mjs
 - **Pruebas:** SQL RLS con invitado lector, compradora y extraño, bloqueo de escrituras no autorizadas y RPC de compra/recepción + eventos; transacciones de prueba revertidas. Las políticas RLS fueron verificadas sin hallazgos; el auditor de Supabase Auth señala que la protección contra contraseñas filtradas está desactivada porque esa función requiere plan Pro. No se asumió ni contrató un plan de pago; el alta por la web exige contraseña única de al menos 12 caracteres. Render LIVE, PWA móvil 390px sin scroll horizontal; manifest y SW registrados. GitHub Actions QA: pruebas de sintaxis, roles, PWA, FX, historial y catálogo.
 - **Pendiente imprescindible para activar uso familiar real:** crear y verificar cuenta del propietario, configurar/verificar URL Auth de confirmación email en Supabase (Site URL + Redirect URLs), invitar cuenta del familiar y hacer prueba real con dos dispositivos. En este punto la base puede estar vacía aunque existan 14 fichas iniciales como plantilla en el frontend.
 - **Límite de precios:** Amazon sigue con snapshot fechado, no precio continuo sin API/proveedor autorizado; nunca etiquetar captura antigua como precio actual en tiempo real. VEVOR/Creality se consultan automáticamente con las limitaciones públicas respectivas.
+
+---
+
+## V1.5 · Acceso familiar administrado — 12/11/2026 (RD)
+
+**Decisión:** solo el administrador crea y entrega credenciales familiares desde GC GRAPHICS. Mamá únicamente usa correo y contraseña; no hay registro, verificación de correo ni configuración técnica para ella.
+
+- **Login premium:** archivo `data/login.css` aislado para no alterar el inventario, instrucciones en español, visibilidad de contraseña, validación integrada y adaptaciones móviles.
+- **Panel familiar:** botón `👥 Cuentas familiares` abre creación con email + rol buyer/viewer, contraseña aleatoria de 22 caracteres y mensaje mostrado solo una vez. Se copia o comparte mediante la hoja nativa del sistema (sin integración WhatsApp). El administrador puede renovar clave, cambiar rol y revocar acceso.
+- **Pendientes antiguos:** la opción `Activar / nueva clave` puede convertir una invitación existente con cuenta aún no verificada en una cuenta familiar gestionada y confirmada, exclusivamente cuando el correo está asociado a una invitación real del mismo propietario y el usuario no es ya una cuenta independiente verificada.
+- **Backend:** Supabase Edge Function `gc-family-access` v2 ACTIVE con `verify_jwt=true`, verificación del usuario y de `app_metadata.gc_admin`, sin clave administrativa en el frontend. Credenciales generadas y gestionadas en el servidor; operaciones de Auth confirmadas antes de mostrar contraseña.
+- **Propietario existente:** se identificó por SQL una sola cuenta verificada con los 14 artículos originales, 4 compras físicamente recibidas y una invitación asociada; esa cuenta fue marcada como administradora sin inventar ni sustituir cuentas, y sin modificar el inventario.
+- **PWA v6:** service worker actualiza de inmediato código y estilos sensibles de login mediante `skipWaiting` y estrategia network-first; login.css se cachea como recurso de aplicación. Se corrigió el recorte detectado en 320×568 con un layout desplazable; el QA de ese tamaño tras invalidación de caché queda pendiente.
+- **QA:** CI de GitHub verifica `tests/admin-access.test.mjs`, roles y los demás módulos. Edge Function rechaza solicitudes sin JWT con HTTP 401. Navegador real a 390 px mostró login, no mostró registro, y el botón mostrar/ocultar contraseña funcionó.
+
+**Pendiente necesario para bloquear también registro directo por la API:** En Supabase Auth > Configuración general, desactivar **Allow new users to sign up**. El frontend ya no usa `auth.signUp`, y los usuarios no invitados no pueden abrir el inventario, pero el conector instalado no permite modificar la preferencia de registro público. No declarar esta configuración desactivada hasta verificarla. [Panel Supabase](https://supabase.com/dashboard/project/wldbhuvlmrzfltbhmqvl/auth/providers).
+
+**Próxima prueba real:** iniciar sesión con la cuenta propietaria actual, abrir Cuentas familiares, activar la invitación existente o crear una nueva, compartir el acceso, y confirmar que mamá entra con contraseña desde su teléfono y registra compra/recepción sin poder editar fichas. Sin pedir ni almacenar contraseñas reales en este chat.
+
+[Aplicación PWA](https://gc-graphics-inventory.onrender.com/data/app.html) · [Issue #2](https://github.com/Dark-GC/gc-nexus-app/issues/2).
