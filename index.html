@@ -4,11 +4,13 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <meta name="theme-color" content="#0b0e16">
-  <meta name="description" content="GC GRAPHICS · Inventario de compras, maquinaria, materiales y control de proveedores">
-  <title>GC GRAPHICS — Inventory</title>
+  <meta name="description" content="GC GRAPHICS Origen · Inventario de equipos, registro de inversiones y bitácora de crecimiento del negocio">
+  <title>GC GRAPHICS — Origen e Inventario</title>
   <link rel="icon" href="./favicon.svg" type="image/svg+xml">
   <link rel="stylesheet" href="./styles.css">
+  <link rel="stylesheet" href="./data/growth.css">
   <script src="./app.js" defer></script>
+  <script src="./data/growth.js" defer></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.118.0" defer></script>
   <script src="./data/cloud.js" defer></script>
 </head>
@@ -27,6 +29,11 @@
         <button class="nav-link" data-view="out"><span class="nav-icon">⊘</span> Sin existencias <span class="nav-count" id="navOut">–</span></button>
         <button class="nav-link" data-view="deals"><span class="nav-icon">%</span> Ofertas <span class="nav-count" id="navDeals">–</span></button>
       </nav>
+      <div class="side-divider growth-side-divider"></div>
+      <div class="nav-label growth-side-label">NUESTRO CAMINO</div>
+      <nav aria-label="Historia del negocio">
+        <button class="nav-link growth-nav-link" data-growth-nav type="button"><span class="nav-icon">✦</span> Bitácora y ruta <span class="growth-side-flag">NUEVO</span></button>
+      </nav>
       <div class="side-divider"></div>
       <div class="nav-label">GESTIÓN</div>
       <nav>
@@ -37,7 +44,7 @@
       <div class="sidebar-bottom">
         <div class="connection"><span class="connection-dot"></span> Datos guardados en este navegador</div>
         <p>GC GRAPHICS · República Dominicana</p>
-        <p class="version">Versión 1.0 · Primer lanzamiento</p>
+        <p class="version">Origen V1.3 · Construimos nuestro camino</p>
       </div>
     </aside>
     <main class="main">
@@ -50,6 +57,43 @@
         </div>
       </header>
       <div class="content">
+
+        <section id="growthScreen" class="growth-screen hidden" aria-labelledby="growthHeading">
+          <div class="growth-hero">
+            <div class="growth-hero-text">
+              <div class="growth-eyebrow"><span class="growth-orbit">✦</span> GC GRAPHICS / ORIGEN</div>
+              <h1 id="growthHeading">Cada paso construye <em>nuestro futuro.</em></h1>
+              <p>La bitácora real de nuestras máquinas, inversiones, decisiones y aprendizajes. Aquí guardamos cómo comenzó todo y hacia dónde queremos avanzar.</p>
+              <div class="growth-hero-meta"><span>◆ Registro de hechos, no suposiciones</span><span>◆ Crecimiento a nuestro ritmo</span></div>
+            </div>
+            <div class="growth-hero-emblem" aria-hidden="true"><span>GC</span><small>EST. 2026</small></div>
+          </div>
+          <div class="growth-kpis" id="growthKpis" aria-label="Indicadores documentados"></div>
+          <div class="growth-headline">
+            <div><span class="growth-overline">MEMORIA · ORIGEN · EVOLUCIÓN</span><h2>El camino que estamos construyendo</h2>
+              <p>Una cronología verificable y una hoja de ruta que actualizamos con cada avance.</p></div>
+            <div class="growth-headline-actions"><button id="growthAddEntry" class="btn btn-primary" type="button">＋ Registrar avance</button></div>
+          </div>
+          <div class="growth-tabs" role="group" aria-label="Secciones de crecimiento">
+            <button type="button" id="growthTabJournal" class="growth-tab active">✎ Bitácora <span id="growthEntriesCount">0 registros</span></button>
+            <button type="button" id="growthTabRoadmap" class="growth-tab">◇ Nuestra ruta</button>
+          </div>
+          <div id="growthJournalPane" class="growth-pane">
+            <div class="growth-toolbar">
+              <div class="growth-search"><span>⌕</span><input type="search" id="growthSearch" placeholder="Buscar decisiones, pruebas o aprendizajes" aria-label="Buscar en bitácora"></div>
+              <select id="growthKindFilter" aria-label="Filtrar tipo de registro">
+                <option>Todos</option><option>Decisión</option><option>Compra</option><option>Recepción</option><option>Prueba</option><option>Aprendizaje</option><option>Hito</option><option>Nota</option>
+              </select>
+            </div>
+            <div class="growth-timeline" id="growthEntries" aria-live="polite"></div>
+          </div>
+          <div id="growthRoadmapPane" class="growth-pane hidden">
+            <div class="growth-road-intro"><div><span class="growth-overline">RUTA ABIERTA</span><h3>Nuestros hitos, a nuestro ritmo</h3><p>No son logros automáticos: tú confirmas cada paso cuando realmente se ha cumplido.</p></div><div class="growth-road-meter"><strong id="growthRoadLabel">0 de 6 hitos</strong><div class="growth-progress"><div id="growthRoadProgress"></div></div></div></div>
+            <div class="growth-milestones" id="growthMilestones"></div>
+            <div class="growth-new-milestone"><label for="growthNewMilestone">Agregar un hito propio</label><div><input type="text" id="growthNewMilestone" maxlength="160" placeholder="Ej. Dejar lista la mesa de sublimación"><button class="btn btn-secondary" id="growthNewMilestoneBtn" type="button">＋ Agregar</button></div></div>
+          </div>
+          <div class="growth-save-notice"><span>◇</span><p id="growthSaveState">Registro personal guardado localmente. Exporta copias JSON para mayor seguridad.</p></div>
+        </section>
         <section class="page-heading">
           <div>
             <div class="eyebrow"><span class="eyebrow-line"></span> CENTRO DE OPERACIONES</div>
@@ -97,7 +141,23 @@
     <button type="button" class="mobile-tab" data-view="pending" aria-label="Pendientes de compra"><span class="mobile-tab-icon">◷</span><span>Pendientes</span></button>
     <button type="button" class="mobile-tab" data-view="purchased" aria-label="Artículos comprados"><span class="mobile-tab-icon">✓</span><span>Comprados</span></button>
     <button type="button" class="mobile-tab" data-view="deals" aria-label="Ofertas verificadas"><span class="mobile-tab-icon">%</span><span>Ofertas</span></button>
+    <button type="button" class="mobile-tab" data-growth-nav aria-label="Bitácora y ruta del negocio"><span class="mobile-tab-icon">✦</span><span>Bitácora</span></button>
   </nav>
+
+  <div class="overlay hidden" id="growthModal" role="presentation">
+    <div class="modal compact growth-dialog" role="dialog" aria-modal="true" aria-labelledby="growthFormTitle">
+      <div class="modal-head"><div><div class="modal-kicker">GC GRAPHICS / ORIGEN</div><h2 id="growthFormTitle">Nuevo registro en la bitácora</h2></div><button type="button" id="growthCloseModal" class="close-btn" aria-label="Cerrar">×</button></div>
+      <form id="growthForm">
+        <div class="growth-form-fields">
+          <div class="growth-form-row"><label class="field"><span>Fecha del acontecimiento</span><input type="date" id="growthDate" required></label><label class="field"><span>Tipo de registro</span><select id="growthCategory"><option>Nota</option><option>Decisión</option><option>Compra</option><option>Recepción</option><option>Prueba</option><option>Aprendizaje</option><option>Hito</option></select></label></div>
+          <label class="field"><span>¿Qué ocurrió? *</span><input type="text" id="growthTitle" required maxlength="150" placeholder="Ej. Primera prueba de sublimación completada"></label>
+          <label class="field"><span>Equipo relacionado (opcional)</span><select id="growthProduct"><option value="">Sin equipo asociado</option></select></label>
+          <label class="field"><span>Detalles, resultados o aprendizaje</span><textarea id="growthDescription" rows="5" maxlength="2400" placeholder="Qué hicimos, qué salió bien o mal y qué haremos después."></textarea></label>
+        </div>
+        <div class="modal-foot"><button type="button" class="btn btn-secondary" id="growthCancelModal">Cancelar</button><button type="submit" class="btn btn-primary">Guardar en bitácora</button></div>
+      </form>
+    </div>
+  </div>
   <div class="overlay hidden" id="formOverlay" role="presentation">
     <div class="modal large" role="dialog" aria-modal="true" aria-labelledby="formTitle">
       <div class="modal-head"><div><div class="modal-kicker">GESTIÓN DE INVENTARIO</div><h2 id="formTitle">Nuevo artículo</h2></div><button class="close-btn" id="closeForm" aria-label="Cerrar formulario">×</button></div>
