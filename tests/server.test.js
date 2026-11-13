@@ -61,9 +61,9 @@ test('HTTP health and unsupported source are explicit', async () => {
     const health = await fetch(base + '/api/health');
     assert.equal(health.status, 200);
     assert.deepEqual(await health.json(), { ok: true, app: 'gc-graphics-inventory', version: '1.7.4' });
-    const blocked = await fetch(base + '/api/product-preview?url=' + encodeURIComponent('https://www.amazon.com/dp/B0D9VWCHM8'));
-    assert.equal(blocked.status, 422);
-    assert.equal((await blocked.json()).error, 'unsupported_source');
+    const amazon = await fetch(base + '/api/product-preview?url=' + encodeURIComponent('https://www.amazon.com/dp/B0D9VWCHM8'));
+    assert.equal(amazon.status, 200);
+    assert.equal((await amazon.json()).asin, 'B0D9VWCHM8');
     const home = await fetch(base + '/');
     assert.equal(home.status, 200);
     assert.match(await home.text(), /GC GRAPHICS/);

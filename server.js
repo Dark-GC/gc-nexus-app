@@ -303,6 +303,13 @@ export const server = http.createServer(async (req, res) => {
     if (target.pathname === '/api/health') return send(res, 200, JSON.stringify({ ok: true, app: 'gc-graphics-inventory', version: '1.7.4' }));
     if (target.pathname === '/api/product-preview') {
       const link = target.searchParams.get('url');
+      const isAmazonLink=/^https:\/\/(?:www\.)?(?:amazon\.[^/]+|a\.co|amzn\.to)\//i.test(link||'');
+      if(isAmazonLink) try {
+        const amazon=await resolveAmazonProductUrl(link);
+        return send(res,200,JSON.stringify({title:'Producto Amazon identificado',store:'amazon.com',asin:amazon.asin,productUrl:link,requestedUrl:link,price:null,currency:null,availability:'unknown',source:'amazon-link',checkedAt:new Date().toISOString(),note:'ASIN identificado. El precio se consulta de forma privada después de guardar el artículo.'}));
+      } catch (error) {
+        return send(res,422,JSON.stringify({error:'amazon_asin_not_found',message:'No se pudo identificar el ASIN exacto de este enlace Amazon.'}));
+      }
       if (!allowedProductUrl(link)) {
         return send(res, 422, JSON.stringify({
           error: 'unsupported_source',
