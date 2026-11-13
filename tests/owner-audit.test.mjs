@@ -9,7 +9,7 @@ test("owner audit is an atomic Postgres trigger with invoker security",()=>{
   assert.match(sql,/after insert or update or delete on public\.inventory_items/);
   assert.match(sql,/insert into public\.inventory_events/);
   assert.match(sql,/gc_owner_item_atomic_audit/);
-  assert.match(sql,/auth\.uid\(\) is distinct from new\.user_id/);
+  assert.match(sql,/\(select auth\.uid\(\)\) is distinct from new\.user_id/);
   for(const type of ["purchase_confirmed","received_confirmed","purchase_reverted","deleted"])
     assert.ok(sql.includes(type),type);
 });
