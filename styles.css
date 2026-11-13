@@ -347,3 +347,9 @@ body.family-buyer .product-bottom .family-status{font-size:11px}
 }
 @media(max-width:390px){:root{--mobile-nav-height:68px}.mobile-tab{font-size:8px}.mobile-tab-icon{font-size:18px}.stat-card{min-height:88px}.page-heading{margin-bottom:18px}.catalog-header{margin-top:24px}}
 @media(prefers-reduced-motion:reduce){.mobile-tab,.image-viewer-stage img,.product-card{transition:none!important}}
+
+/* V1.7.1: iOS modal locking and desktop-safe card controls. */
+body.modal-scroll-locked{position:fixed;left:0;right:0;width:100%;overflow:hidden;overscroll-behavior:none}
+.overlay{overscroll-behavior:contain}.modal{overscroll-behavior:contain}.form-scroll{overscroll-behavior:contain;-webkit-overflow-scrolling:touch}
+@media(min-width:761px){.product-menu{opacity:0;pointer-events:none;transition:opacity .16s ease}.product-card:hover .product-menu,.product-card:focus-within .product-menu{opacity:1;pointer-events:auto}.product-flag{max-width:calc(100% - 92px)}.deal-flag{max-width:calc(100% - 28px)}}
+@media(max-width:760px){.decision-message{overflow-wrap:anywhere}.purchase-extra{min-width:0}.purchase-extra .field,.purchase-extra .receipt-field{min-width:0}.purchase-extra input[type="date"],.purchase-extra input,.purchase-extra select{max-width:100%;width:100%;min-width:0}.purchase-extra .receipt-choices{gap:8px}.purchase-extra .receipt-choices label{min-width:0;overflow-wrap:anywhere}.modal.compact{width:100%;max-width:100vw}.modal-foot .btn{min-width:0;flex:1}}

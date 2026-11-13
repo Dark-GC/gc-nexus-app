@@ -247,8 +247,11 @@
   }
   function scheduleCountdowns(){if(countdownTimer)return;countdownTimer=setInterval(updateCountdowns,1000);}
   function setView(v) {S.view=v;S.category="Todas";$("searchInput").value="";S.query="";render();}
-  function showOverlay(id) {$(id).classList.remove("hidden"); document.body.style.overflow="hidden";}
-  function closeOverlays() {["formOverlay","decisionOverlay","imageOverlay"].forEach(id=>$(id)?.classList.add("hidden"));document.body.style.overflow=""; S.editing=null; S.pendingPhoto=null; S.decision=null;}
+  let lockedScrollY=0;
+  function lockBackground(){if(document.body.classList.contains("modal-scroll-locked"))return;lockedScrollY=window.scrollY;document.body.classList.add("modal-scroll-locked");document.body.style.top="-"+lockedScrollY+"px";}
+  function unlockBackground(){if(!document.body.classList.contains("modal-scroll-locked"))return;document.body.classList.remove("modal-scroll-locked");document.body.style.top="";window.scrollTo(0,lockedScrollY);}
+  function showOverlay(id) {$(id).classList.remove("hidden"); lockBackground();}
+  function closeOverlays() {["formOverlay","decisionOverlay","imageOverlay"].forEach(id=>$(id)?.classList.add("hidden"));unlockBackground(); S.editing=null; S.pendingPhoto=null; S.decision=null;}
   function showImage(p){
     const image=productImage(p);if(!image)return;
     const img=$("imageViewerImg");img.src=image;img.alt="Imagen completa de "+p.name;img.style.transform="translate(0px,0px) scale(1)";
