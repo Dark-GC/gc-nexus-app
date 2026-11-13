@@ -120,7 +120,7 @@
     const uid=state.ownerId;
     state.channel=state.client.channel("gc-inventory-"+uid)
       .on("postgres_changes",{event:"*",schema:"public",table:"inventory_items",filter:"user_id=eq."+uid},()=>{
-        clearTimeout(state.timer);state.timer=setTimeout(()=>{if(!state.pending)loadRemote(false);},500);
+        clearTimeout(state.timer);state.timer=setTimeout(async()=>{if(!state.pending){await loadRemote(false);await fetchFamilyEvents();}},500);
       })
       .subscribe();
   }
@@ -172,6 +172,16 @@
     if(error)show("No se pudo compartir: "+errorMessage(error),"error");
     else{$("viewerEmail").value="";show("Invitación registrada: "+(role==="buyer"?"compras y recepción":"solo consulta")+". Tu familiar debe crear su cuenta con ese correo y confirmarlo.","ok");await refreshViewers();}
   }
+  async function fetchFamilyEvents(){
+    if(!state.client||!state.ownerId||!state.user)return;
+    const owner=state.ownerId;
+    const {data,error}=await state.client.from("inventory_events")
+      .select("event_id,item_id,event_type,detail,event_at").eq("user_id",owner)
+      .order("event_at",{ascending:false}).limit(300);
+    if(error){console.info("Movimientos familiares:",error.message);return;}
+    if(owner===state.ownerId)window.GCGrowth?.setFamilyEvents?.(data||[]);
+  }
+
   async function loadGrowth(initial=false){
     if(!state.client||!state.ownerId)return;
     const {data,error}=await state.client.from("inventory_journal_state").select("document").eq("user_id",state.ownerId).maybeSingle();
@@ -241,6 +251,7 @@
       state.pending=false;
       if(epoch!==state.epoch)throw new Error("La sesión cambió durante la compra; vuelve a ingresar.");
       await loadRemote(false);
+      await fetchFamilyEvents();
       show(mode==="buy"?"Compra confirmada y registrada en la bitácora de movimientos.":"Recepción física confirmada y registrada.","ok");
       return data;
     }catch(e){
@@ -267,6 +278,7 @@
     await loadRemote(true);
     if(!state.ready)return;
     await loadGrowth(true);
+    await fetchFamilyEvents();
     subscribe();
     if(state.journalChannel)await state.client.removeChannel(state.journalChannel);
     state.journalChannel=state.client.channel("gc-journal-"+state.ownerId)
