@@ -3,7 +3,7 @@
   const KEY = "gc_graphics_inventory_v1";
   const CATEGORIES = ["Todas", "Maquinaria", "Accesorio", "Consumible"];
   const $ = id => document.getElementById(id);
-  const S = {items: [], feed: {items: {}}, amazonFeed:{items:{}}, promotions:{items:{}}, liveQuotes:{}, verifiedImages:{}, brokenImages:new Set(), view: "all", category: "Todas", query: "", sort: "order", editing: null, pendingPhoto: null, decision: null, incoming: null};
+  const S = {items: [], feed: {items: {}}, amazonFeed:{items:{}}, promotions:{items:{}}, liveQuotes:{}, verifiedImages:{}, brokenImages:new Set(), view: "all", category: "Todas", query: "", sort: "order", editing: null, pendingPhoto: null, decision: null, incoming: null,readOnly:false,initialized:false};
   const safeText = v => String(v == null ? "" : v);
   const esc = v => safeText(v).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#39;");
   const urlOK = v => /^https:\/\/[^\s]+$/i.test(safeText(v)) || /^http:\/\/[^\s]+$/i.test(safeText(v));
@@ -46,7 +46,7 @@
       imageUrl: imageOK(p.imageUrl) ? safeText(p.imageUrl).slice(0, 180000) : "",
       manualPrice: toNum(p.manualPrice), manualOriginalPrice:toNum(p.manualOriginalPrice), stockQty: p.stockQty === 0 ? 0 : (Number.isInteger(Number(p.stockQty)) && p.stockQty !== "" && p.stockQty != null && Number(p.stockQty) >= 0 ? Number(p.stockQty) : null),
       purchaseDate: /^\d{4}-\d{2}-\d{2}$/.test(safeText(p.purchaseDate)) ? p.purchaseDate : null,
-      paidAmount: toNum(p.paidAmount), notes: clamp(p.notes, 1200),
+      paidAmount: toNum(p.paidAmount),paidCurrency:p.paidCurrency==="DOP"?"DOP":"USD",purchaseCountry:["US","DO"].includes(p.purchaseCountry)?p.purchaseCountry:null, notes: clamp(p.notes, 1200),
       notionUrl: urlOK(p.notionUrl) ? p.notionUrl : "",
       editedAt: p.editedAt || null
     };
@@ -149,16 +149,17 @@
   function productCard(p) {
     const s = productStock(p), f = flag(p), price = productPrice(p), image = productImage(p);
     const thumb = image ? '<img loading="lazy" data-product-id="'+ esc(p.id) +'" referrerpolicy="no-referrer" src="' + esc(image) + '" alt="Imagen del producto '+ esc(p.name) +'">' : '<div class="product-symbol">' + esc(titleInitials(p.brand || p.name)) + '</div>';
+    const converted=price.currency==="USD"&&Number.isFinite(price.value)?(window.GCFX?.convert?.(price.value)||""):"";
     const dealBadge=price.discountPercent?'<span class="deal-flag">-'+price.discountPercent+'% OFERTA</span>':"";
     const offerMeta=price.originalPrice!==null?'<div class="old-price-row"><del>'+esc(priceText(price.originalPrice,price.currency))+'</del><span>Ahorras '+esc(priceText(price.originalPrice-price.value,price.currency))+'</span></div>':"";
     const name = esc(p.name), encoded = esc(p.id), notes = esc(p.notes || "Sin descripción adicional.");
     const link = p.url ? '<a class="open-link" href="'+esc(p.url)+'" target="_blank" rel="noreferrer noopener" aria-label="Visitar tienda de '+name+'" title="Ver en tienda">↗</a>' : "";
-    const buy = p.status !== "Comprada" ? '<button type="button" class="btn btn-bought" data-action="buy" data-id="' + encoded + '">✓ Confirmar compra</button>' : (p.received ? '<button class="btn btn-secondary" disabled>✓ Recibido</button>' : '<button class="btn btn-bought" data-action="receive" data-id="'+encoded+'">✓ Marcar recibido</button>');
+    const buy = S.readOnly?'<span class="family-status">'+(p.status==="Comprada"?(p.received?'✓ Ya recibido':'◷ Aún por recibir'):'◷ En lista de compras')+'</span>':p.status !== "Comprada" ? '<button type="button" class="btn btn-bought" data-action="buy" data-id="' + encoded + '">✓ Confirmar compra</button>' : (p.received ? '<button class="btn btn-secondary" disabled>✓ Recibido</button>' : '<button class="btn btn-bought" data-action="receive" data-id="'+encoded+'">✓ Marcar recibido</button>');
     return '<article class="product-card">' +
       '<div class="product-image">' + thumb + '<span class="product-flag '+ f.css +'">'+esc(f.text)+'</span>'+dealBadge+'<div class="product-menu"><button data-action="edit" data-id="'+encoded+'" title="Editar" aria-label="Editar '+name+'">✎</button><button data-action="delete" data-id="'+encoded+'" title="Eliminar" aria-label="Eliminar '+name+'">×</button></div></div>' +
       '<div class="product-body"><div class="product-meta">'+ esc(p.type) + (p.code ? " · " + esc(p.code) : "") + '</div>' +
       '<h3 class="product-name" title="'+name+'">'+name+'</h3><p class="product-desc">'+notes+'</p>'+
-      '<div class="product-price-row"><div><div class="price-num '+(price.value==null?'unknown':'')+'">'+(price.value==null?'Consultar precio':esc(priceText(price.value,price.currency)))+'</div>'+offerMeta+'<span class="price-detail">'+esc(price.label)+'</span></div>'+
+      '<div class="product-price-row"><div><div class="price-num '+(price.value==null?'unknown':'')+'">'+(price.value==null?'Consultar precio':esc(priceText(price.value,price.currency)))+'</div>'+offerMeta+(converted?'<span class="converted-price">'+esc(converted)+' · referencia</span>':"")+'<span class="price-detail">'+esc(price.label)+'</span></div>'+
       '<span class="stock-pill '+s.kind+'">'+esc(s.text)+'</span></div>'+
       '<div class="product-bottom">'+buy+link+'</div></div></article>';
   }
@@ -190,6 +191,7 @@
   function showOverlay(id) {$(id).classList.remove("hidden"); document.body.style.overflow="hidden";}
   function closeOverlays() {["formOverlay","decisionOverlay"].forEach(id=>$(id).classList.add("hidden"));document.body.style.overflow=""; S.editing=null; S.pendingPhoto=null; S.decision=null;}
   function showForm(item=null) {
+    if(S.readOnly)return toast("Vista familiar: este inventario es de solo lectura.",true);
     closeOverlays();S.editing=item ? item.id : null;S.pendingPhoto=null;
     $("formTitle").textContent=item?"Editar artículo":"Nuevo artículo";
     const form=$("itemForm");form.reset();
@@ -201,13 +203,14 @@
     showOverlay("formOverlay"); $("itemName").focus();
   }
   function showDecision(mode,p) {
+    if(S.readOnly&&mode!=="info")return toast("Vista familiar de solo lectura.",true);
     closeOverlays();S.decision={mode,id:p?.id};$("purchaseExtra").classList.toggle("hidden",mode!=="buy");
     $("decisionKicker").textContent=mode==="delete"?"ELIMINACIÓN":mode==="buy"?"REGISTRO DE COMPRA":mode==="receive"?"RECEPCIÓN":mode==="import"?"RESTAURAR DATOS":"INFORMACIÓN";
     $("decisionTitle").textContent=mode==="delete"?"¿Eliminar este artículo?":mode==="buy"?"Confirmar compra":mode==="receive"?"Confirmar recepción":mode==="import"?"¿Restaurar la copia?":"Actualización de precios";
     $("decisionMessage").textContent=mode==="delete"?"Se eliminará «"+p.name+"» del catálogo de este navegador. Antes puedes exportar una copia JSON.":mode==="buy"?"¿Confirmas la compra de «"+p.name+"»? Se registrará como comprado, con opción de indicar la recepción.":mode==="receive"?"¿Confirmas que recibiste físicamente «"+p.name+"»?":mode==="import"?"Se reemplazarán los artículos actuales por "+(S.incoming?.length || 0)+" artículos de la copia seleccionada.": "El sistema publica capturas de proveedores con fecha y procedencia. Amazon y algunas tiendas pueden bloquear las consultas. Nunca mostramos cifras supuestas como precios o cantidades reales; para nuevos datos debe ejecutarse la actualización automática en GitHub.";
     const confirm=$("confirmDecision");confirm.textContent=mode==="delete"?"Eliminar":mode==="buy"?"Registrar compra":mode==="receive"?"Marcar como recibido":mode==="import"?"Restaurar inventario":"Entendido";
     confirm.className="btn "+(mode==="delete"?"btn-danger":"btn-primary");
-    if(mode==="buy"){$("purchasedDate").value=new Date().toISOString().slice(0,10);$("paidAmount").value="";document.querySelectorAll('input[name="purchaseReceivedChoice"]').forEach(x=>x.checked=false);}
+    if(mode==="buy"){$("purchasedDate").value=new Date().toISOString().slice(0,10);$("paidAmount").value="";$("paidCurrency").value="USD";$("purchaseCountry").value="";document.querySelectorAll('input[name="purchaseReceivedChoice"]').forEach(x=>x.checked=false);}
     showOverlay("decisionOverlay");
   }
   async function shrinkImage(file) {
@@ -219,6 +222,7 @@
     });
   }
   function recordForm(ev) {
+    if(S.readOnly){ev.preventDefault();return toast("Solo lectura.",true);}
     ev.preventDefault();const form=ev.currentTarget;const current=S.items.find(p=>p.id===S.editing);
     const get=k=>form.elements.namedItem(k).value;
     const url=clamp(get("url"),1500),img=S.pendingPhoto || clamp(get("imageUrl"),180000);
@@ -237,6 +241,7 @@
     if(supportsLive(vals))getLiveQuote(vals);
   }
   function confirmDecision() {
+    if(S.readOnly)return closeOverlays();
     const d=S.decision; if(!d)return closeOverlays();
     if(d.mode==="info")return closeOverlays();
     if(d.mode==="import"){
@@ -248,7 +253,7 @@
     const p=S.items.find(x=>x.id===d.id);if(!p)return closeOverlays();
     if(d.mode==="delete")S.items=S.items.filter(x=>x.id!==p.id);
     if(d.mode==="receive")p.received=true;
-    if(d.mode==="buy"){const choice=document.querySelector('input[name="purchaseReceivedChoice"]:checked')?.value;if(!choice)return toast("Selecciona si ya recibiste físicamente la compra.",true);p.status="Comprada";p.received=choice==="yes";p.purchaseDate=$("purchasedDate").value||new Date().toISOString().slice(0,10);p.paidAmount=toNum($("paidAmount").value);}
+    if(d.mode==="buy"){const choice=document.querySelector('input[name="purchaseReceivedChoice"]:checked')?.value;if(!choice)return toast("Selecciona si ya recibiste físicamente la compra.",true);p.status="Comprada";p.received=choice==="yes";p.purchaseDate=$("purchasedDate").value||new Date().toISOString().slice(0,10);p.paidAmount=toNum($("paidAmount").value);p.paidCurrency=$("paidCurrency").value==="DOP"?"DOP":"USD";p.purchaseCountry=["US","DO"].includes($("purchaseCountry").value)?$("purchaseCountry").value:null;}
     if(d.mode!=="delete")p.editedAt=now();
     save();window.GCGrowth?.recordInventoryAction?.(d.mode,p);
     closeOverlays();render();toast(d.mode==="delete"?"Artículo eliminado.":d.mode==="receive"?"Recepción registrada.":"Compra registrada correctamente.");
@@ -369,9 +374,12 @@
       if(response.ok){const extra=await response.json();S.verifiedImages=extra.items||{};render();}
     }catch{}
     scheduleLiveQuotes();
+    S.initialized=true;document.dispatchEvent(new Event("gc-inventory-ready"));
   }
   window.GCInventory = {
     getItems: () => S.items.map(p => ({...p})),
+    ready:()=>S.initialized,
+    setReadOnly:value=>{S.readOnly=!!value;document.body.classList.toggle("family-viewer",S.readOnly);render();},
     setItemsFromCloud: items => {
       suppressCloudSave = true;
       S.items = Array.isArray(items) ? items.map(safeItem) : S.items;
