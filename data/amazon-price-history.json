@@ -1,0 +1,139 @@
+{
+  "schemaVersion": 1,
+  "startedAt": "2026-11-13T14:05:51.689Z",
+  "retention": "Latest 90 dated observations per product",
+  "items": {
+    "gc-bettersub": [
+      {
+        "asin": "B09NRDXYP3",
+        "checkedAt": "2026-11-13T14:05:51.313Z",
+        "price": 81.59,
+        "currency": "USD",
+        "priceStatus": "verified",
+        "listPrice": null,
+        "seller": "BetterSub",
+        "stockStatus": "in_stock"
+      }
+    ],
+    "gc-epson": [
+      {
+        "asin": "B096N8DN2H",
+        "checkedAt": "2026-11-13T14:05:51.313Z",
+        "price": null,
+        "currency": null,
+        "priceStatus": "unavailable",
+        "listPrice": null,
+        "seller": null,
+        "stockStatus": "unknown"
+      }
+    ],
+    "gc-buyounger": [
+      {
+        "asin": "B09471X83K",
+        "checkedAt": "2026-11-13T14:05:51.313Z",
+        "price": 29.99,
+        "currency": "USD",
+        "priceStatus": "verified",
+        "listPrice": null,
+        "seller": "EVERSEAS TECHNOLOGY CO., LIMITED",
+        "stockStatus": "in_stock"
+      }
+    ],
+    "gc-topdeep": [
+      {
+        "asin": "B0BFPDKN6R",
+        "checkedAt": "2026-11-13T14:05:51.313Z",
+        "price": 194.9,
+        "currency": "USD",
+        "priceStatus": "verified",
+        "listPrice": null,
+        "seller": "SHENG YUAN HOME TOOLS LIMITED",
+        "stockStatus": "in_stock"
+      }
+    ],
+    "gc-colemoly": [
+      {
+        "asin": "B0D62QWN6M",
+        "checkedAt": "2026-11-13T14:05:51.313Z",
+        "price": 24.56,
+        "currency": "USD",
+        "priceStatus": "verified",
+        "listPrice": null,
+        "seller": "Colemoly",
+        "stockStatus": "in_stock"
+      }
+    ],
+    "gc-mebmik": [
+      {
+        "asin": "B0CQYH6VLH",
+        "checkedAt": "2026-11-13T14:05:51.689Z",
+        "price": 9.99,
+        "currency": "USD",
+        "priceStatus": "verified",
+        "listPrice": null,
+        "seller": "HEKALM",
+        "stockStatus": "in_stock"
+      }
+    ],
+    "gc-dispensador": [
+      {
+        "asin": "B08CCT5W77",
+        "checkedAt": "2026-11-13T14:05:51.689Z",
+        "price": 11.99,
+        "currency": "USD",
+        "priceStatus": "verified",
+        "listPrice": null,
+        "seller": "HONG LIN",
+        "stockStatus": "in_stock"
+      }
+    ],
+    "gc-caja": [
+      {
+        "asin": "B0CMXGG8XX",
+        "checkedAt": "2026-11-13T14:05:51.689Z",
+        "price": 52.99,
+        "currency": "USD",
+        "priceStatus": "verified",
+        "listPrice": null,
+        "seller": "CREALITY FALCON Official",
+        "stockStatus": "in_stock"
+      }
+    ],
+    "gc-ptfe": [
+      {
+        "asin": "B0DK5CQPP8",
+        "checkedAt": "2026-11-13T14:05:51.689Z",
+        "price": 9.99,
+        "currency": "USD",
+        "priceStatus": "verified",
+        "listPrice": null,
+        "seller": "Transourdream",
+        "stockStatus": "in_stock"
+      }
+    ],
+    "gc-cinta": [
+      {
+        "asin": "B0FPG8RC3J",
+        "checkedAt": "2026-11-13T14:05:51.689Z",
+        "price": 6.19,
+        "currency": "USD",
+        "priceStatus": "verified",
+        "listPrice": null,
+        "seller": "COOLTOOLS",
+        "stockStatus": "in_stock"
+      }
+    ],
+    "gc-falcon10": [
+      {
+        "asin": "B0D9VWCHM8",
+        "checkedAt": "2026-11-13T14:05:49.265Z",
+        "price": 189.9,
+        "currency": "USD",
+        "priceStatus": "verified",
+        "listPrice": null,
+        "seller": "CREALITY FALCON Official",
+        "stockStatus": "in_stock"
+      }
+    ]
+  }
+}
