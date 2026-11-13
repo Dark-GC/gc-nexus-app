@@ -182,6 +182,44 @@
     const total=Math.floor(remaining/1000),days=Math.floor(total/86400),hours=Math.floor(total%86400/3600),minutes=Math.floor(total%3600/60),seconds=total%60;
     return String(days).padStart(2,"0")+" días · "+String(hours).padStart(2,"0")+" h · "+String(minutes).padStart(2,"0")+" min · "+String(seconds).padStart(2,"0")+" s";
   }
+  const amazonQuotePending=new Set();
+  function isAmazonUrl(url){
+    return /^https:\/\/(?:www\.)?(?:amazon\.[^/]+|a\.co|amzn\.to)\//i.test(url||"");
+  }
+  async function requestAmazonQuote(p){
+    if(S.readOnly||amazonQuotePending.has(p.id)||!isAmazonUrl(p.url))return;
+    amazonQuotePending.add(p.id);render();
+    toast("Consultando Amazon de forma privada…");
+    try{
+      if(!window.GCCloud?.requestImmediateAmazonQuote)throw Error("amazon_quotes_not_configured");
+      const quote=await window.GCCloud.requestImmediateAmazonQuote(p);
+      if(!quote)throw Error("quote_not_started");
+      if(!S.items.some(x=>x.id===p.id&&x.url===p.url))return;
+      S.liveQuotes[p.id]={
+        sourceUrl:p.url,provider:"amazon-snapshot",checkedAt:quote.checkedAt,
+        price:quote.price,originalPrice:null,currency:quote.currency,
+        priceStatus:quote.priceStatus,stockStatus:quote.stockStatus,
+        stockQuantity:null,imageUrl:"",seller:quote.seller||null,error:null
+      };
+      toast(quote.priceStatus==="verified"?"Precio Amazon verificado y mostrado en la tarjeta.":"Amazon respondió sin precio verificable.");
+    }catch(error){
+      const code=String(error?.message||"network_error");
+      const messages={
+        amazon_quotes_not_configured:"Falta configuración privada del servidor.",
+        owner_required:"La cuenta no tiene permisos para consultar.",
+        amazon_quote_unavailable:"El proveedor no pudo confirmar el precio.",
+        quote_already_recorded:"Ya existe una cotización de ese ASIN; no se hizo otra consulta.",
+        quote_pending_review:"La consulta anterior está pendiente de revisión; no se repitió el gasto.",
+        monthly_budget_exhausted:"Se alcanzó el límite mensual de créditos.",
+        inventory_item_not_found:"No se encontró el artículo en el inventario sincronizado.",
+        asin_does_not_match_stored_item:"El ASIN no coincide con el artículo guardado.",
+        short_link_unresolved:"Amazon no resolvió el enlace abreviado.",
+        amazon_asin_not_found:"No se identificó el ASIN exacto."
+      };
+      const message=messages[code]||(/^supabase_\d+$/.test(code)?"La base de datos rechazó la operación ("+code+").":"No se pudo completar la consulta ("+(["internal_error","network_error"].includes(code)?code:"error de conexión o verificación")+").");
+      toast(message+" El artículo sigue guardado.",true);
+    }finally{amazonQuotePending.delete(p.id);render();}
+  }
   function productCard(p) {
     const s = productStock(p), f = flag(p), price = productPrice(p), image = productImage(p);
     const name = esc(p.name), encoded = esc(p.id), notes = esc(p.notes || "Sin descripción adicional.");
@@ -190,6 +228,9 @@
     const promo=price.promotion;
     const campaignClass=promo?.campaignVerified&&/^black friday$/i.test(promo.label)?" black-friday":"";
     const dealBadge=price.discountPercent?'<span class="deal-flag">-'+price.discountPercent+'% '+esc(promo?.label||"Precio inferior a referencia")+'</span>':"";
+    const retryQuote=(!S.readOnly&&isAmazonUrl(p.url)&&!S.liveQuotes[p.id]&&!S.amazonFeed.items?.[p.id])
+      ? '<button type="button" class="quote-retry" data-action="quote-retry" data-id="'+encoded+'"'+(amazonQuotePending.has(p.id)?' disabled':'')+'>'+(amazonQuotePending.has(p.id)?'Consultando…':'↻ Consultar precio Amazon')+'</button>'
+      : "";
     const localQuote=Number.isFinite(p.localPriceDop)?'<div class="local-quote"><strong>Precio RD: '+esc(priceText(p.localPriceDop,"DOP"))+'</strong><small>'+esc(p.localShopName||"Cotización manual")+' · '+esc(p.localPriceCheckedAt||"sin fecha")+'</small></div>':"";
     const offerMeta=price.originalPrice!==null?'<div class="old-price-row"><del>'+esc(priceText(price.originalPrice,price.currency))+'</del><span>Ahorras '+esc(priceText(price.originalPrice-price.value,price.currency))+'</span></div>':"";
     const promotionMeta=promo?'<div class="promotion-line"><span class="campaign-badge'+campaignClass+'">'+esc(promo.label)+'</span>'+
@@ -210,7 +251,7 @@
       '<div class="product-image">' + thumb + '<span class="product-flag '+ f.css +'">'+esc(f.text)+'</span><div class="product-menu"><button data-action="edit" data-id="'+encoded+'" title="Editar" aria-label="Editar '+name+'">✎</button><button data-action="delete" data-id="'+encoded+'" title="Eliminar" aria-label="Eliminar '+name+'">×</button></div></div>' +
       '<div class="product-body"><div class="product-meta">'+ esc(p.type) + (p.code ? " · " + esc(p.code) : "") + '</div>' +(p.brand?'<div class="product-brand">'+esc(p.brand)+'</div>':"")+
       '<h3 class="product-name" title="'+name+'">'+name+'</h3><p class="product-desc">'+notes+'</p>'+dealBadge+
-      '<div class="product-price-row"><div class="price-block"><div class="price-num '+(price.value==null?'unknown':'')+'">'+(price.value==null?'Consultar precio':esc(priceText(price.value,price.currency)))+'</div>'+offerMeta+promotionMeta+(converted?'<span class="converted-price">'+esc(converted)+' · referencia</span>':"")+'<span class="price-detail">'+esc(price.label)+'</span>'+localQuote+'</div>'+
+      '<div class="product-price-row"><div class="price-block"><div class="price-num '+(price.value==null?'unknown':'')+'">'+(price.value==null?'Consultar precio':esc(priceText(price.value,price.currency)))+'</div>'+offerMeta+promotionMeta+(converted?'<span class="converted-price">'+esc(converted)+' · referencia</span>':"")+'<span class="price-detail">'+esc(price.label)+'</span>'+retryQuote+localQuote+'</div>'+
       '<span class="stock-pill '+s.kind+'">'+esc(s.text)+'</span></div>'+
       '<div class="product-bottom">'+buy+link+'</div></div></article>';
   }
@@ -374,14 +415,7 @@
     save();window.GCGrowth?.recordInventoryAction?.(current?"edited":"created",vals);
     closeOverlays();render();toast(current?"Artículo actualizado.":"Artículo agregado al inventario.");
     if(supportsLive(vals))getLiveQuote(vals);
-    if(!current&&/^https:\/\/(?:www\.)?(?:amazon\.[^/]+|a\.co|amzn\.to)\//i.test(vals.url)){
-      toast("Artículo guardado. Consultando Amazon de forma privada…");
-      window.GCCloud?.requestImmediateAmazonQuote?.(vals).then(quote=>{
-        if(!quote)return;
-        S.liveQuotes[vals.id]={sourceUrl:vals.url,provider:"amazon-snapshot",checkedAt:quote.checkedAt,price:quote.price,originalPrice:null,currency:quote.currency,priceStatus:quote.priceStatus,stockStatus:quote.stockStatus,stockQuantity:null,imageUrl:"",seller:quote.seller||null,error:null};
-        if(S.items.some(x=>x.id===vals.id&&x.url===vals.url)){render();toast(quote.priceStatus==="verified"?"Precio Amazon verificado y mostrado en la tarjeta.":"Amazon respondió sin un precio verificable.");}
-      }).catch(error=>toast(error.message==="amazon_quotes_not_configured"?"La consulta inmediata de Amazon aún no está habilitada en el servidor.":"No se pudo consultar Amazon ahora. El artículo quedó guardado.",true));
-    }
+    if(!current&&isAmazonUrl(vals.url))void requestAmazonQuote(vals);
   }
   async function confirmDecision() {
     if(S.readOnly){
@@ -503,6 +537,7 @@
       const b=e.target.closest("button[data-action]");if(!b)return;
       const p=S.items.find(x=>x.id===b.dataset.id);if(!p)return;
       if(b.dataset.action==="view-image")return showImage(p);
+      if(b.dataset.action==="quote-retry")return void requestAmazonQuote(p);
       if(b.dataset.action==="edit")showForm(p);
       if(b.dataset.action==="buy"||b.dataset.action==="delete"||b.dataset.action==="receive")showDecision(b.dataset.action,p);
     });
