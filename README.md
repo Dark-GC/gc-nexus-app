@@ -183,3 +183,20 @@ node --test tests/*.test.mjs
 - Validación: [GitHub Actions PASS (HEAD dc3f7a8)](https://github.com/Dark-GC/gc-nexus-app/actions/runs/43360533566). Despliegue estático Render LIVE en ese commit. Los 14 artículos, los cuatro recibidos, 2 usuarios, 1 invitación y la bitácora se conservan.
 - **Pendientes reales:** impedir registro directo en Supabase Auth (`disable_signup=false` según último chequeo de Work; requiere configuración autorizada del proyecto), prueba de dos sesiones familiares reales, QA físico iPhone/Android y límites de precio Amazon. No declarar `COMPLETE` mientras sigan abiertos.
 
+
+
+## Amazon programado — Firecrawl Alexandria (PREPARADO, NO ACTIVADO)
+
+Se añadió el flujo `.github/workflows/amazon-snapshots.yml` y el script `scripts/refresh-amazon.mjs`.
+Por defecto, la ejecución programada **no consulta Amazon** hasta que el propietario configure el secreto privado `FIRECRAWL_API_KEY` en **Settings → Secrets and variables → Actions → New repository secret** de este repositorio.
+
+1. Accede a la cuenta Firecrawl que tenga habilitado Alexandria, abre el panel **API Keys** y crea/copia una clave propia para GC GRAPHICS. No la compartas en chats ni en el repositorio.
+2. Guarda esa clave únicamente en GitHub Actions Secrets con el nombre exacto `FIRECRAWL_API_KEY`.
+3. En GitHub Actions ejecuta manualmente **Amazon price snapshots (Firecrawl)** para la primera validación.
+4. Comprueba la nueva fecha en `data/amazon-snapshot.json`, los registros `.automation/amazon-budget.json`, los resultados de CI y el despliegue de Render.
+
+La tarea se programa a las **15:17 UTC** (~11:17 hora República Dominicana). No existe dependencia de Cron Jobs pagos en Render. Opera sobre un máximo explícito de 25 ASIN, lotes de 1–5 (5 créditos cada uno) y un presupuesto de **500 créditos por mes UTC calendario** dedicado a esta tarea. El cupo de 500 NO cubre llamadas manuales hechas fuera del proceso; revisar también el saldo de toda la cuenta en Firecrawl. No activar recarga automática ni contratar planes sin autorización.
+
+Se validan ASIN solicitado y servido; se rechazan variantes distintas; las observaciones Amazon nunca cambian el importe de compra. El precio de lista se conserva como referencia, pero **no** crea por sí solo una etiqueta de oferta verificada. Los datos sin precio confirmado quedan marcados como no disponibles, y ningún plazo de entrega se transforma en vencimiento de promoción. Las cuentas regresivas y la detección de eventos como Black Friday necesitan una fuente con fecha de expiración corroborada; aún no forman parte de este proceso.
+
+Las pruebas de `tests/amazon-refresh.test.js` no consumen créditos. **No declarar la automatización PASS en producción hasta comprobar una ejecución exitosa con una clave real** y validar después los 11 artículos en la PWA.
