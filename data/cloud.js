@@ -112,22 +112,12 @@
         const {error}=await state.client.from("inventory_items").delete().eq("user_id",uid).in("id",remove);
         if(error)throw error;
       }
-      const events=[];
-      for(const p of put){
-        const prev=state.lastItems?.get(p.id);
-        if(p.status==="Comprada"&&prev?.status!=="Comprada")
-          events.push({user_id:uid,item_id:p.id,event_type:"purchase_confirmed",detail:{purchase_date:p.purchaseDate,paid_amount:p.paidAmount,paid_currency:p.paidCurrency||"USD"}});
-        if(p.received&&!prev?.received)
-          events.push({user_id:uid,item_id:p.id,event_type:"received_confirmed",detail:{}});
-      }
-      for(const id of remove)events.push({user_id:uid,item_id:id,event_type:"deleted",detail:{}});
-      // The inventory write succeeded. Record its corresponding history before saying all is saved.
+      // The DB trigger gc_owner_item_atomic_audit writes history atomically
+      // with each owner INSERT/UPDATE/DELETE. Never send a second event batch.
+      // If a database write fails, the matching movement is rolled back too.
       state.snapshot=new Map(desired.map(p=>[p.id,stable(p)]));
       state.lastItems=new Map(desired.map(p=>[p.id,{status:p.status,received:p.received}]));
-      if(events.length){
-        const {error}=await state.client.from("inventory_events").insert(events);
-        if(error)throw new Error("Inventario guardado; movimiento de bitácora pendiente: "+errorMessage(error));
-      }
+
     }).then(()=>{
       if(epoch!==state.epoch)return;
       state.pendingCount=Math.max(0,state.pendingCount-1);
