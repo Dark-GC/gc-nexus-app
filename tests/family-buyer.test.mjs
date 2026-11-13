@@ -37,7 +37,8 @@ test("family action is a real authenticated RPC, never an unrestricted update",(
  assert.match(client,/p_item_id:details\.id/);
  assert.match(client,/p_action:mode/);
  assert.match(ddl,/SECURITY DEFINER/);
- assert.match(ddl,/security invoker/i);
+ assert.match(ddl,/CREATE OR REPLACE FUNCTION public\.gc_family_purchase_action/);
+ assert.doesNotMatch(ddl.slice(ddl.indexOf("CREATE OR REPLACE FUNCTION public.gc_family_purchase_action")) ,/SECURITY DEFINER/);
  assert.match(ddl,/viewer_email=v_email/);
  assert.match(ddl,/v\.role='buyer'/);
  assert.match(ddl,/email_confirmed_at is not null/);
