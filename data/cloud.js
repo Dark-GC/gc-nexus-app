@@ -2,11 +2,11 @@
 "use strict";
 (() => {
   const $ = id => document.getElementById(id);
-  const state = {client:null,user:null,ready:false,queue:Promise.resolve(),snapshot:new Map(),channel:null,pending:false,timer:null,booted:false};
+  const state = {client:null,user:null,ready:false,queue:Promise.resolve(),snapshot:new Map(),channel:null,journalChannel:null,pending:false,timer:null,booted:false,ownerId:null,viewer:false,applyingJournal:false,backupTimer:null};
   const backend = () => window.GCInventory;
   const show = (message,mode="info") => {
     const button=$("cloudButton"), note=$("cloudState");
-    if(button)button.textContent=mode==="ok"?"☁ Sincronizado":mode==="busy"?"☁ Guardando…":mode==="error"?"☁ Sin conexión":"☁ Conectar nube";
+    if(button)button.textContent=mode==="ok"?"☁ Sincronizado":mode==="busy"?"☁ Guardando…":mode==="error"?"☁ Sin conexión":state.viewer?"👁 Vista familiar":"☁ Conectar nube";
     if(note)note.textContent=message;
     const extra=$("authMessage");if(extra)extra.textContent=message;
   };
@@ -18,24 +18,24 @@
       type:item.type,status:item.status,received:!!item.received,
       brand:item.brand||"",code:item.code||"",product_url:item.url||"",
       image_url:item.imageUrl||"",notes:item.notes||"",notion_url:item.notionUrl||"",
-      manual_price:item.manualPrice??null,manual_original_price:item.manualOriginalPrice??null,stock_qty:item.stockQty??null,
+      manual_price:item.manualPrice??null,manual_original_price:item.manualOriginalPrice??null,stock_qty:item.stockQty??null,paid_currency:item.paidCurrency||"USD",purchase_country:item.purchaseCountry||null,
       purchase_date:item.purchaseDate||null,paid_amount:item.paidAmount??null};
   }
   function itemFrom(x){return {id:x.id,order:x.sort_order,name:x.name,type:x.type,brand:x.brand,code:x.code,
     status:x.status,received:x.received,url:x.product_url,imageUrl:x.image_url,
     manualPrice:x.manual_price===null?null:Number(x.manual_price),
     manualOriginalPrice:x.manual_original_price===null?null:Number(x.manual_original_price),
-    stockQty:x.stock_qty,purchaseDate:x.purchase_date,
+    stockQty:x.stock_qty,purchaseDate:x.purchase_date,paidCurrency:x.paid_currency||"USD",purchaseCountry:x.purchase_country||null,
     paidAmount:x.paid_amount===null?null:Number(x.paid_amount),
     notes:x.notes,notionUrl:x.notion_url,editedAt:x.updated_at};}
   function stable(x){return JSON.stringify(dataFrom(x,""));}
   function notify() {
-    if(!state.ready||!state.user)return;
+    if(!state.ready||!state.user||state.viewer)return;
     state.pending=true;show("Guardando cambios en la base de datos…","busy");
     state.queue=state.queue.catch(()=>{}).then(async()=>{
       const desired=backend()?.getItems?.()||[];
       if(!state.user||!state.ready)return;
-      const uid=state.user.id;
+      const uid=state.ownerId;
       const desiredMap=new Map(desired.map(p=>[p.id,p]));
       const put=desired.filter(p=>state.snapshot.get(p.id)!==stable(p));
       const remove=[...state.snapshot.keys()].filter(id=>!desiredMap.has(id));
@@ -67,11 +67,11 @@
   }
   async function loadRemote(initial=false) {
     if(!state.client||!state.user||state.pending)return;
-    const uid=state.user.id;
+    const uid=state.ownerId;
     const {data,error}=await state.client.from("inventory_items").select("*").eq("user_id",uid).order("sort_order",{ascending:true});
     if(error){show("No se pudo obtener el inventario: "+errorMessage(error),"error");return;}
     if(!state.user||state.user.id!==uid)return;
-    if(initial && data.length===0){
+    if(initial && !state.viewer && data.length===0){
       const local=backend()?.getItems?.()||[];
       if(local.length){
         const {error:e}=await state.client.from("inventory_items").upsert(local.map(p=>dataFrom(p,uid)),{onConflict:"user_id,id"});
@@ -91,21 +91,97 @@
   function subscribe(){
     if(state.channel)state.client.removeChannel(state.channel);
     if(!state.user)return;
-    const uid=state.user.id;
+    const uid=state.ownerId;
     state.channel=state.client.channel("gc-inventory-"+uid)
       .on("postgres_changes",{event:"*",schema:"public",table:"inventory_items",filter:"user_id=eq."+uid},()=>{
         clearTimeout(state.timer);state.timer=setTimeout(()=>{if(!state.pending)loadRemote(false);},500);
       })
       .subscribe();
   }
+  async function waitInventory(){
+    if(backend()?.ready?.())return;
+    await Promise.race([new Promise(resolve=>document.addEventListener("gc-inventory-ready",resolve,{once:true})),new Promise(resolve=>setTimeout(resolve,10000))]);
+  }
+  async function refreshViewers(){
+    if(!state.client||!state.user||state.viewer)return;
+    const {data,error}=await state.client.from("inventory_viewers").select("viewer_email").eq("owner_id",state.user.id);
+    if(error){show("No se pudo consultar la lista de acceso: "+errorMessage(error),"error");return;}
+    const list=$("viewerList");if(!list)return;
+    list.replaceChildren();
+    for(const item of data||[]){
+      const row=document.createElement("div");row.className="viewer-invite";
+      const label=document.createElement("span");label.textContent="👁 "+item.viewer_email;
+      const remove=document.createElement("button");remove.type="button";remove.textContent="Revocar";remove.className="btn btn-secondary";
+      remove.addEventListener("click",async()=>{
+        if(!confirm("¿Revocar acceso de lectura a "+item.viewer_email+"?"))return;
+        const r=await state.client.from("inventory_viewers").delete().eq("owner_id",state.user.id).eq("viewer_email",item.viewer_email);
+        if(r.error)show("No se pudo revocar el acceso: "+errorMessage(r.error),"error");else{show("Acceso revocado.","ok");await refreshViewers();}
+      });
+      row.append(label,remove);list.append(row);
+    }
+    if(!data?.length)list.textContent="Todavía no se ha invitado a nadie.";
+  }
+  async function addViewer(event){
+    event.preventDefault();
+    if(!state.client||!state.user||state.viewer)return;
+    const email=$("viewerEmail").value.trim().toLowerCase();
+    if(!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)||email.length>254){show("Escribe un correo válido.","error");return;}
+    if(email===state.user.email?.toLowerCase()){show("Este ya es tu correo de administrador.","info");return;}
+    const {error}=await state.client.from("inventory_viewers").upsert({owner_id:state.user.id,viewer_email:email,role:"viewer",label:"Familia"},{onConflict:"owner_id,viewer_email"});
+    if(error)show("No se pudo compartir: "+errorMessage(error),"error");
+    else{$("viewerEmail").value="";show("Invitación registrada. Tu familiar debe crear su cuenta con ese correo y confirmarlo.","ok");await refreshViewers();}
+  }
+  async function loadGrowth(initial=false){
+    if(!state.client||!state.ownerId)return;
+    const {data,error}=await state.client.from("inventory_journal_state").select("document").eq("user_id",state.ownerId).maybeSingle();
+    if(error){console.info("Bitácora:",error.message);return;}
+    if(!data&&initial&&!state.viewer){
+      const backup=window.GCGrowth?.getBackup?.();
+      if(!backup)return;
+      const r=await state.client.from("inventory_journal_state").upsert({user_id:state.ownerId,document:backup},{onConflict:"user_id"});
+      if(r.error)show("Inventario guardado; bitácora pendiente: "+errorMessage(r.error),"error");
+      return;
+    }
+    if(data?.document&&window.GCGrowth?.validateBackup?.(data.document)){
+      state.applyingJournal=true;
+      try{window.GCGrowth.restoreFromBackup(data.document);}finally{state.applyingJournal=false;}
+    }
+  }
+  function notifyGrowth(){
+    if(!state.ready||!state.user||state.viewer||state.applyingJournal)return;
+    clearTimeout(state.backupTimer);
+    state.backupTimer=setTimeout(async()=>{
+      const backup=window.GCGrowth?.getBackup?.();
+      if(!backup)return;
+      const {error}=await state.client.from("inventory_journal_state").upsert({user_id:state.ownerId,document:backup},{onConflict:"user_id"});
+      if(error)show("Bitácora guardada localmente, aún no en la nube: "+errorMessage(error),"error");
+      else show("Bitácora sincronizada entre dispositivos.","ok");
+    },350);
+  }
   async function beginSession(user) {
-    if(!user)return;
-    state.ready=false;state.user=user;
+    if(!user||state.user?.id===user.id&&state.ready)return;
+    await waitInventory();
+    state.ready=false;state.user=user;state.ownerId=user.id;state.viewer=false;
+    show("Verificando acceso privado…","busy");
+    const {data:links,error:linkError}=await state.client.from("inventory_viewers").select("owner_id,role");
+    if(linkError){show("Error validando acceso: "+errorMessage(linkError),"error");return;}
+    const invited=(links||[]).find(x=>x.owner_id!==user.id&&x.role==="viewer");
+    if(invited){state.ownerId=invited.owner_id;state.viewer=true;}
+    backend()?.setReadOnly?.(state.viewer);
+    $("viewerTools")?.classList.toggle("hidden",state.viewer);
     $("authSignOut")?.classList.remove("hidden");
     $("authForm")?.classList.add("hidden");
-    show("Conectando a la base de datos…","busy");
     await loadRemote(true);
-    if(state.ready){subscribe();closeLogin();}
+    if(!state.ready)return;
+    await loadGrowth(true);
+    subscribe();
+    if(state.journalChannel)await state.client.removeChannel(state.journalChannel);
+    state.journalChannel=state.client.channel("gc-journal-"+state.ownerId)
+      .on("postgres_changes",{event:"*",schema:"public",table:"inventory_journal_state",filter:"user_id=eq."+state.ownerId},()=>{if(!state.applyingJournal)loadGrowth(false);}).subscribe();
+    document.body.classList.remove("cloud-needs-auth");
+    if(!state.viewer)await refreshViewers();
+    closeLogin();
+    show(state.viewer?"Vista familiar conectada. Puedes consultar los avances sin modificarlos.":"Administrador: inventario y bitácora sincronizados.","ok");
   }
   async function login(event){
     event.preventDefault();
@@ -128,10 +204,15 @@
     else show("Cuenta creada. Revisa tu correo para confirmar y luego inicia sesión.","ok");
   }
   async function signOut() {
-    state.ready=false;state.user=null;
+    state.ready=false;state.user=null;state.viewer=false;state.ownerId=null;
+    if(state.journalChannel){await state.client.removeChannel(state.journalChannel);state.journalChannel=null;}
     if(state.channel){await state.client.removeChannel(state.channel);state.channel=null;}
     await state.client.auth.signOut();
     state.snapshot.clear();state.lastItems=new Map();
+    backend()?.setItemsFromCloud?.([]);
+    backend()?.setReadOnly?.(true);
+    document.body.classList.add("cloud-needs-auth");
+    $("viewerTools")?.classList.add("hidden");
     $("authSignOut")?.classList.add("hidden");
     $("authForm")?.classList.remove("hidden");
     show("Sesión cerrada. Puedes seguir utilizando tu copia local.","info");
@@ -144,10 +225,14 @@
     $("authForm")?.addEventListener("submit",login);
     $("authSignUp")?.addEventListener("click",signUp);
     $("authSignOut")?.addEventListener("click",signOut);
+    $("viewerForm")?.addEventListener("submit",addViewer);
+    window.addEventListener("online",()=>{if(state.ready&&!state.viewer){notify();notifyGrowth();}else if(state.ready)loadRemote(false);});
     try{
       const res=await fetch("./data/cloud-config.json",{cache:"no-store"});
       if(!res.ok)throw new Error("Falta configuración.");
       const config=await res.json();
+      document.body.classList.add("cloud-needs-auth");
+      backend()?.setReadOnly?.(true);
       if(!/^https:\/\/[a-z0-9-]+\.supabase\.co$/.test(config.url||"")||!/^sb_publishable_/.test(config.publishableKey||""))throw new Error("La base de datos privada todavía no está activada.");
       if(!window.supabase?.createClient)throw new Error("No se pudo cargar el cliente de base de datos.");
       state.client=window.supabase.createClient(config.url,config.publishableKey,{auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:true}});
@@ -157,9 +242,9 @@
       const {data,error}=await state.client.auth.getUser();
       if(error && !/session/i.test(errorMessage(error)))console.warn(errorMessage(error));
       if(data?.user)await beginSession(data.user);
-      else show("Para sincronizar entre dispositivos, inicia sesión.","info");
+      else {show("Inicia sesión para abrir tu inventario privado.","info");openLogin();}
     }catch(e){show("Modo local seguro. "+errorMessage(e),"info");}
   }
-  window.GCCloud={notify,ready:()=>state.ready};
+  window.GCCloud={notify,notifyGrowth,ready:()=>state.ready,isViewer:()=>state.viewer,ownerId:()=>state.ownerId};
   if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",init);else init();
 })();
