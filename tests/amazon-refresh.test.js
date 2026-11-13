@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {batchKey,calendarMonth,completedRun,pendingBatches,splitBatches,normaliseAmazonRow} from '../scripts/refresh-amazon.mjs';
+import {batchKey,calendarMonth,completedRun,pendingBatches,splitBatches,normaliseAmazonRow,dailyReservationKey} from '../scripts/refresh-amazon.mjs';
 
 test('11 Amazon ASINs require exactly three batches without duplicates', () => {
   const batches=splitBatches(Array.from({length:11},(_,i)=>i));
@@ -17,6 +17,14 @@ test('an interrupted daily run resumes only the unpaid batches',()=>{
   assert.equal(completedRun(run),false);
   assert.equal(completedRun({day:run.day,status:'completed',chargedCredits:15}),true);
   assert.equal(completedRun({day:run.day,chargedCredits:15}),true); // Legacy ledger format.
+});
+
+test('central daily reservations permit tomorrow but deduplicate the same day',()=>{
+  const batch=[['gc-demo',{asin:'B0D9VWCHM8'}]];
+  assert.equal(dailyReservationKey('2026-11-13',batch),'daily:2026-11-13:B0D9VWCHM8');
+  assert.equal(dailyReservationKey('2026-11-13',batch),dailyReservationKey('2026-11-13',batch));
+  assert.notEqual(dailyReservationKey('2026-11-14',batch),dailyReservationKey('2026-11-13',batch));
+  assert.throws(()=>dailyReservationKey('2026-11',batch),/invalid daily reservation date/);
 });
 
 test('Amazon buy-box offer matches the exact ASIN and preserves the original user link',()=>{
