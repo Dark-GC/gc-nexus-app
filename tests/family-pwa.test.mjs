@@ -53,3 +53,12 @@ test("USD to DOP conversion never assumes local shop price or actual checkout",(
  assert.match(sql,/local_price_dop/);
  assert.match(app,/gc-fx-updated/);
 });
+
+test("family buyer has a declared RPC action, not merely a reference on window",()=>{
+ const client=r("data/cloud.js"),app=r("app.js");
+ assert.match(client,/async function familyAction\s*\(/);
+ assert.match(client,/\.rpc\("gc_family_purchase_action",args\)/);
+ assert.match(client,/state\.familyRole!=="buyer"/);
+ assert.match(client,/await loadRemote\(false\)/);
+ assert.match(app,/window\.GCCloud\?\.familyAction/);
+});
