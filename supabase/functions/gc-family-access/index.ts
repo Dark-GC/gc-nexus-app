@@ -63,9 +63,9 @@ Deno.serve(async request=>{
       // We never return a password if Auth did not confirm the creation.
       return json(createError?.status===422?409:400,{error:"USER_CREATION_FAILED",detail:createError?.message?.slice(0,180)||"No se creó el usuario."});
     }
-    const {error:inviteError}=await admin.from("inventory_viewers").insert({
+    const {error:inviteError}=await admin.from("inventory_viewers").upsert({
       owner_id:user.id,viewer_email:email,role,label:"Familia"
-    });
+    },{onConflict:"owner_id,viewer_email"});
     if(inviteError){
       // Avoid leaving a new account without an invitation if the second write fails.
       await admin.auth.admin.deleteUser(created.user.id);
@@ -78,17 +78,26 @@ Deno.serve(async request=>{
     const {data:invite,error:invError}=await admin.from("inventory_viewers")
       .select("viewer_email").eq("owner_id",user.id).eq("viewer_email",email).maybeSingle();
     if(invError||!invite)return json(403,{error:"NOT_YOUR_MEMBER"});
-    let target: {id:string;email?:string;app_metadata?:Record<string,unknown>}|null=null;
+    let target: {id:string;email?:string;app_metadata?:Record<string,unknown>;email_confirmed_at?:string|null}|null=null;
     for(let page=1;page<=10&&!target;page++){
       const {data,error}=await admin.auth.admin.listUsers({page,perPage:100});
       if(error)return json(503,{error:"ACCOUNT_LOOKUP_FAILED"});
       target=(data.users||[]).find(u=>u.email?.toLowerCase()===email)??null;
       if((data.users||[]).length<100)break;
     }
-    if(!target||target.app_metadata?.gc_owner_id!==user.id)
-      return json(403,{error:"NOT_A_MANAGED_USER"});
+    if(!target)return json(403,{error:"NOT_A_MANAGED_USER"});
+    const alreadyManaged=target.app_metadata?.gc_owner_id===user.id;
+    // Migrate ONLY an existing unverified family invitation. Never take over
+    // a verified independent account or any other administrator's account.
+    const oldInvitation=!target.email_confirmed_at &&
+      !target.app_metadata?.gc_owner_id &&
+      target.app_metadata?.gc_admin!==true;
+    if(!alreadyManaged&&!oldInvitation)return json(403,{error:"NOT_A_MANAGED_USER"});
     const secret=password();
-    const {error:resetError}=await admin.auth.admin.updateUserById(target.id,{password:secret});
+    const {error:resetError}=await admin.auth.admin.updateUserById(target.id,{
+      password:secret,email_confirm:true,
+      app_metadata:{...target.app_metadata,gc_managed:true,gc_owner_id:user.id}
+    });
     if(resetError)return json(503,{error:"PASSWORD_RESET_FAILED"});
     return json(200,{ok:true,email,password:secret,loginUrl:origin+"/data/app.html"});
   }
