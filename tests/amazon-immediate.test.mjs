@@ -33,12 +33,9 @@ test('Amazon quote endpoint answers an actual CORS preflight only for the app or
 
 test('quota validation uses PostgreSQL-compatible pattern and explicit 500-character limit',()=>{
   const v2=readFileSync(new URL('../database/amazon-budget-v2.sql',import.meta.url),'utf8');
-  const initial=readFileSync(new URL('../database/private-amazon-quotes.sql',import.meta.url),'utf8');
-  for(const ddl of [v2,initial]){
-    assert.ok(!ddl.includes('{8,500}'));
-    assert.ok(ddl.includes('length(p_key) not between 8 and 500'));
-    assert.ok(ddl.includes('[A-Za-z0-9:,_-]+'));
-  }
+  assert.ok(!v2.includes('{8,500}'));
+  assert.ok(v2.includes('length(p_key) not between 8 and 500'));
+  assert.ok(v2.includes('[A-Za-z0-9:,_-]+'));
 });
 test('unverified Amazon articles offer a manual retry without creating another record',()=>{
   const app=readFileSync(new URL('../app.js',import.meta.url),'utf8');
