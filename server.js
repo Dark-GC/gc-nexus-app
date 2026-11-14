@@ -285,6 +285,17 @@ async function immediateAmazonQuote(body,token) {
     return {status:503,body:{error:'amazon_quote_unavailable'}};
   }
 }
+async function latestAmazonQuote(itemId,token){
+  const config=privateConfig(); if(!config)return {status:503,body:{error:'amazon_quotes_not_configured'}};
+  const who=await fetch(config.SUPABASE_URL+'/auth/v1/user',{headers:{apikey:config.SUPABASE_SERVICE_ROLE_KEY,Authorization:'Bearer '+token}});
+  const user=await who.json().catch(()=>null);
+  if(!who.ok||!user?.id||user.app_metadata?.gc_admin!==true)return {status:403,body:{error:'owner_required'}};
+  if(typeof itemId!=='string'||!/^gc-[a-z0-9-]{3,100}$/i.test(itemId))return {status:422,body:{error:'invalid_item_id'}};
+  const saved=await supabase(config,'/rest/v1/inventory_items?select=id&user_id=eq.'+encodeURIComponent(user.id)+'&id=eq.'+encodeURIComponent(itemId));
+  if(!Array.isArray(saved)||saved.length!==1)return {status:404,body:{error:'inventory_item_not_found'}};
+  const rows=await supabase(config,'/rest/v1/rpc/gc_get_private_amazon_quote',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({p_owner_id:user.id,p_item_id:itemId})});
+  return {status:200,body:{quote:Array.isArray(rows)&&rows[0]?{asin:rows[0].asin,price:rows[0].price===null?null:Number(rows[0].price),currency:rows[0].currency,stockStatus:rows[0].stock_status,seller:rows[0].seller,checkedAt:rows[0].observed_at,priceStatus:rows[0].verification_status}:null}};
+}
 
 export const server = http.createServer(async (req, res) => {
   try {
@@ -297,6 +308,12 @@ export const server = http.createServer(async (req, res) => {
       const token=String(req.headers.authorization||'').replace(/^Bearer\s+/i,'');
       if(!token)return send(res,401,JSON.stringify({error:'authentication_required'}));
       const answer=await immediateAmazonQuote(await jsonBody(req),token);
+      return send(res,answer.status,JSON.stringify(answer.body));
+    }
+    if(req.method==='GET'&&target.pathname==='/api/private/amazon-quotes'){
+      const token=String(req.headers.authorization||'').replace(/^Bearer\s+/i,'');
+      if(!token)return send(res,401,JSON.stringify({error:'authentication_required'}));
+      const answer=await latestAmazonQuote(target.searchParams.get('itemId'),token);
       return send(res,answer.status,JSON.stringify(answer.body));
     }
     if (req.method !== 'GET') return send(res, 405, JSON.stringify({ error: 'method_not_allowed' }));

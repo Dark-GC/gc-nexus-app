@@ -599,7 +599,8 @@
       suppressCloudSave = true;
       S.items = Array.isArray(items) ? items.map(safeItem) : S.items;
       save(); render(); suppressCloudSave = false;
-    }
+    },
+    setAmazonQuote:(itemId,quote)=>{const item=S.items.find(x=>x.id===itemId);if(!item||!quote)return;S.liveQuotes[itemId]={sourceUrl:item.url,provider:"amazon-snapshot",checkedAt:quote.checkedAt,price:quote.price,originalPrice:null,currency:quote.currency,priceStatus:quote.priceStatus,stockStatus:quote.stockStatus,stockQuantity:null,imageUrl:"",seller:quote.seller||null,error:null};render();}
   };
   document.addEventListener("DOMContentLoaded",init);
 })();

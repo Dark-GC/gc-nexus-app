@@ -166,6 +166,7 @@
     backend()?.setItemsFromCloud?.(items);
     state.ready=true;
     show("Inventario sincronizado: "+items.length+" artículos.","ok");
+    if(!state.viewer)items.forEach(item=>loadAmazonQuote(item));
   }
   function subscribe(){
     if(state.channel)state.client.removeChannel(state.channel);
@@ -278,6 +279,11 @@
     const result=await response.json().catch(()=>({error:"amazon_quote_unavailable"}));
     if(!response.ok)throw new Error(result.error||"amazon_quote_unavailable");
     return result.quote;
+  }
+  async function loadAmazonQuote(item){
+    if(!state.ready||state.viewer||!state.user||!/^https:\/\/(?:www\.)?(?:amazon\.[^/]+|a\.co|amzn\.to)\//i.test(item?.url||""))return;
+    const {data}=await state.client.auth.getSession(),token=data?.session?.access_token;if(!token)return;
+    const r=await fetch("https://gc-graphics-prices-api.onrender.com/api/private/amazon-quotes?itemId="+encodeURIComponent(item.id),{headers:{Authorization:"Bearer "+token}});const body=await r.json().catch(()=>null);if(r.ok&&body?.quote)backend()?.setAmazonQuote?.(item.id,body.quote);
   }
 
   async function loadGrowth(initial=false){
