@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "generatedAt": "2026-11-14T19:58:07.666Z",
+  "generatedAt": "2026-11-15T20:25:30.169Z",
   "provider": "Firecrawl Alexandria — Amazon.com products/prices, 3 lotes de 5 créditos",
   "disclaimer": "Observación puntual de Amazon US; la lista de Amazon NO es precio histórico ni constituye por sí sola una oferta. Sin ZIP de destino, las existencias y vendedor pueden variar; confirmar antes de pagar. No incluye envío, impuestos ni promociones con fecha de vencimiento verificada.",
   "items": {
@@ -8,7 +8,7 @@
       "sourceUrl": "https://a.co/d/0bwLNZk1",
       "observedUrl": "https://www.amazon.com/dp/B09NRDXYP3",
       "asin": "B09NRDXYP3",
-      "checkedAt": "2026-11-14T19:57:48.691Z",
+      "checkedAt": "2026-11-15T20:25:21.310Z",
       "provider": "amazon-snapshot",
       "price": 81.59,
       "originalPrice": null,
@@ -215,7 +215,7 @@
       "sourceUrl": "https://a.co/d/0gYDXPdp",
       "observedUrl": "https://www.amazon.com/dp/B0FPG8RC3J",
       "asin": "B0FPG8RC3J",
-      "checkedAt": "2026-11-14T19:58:03.995Z",
+      "checkedAt": "2026-11-15T20:25:30.169Z",
       "provider": "amazon-snapshot",
       "price": 6.19,
       "originalPrice": null,

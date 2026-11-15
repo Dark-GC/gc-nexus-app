@@ -1,6 +1,6 @@
 {
   "month": "2026-11",
-  "spent": 30,
+  "spent": 40,
   "runs": [
     {
       "day": "2026-11-13",
@@ -22,6 +22,18 @@
         "B0D9VWCHM8"
       ],
       "completedAt": "2026-11-14T19:58:08.037Z"
+    },
+    {
+      "day": "2026-11-15",
+      "status": "in_progress",
+      "chargedCredits": 10,
+      "checked": 2,
+      "unavailable": 0,
+      "rejected": 8,
+      "completedBatchKeys": [
+        "B09NRDXYP3,B096N8DN2H,B09471X83K,B0BFPDKN6R,B0D62QWN6M",
+        "B0CQYH6VLH,B08CCT5W77,B0CMXGG8XX,B0DK5CQPP8,B0FPG8RC3J"
+      ]
     }
   ]
 }

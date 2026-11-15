@@ -33,6 +33,16 @@
         "listPrice": null,
         "seller": "BetterSub",
         "stockStatus": "in_stock"
+      },
+      {
+        "asin": "B09NRDXYP3",
+        "checkedAt": "2026-11-15T20:25:21.310Z",
+        "price": 81.59,
+        "currency": "USD",
+        "priceStatus": "verified",
+        "listPrice": null,
+        "seller": "BetterSub",
+        "stockStatus": "in_stock"
       }
     ],
     "gc-epson": [
@@ -305,6 +315,16 @@
       {
         "asin": "B0FPG8RC3J",
         "checkedAt": "2026-11-14T19:58:03.995Z",
+        "price": 6.19,
+        "currency": "USD",
+        "priceStatus": "verified",
+        "listPrice": null,
+        "seller": "COOLTOOLS",
+        "stockStatus": "in_stock"
+      },
+      {
+        "asin": "B0FPG8RC3J",
+        "checkedAt": "2026-11-15T20:25:30.169Z",
         "price": 6.19,
         "currency": "USD",
         "priceStatus": "verified",
