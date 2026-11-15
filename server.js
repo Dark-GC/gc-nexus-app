@@ -256,6 +256,13 @@ async function supabase(config,path,options={}) {
   const response=await fetch(config.SUPABASE_URL+path,{...options,headers:{apikey:config.SUPABASE_SERVICE_ROLE_KEY,Authorization:'Bearer '+config.SUPABASE_SERVICE_ROLE_KEY,...options.headers}});
   const data=await response.json().catch(()=>null); if(!response.ok) throw Error('supabase_'+response.status); return data;
 }
+function quoteFromPrivateRow(row) {
+  if (!row || typeof row !== 'object') return null;
+  const price=row.price===null||row.price===undefined?null:Number(row.price);
+  if (price!==null&&!Number.isFinite(price)) return null;
+  return {asin:row.asin,price,currency:row.currency,stockStatus:row.stock_status,seller:row.seller||null,
+    productUrl:row.product_url,observedUrl:row.observed_url,checkedAt:row.observed_at,priceStatus:row.verification_status};
+}
 async function immediateAmazonQuote(body,token) {
   const config=privateQuoteConfig(); if(!config) return {status:503,body:{error:'amazon_quotes_not_configured'}};
   const who=await fetch(config.SUPABASE_URL+'/auth/v1/user',{headers:{apikey:config.SUPABASE_SERVICE_ROLE_KEY,Authorization:'Bearer '+token}});
@@ -270,7 +277,17 @@ async function immediateAmazonQuote(body,token) {
   const requestKey='immediate:'+user.id+':'+product.asin;
   const reserve=await supabase(config,'/rest/v1/rpc/gc_reserve_amazon_quote',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({p_key:requestKey,p_credits:5,p_source:'immediate'})});
   if(!reserve?.accepted)return {status:429,body:{error:'monthly_budget_exhausted'}};
-  if(!reserve.new)return {status:reserve.state==='committed'?409:503,body:{error:reserve.state==='committed'?'quote_already_recorded':'quote_pending_review'}};
+  if(!reserve.new){
+    // A duplicate ASIN must never spend a second credit.  It still needs its own
+    // private history row, otherwise a newly added card looks as if nothing happened.
+    if(reserve.state==='committed'){
+      const reused=await supabase(config,'/rest/v1/rpc/gc_reuse_private_amazon_quote',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({p_owner_id:user.id,p_item_id:body.itemId,p_asin:product.asin,p_product_url:product.url})});
+      const quote=quoteFromPrivateRow(Array.isArray(reused)?reused[0]:null);
+      if(quote)return {status:200,body:{quote,reused:true}};
+      return {status:409,body:{error:'quote_already_recorded'}};
+    }
+    return {status:503,body:{error:'quote_pending_review'}};
+  }
   await supabase(config,'/rest/v1/rpc/gc_mark_private_amazon_request',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({p_owner_id:user.id,p_item_id:body.itemId,p_asin:product.asin,p_product_url:product.url,p_request_key:requestKey,p_status:'running'})});
   try {
     const reply=await fetch('https://api.firecrawl.dev/v2/scrape',{method:'POST',headers:{Authorization:'Bearer '+config.FIRECRAWL_API_KEY,'Content-Type':'application/json'},body:JSON.stringify({alexandria:{provider:'amazon-com',capability:'products/prices',options:{asins:[product.asin]}}}),signal:AbortSignal.timeout(60000)});
@@ -299,7 +316,7 @@ async function latestAmazonQuote(itemId,token){
   const saved=await supabase(config,'/rest/v1/inventory_items?select=id&user_id=eq.'+encodeURIComponent(user.id)+'&id=eq.'+encodeURIComponent(itemId));
   if(!Array.isArray(saved)||saved.length!==1)return {status:404,body:{error:'inventory_item_not_found'}};
   const rows=await supabase(config,'/rest/v1/rpc/gc_get_private_amazon_quote',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({p_owner_id:user.id,p_item_id:itemId})});
-  return {status:200,body:{quote:Array.isArray(rows)&&rows[0]?{asin:rows[0].asin,price:rows[0].price===null?null:Number(rows[0].price),currency:rows[0].currency,stockStatus:rows[0].stock_status,seller:rows[0].seller,checkedAt:rows[0].observed_at,priceStatus:rows[0].verification_status}:null}};
+  return {status:200,body:{quote:quoteFromPrivateRow(Array.isArray(rows)?rows[0]:null)}};
 }
 
 export const server = http.createServer(async (req, res) => {

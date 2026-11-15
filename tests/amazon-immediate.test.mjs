@@ -51,3 +51,13 @@ test('quote restoration does not leave rejected background requests unhandled',(
   const cloud=readFileSync(new URL('../data/cloud.js',import.meta.url),'utf8');
   assert.match(cloud,/void loadAmazonQuote\(item\)\.catch\(\(\)=>\{\}\)/);
 });
+
+test('a committed ASIN reuses its private observation for a newly added card without spending again',()=>{
+  const server=readFileSync(new URL('../server.js',import.meta.url),'utf8');
+  const migration=readFileSync(new URL('../database/amazon-quote-cache.sql',import.meta.url),'utf8');
+  assert.match(server,/gc_reuse_private_amazon_quote/);
+  assert.match(server,/body:\{quote,reused:true\}/);
+  assert.match(migration,/firecrawl-alexandria-cache/);
+  assert.match(migration,/grant execute on function public\.gc_reuse_private_amazon_quote[\s\S]* to service_role/);
+  assert.doesNotMatch(migration,/grant execute[\s\S]* to authenticated/);
+});
