@@ -166,7 +166,7 @@
     backend()?.setItemsFromCloud?.(items);
     state.ready=true;
     show("Inventario sincronizado: "+items.length+" artículos.","ok");
-    if(!state.viewer)items.forEach(item=>loadAmazonQuote(item));
+    if(!state.viewer)items.forEach(item=>{void loadAmazonQuote(item).catch(()=>{});});
   }
   function subscribe(){
     if(state.channel)state.client.removeChannel(state.channel);

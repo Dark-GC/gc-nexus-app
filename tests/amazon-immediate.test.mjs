@@ -25,7 +25,11 @@ test('Amazon quote endpoint answers an actual CORS preflight only for the app or
   try{
     const base='http://127.0.0.1:'+server.address().port;
     const ok=await fetch(base+'/api/private/amazon-quotes',{method:'OPTIONS',headers:{Origin:'https://gc-graphics-inventory.onrender.com','Access-Control-Request-Method':'POST','Access-Control-Request-Headers':'authorization, content-type'}});
-    assert.equal(ok.status,204);assert.equal(ok.headers.get('access-control-allow-headers'),'Authorization, Content-Type');
+    assert.equal(ok.status,204);assert.equal(ok.headers.get('access-control-allow-headers'),'Authorization, Content-Type');assert.match(ok.headers.get('access-control-allow-methods'),/POST/);
+    const read=await fetch(base+'/api/private/amazon-quotes',{method:'OPTIONS',headers:{Origin:'https://gc-graphics-inventory.onrender.com','Access-Control-Request-Method':'GET','Access-Control-Request-Headers':'authorization'}});
+    assert.equal(read.status,204);assert.match(read.headers.get('access-control-allow-methods'),/GET/);
+    const unauthenticated=await fetch(base+'/api/private/amazon-quotes?itemId=gc-amazon-quote');
+    assert.equal(unauthenticated.status,401);
     const rejected=await fetch(base+'/api/private/amazon-quotes',{method:'OPTIONS',headers:{Origin:'https://attacker.example','Access-Control-Request-Method':'POST'}});
     assert.equal(rejected.status,403);
   }finally{await new Promise(resolve=>server.close(resolve));}
@@ -42,4 +46,8 @@ test('unverified Amazon articles offer a manual retry without creating another r
   assert.ok(app.includes('data-action="quote-retry"'));
   assert.ok(app.includes('if(b.dataset.action==="quote-retry")return void requestAmazonQuote(p);'));
   assert.ok(app.includes('if(!current&&isAmazonUrl(vals.url))void requestAmazonQuote(vals);'));
+});
+test('quote restoration does not leave rejected background requests unhandled',()=>{
+  const cloud=readFileSync(new URL('../data/cloud.js',import.meta.url),'utf8');
+  assert.match(cloud,/void loadAmazonQuote\(item\)\.catch\(\(\)=>\{\}\)/);
 });

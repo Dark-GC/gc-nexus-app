@@ -243,16 +243,21 @@ async function jsonBody(req) {
   let body=''; for await (const chunk of req) { body+=chunk; if(body.length>10000) throw Error('body_too_large'); }
   try{return JSON.parse(body||'{}');}catch{throw Error('invalid_json');}
 }
-function privateConfig() {
-  const {SUPABASE_URL,SUPABASE_SERVICE_ROLE_KEY,FIRECRAWL_API_KEY}=process.env;
-  return SUPABASE_URL&&SUPABASE_SERVICE_ROLE_KEY&&FIRECRAWL_API_KEY?{SUPABASE_URL,SUPABASE_SERVICE_ROLE_KEY,FIRECRAWL_API_KEY}:null;
+function privateDatabaseConfig() {
+  const {SUPABASE_URL,SUPABASE_SERVICE_ROLE_KEY}=process.env;
+  return SUPABASE_URL&&SUPABASE_SERVICE_ROLE_KEY?{SUPABASE_URL,SUPABASE_SERVICE_ROLE_KEY}:null;
+}
+function privateQuoteConfig() {
+  const database=privateDatabaseConfig();
+  const {FIRECRAWL_API_KEY}=process.env;
+  return database&&FIRECRAWL_API_KEY?{...database,FIRECRAWL_API_KEY}:null;
 }
 async function supabase(config,path,options={}) {
   const response=await fetch(config.SUPABASE_URL+path,{...options,headers:{apikey:config.SUPABASE_SERVICE_ROLE_KEY,Authorization:'Bearer '+config.SUPABASE_SERVICE_ROLE_KEY,...options.headers}});
   const data=await response.json().catch(()=>null); if(!response.ok) throw Error('supabase_'+response.status); return data;
 }
 async function immediateAmazonQuote(body,token) {
-  const config=privateConfig(); if(!config) return {status:503,body:{error:'amazon_quotes_not_configured'}};
+  const config=privateQuoteConfig(); if(!config) return {status:503,body:{error:'amazon_quotes_not_configured'}};
   const who=await fetch(config.SUPABASE_URL+'/auth/v1/user',{headers:{apikey:config.SUPABASE_SERVICE_ROLE_KEY,Authorization:'Bearer '+token}});
   const user=await who.json().catch(()=>null);
   if(!who.ok||!user?.id||user.app_metadata?.gc_admin!==true) return {status:403,body:{error:'owner_required'}};
@@ -286,7 +291,7 @@ async function immediateAmazonQuote(body,token) {
   }
 }
 async function latestAmazonQuote(itemId,token){
-  const config=privateConfig(); if(!config)return {status:503,body:{error:'amazon_quotes_not_configured'}};
+  const config=privateDatabaseConfig(); if(!config)return {status:503,body:{error:'amazon_quotes_not_configured'}};
   const who=await fetch(config.SUPABASE_URL+'/auth/v1/user',{headers:{apikey:config.SUPABASE_SERVICE_ROLE_KEY,Authorization:'Bearer '+token}});
   const user=await who.json().catch(()=>null);
   if(!who.ok||!user?.id||user.app_metadata?.gc_admin!==true)return {status:403,body:{error:'owner_required'}};
@@ -302,7 +307,7 @@ export const server = http.createServer(async (req, res) => {
     const target = new URL(req.url || '/', 'http://localhost');
     if (target.pathname==='/api/private/amazon-quotes' && req.method==='OPTIONS') {
       if(req.headers.origin!==APP_ORIGIN)return send(res,403,JSON.stringify({error:'origin_not_allowed'}));
-      res.writeHead(204,{'Access-Control-Allow-Origin':APP_ORIGIN,'Access-Control-Allow-Methods':'POST, OPTIONS','Access-Control-Allow-Headers':'Authorization, Content-Type','Access-Control-Max-Age':'600','Vary':'Origin','Cache-Control':'no-store'});return res.end();
+      res.writeHead(204,{'Access-Control-Allow-Origin':APP_ORIGIN,'Access-Control-Allow-Methods':'GET, POST, OPTIONS','Access-Control-Allow-Headers':'Authorization, Content-Type','Access-Control-Max-Age':'600','Vary':'Origin','Cache-Control':'no-store'});return res.end();
     }
     if (req.method==='POST' && target.pathname==='/api/private/amazon-quotes') {
       const token=String(req.headers.authorization||'').replace(/^Bearer\s+/i,'');

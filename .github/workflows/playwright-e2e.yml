@@ -1,0 +1,43 @@
+name: GC Graphics — Playwright E2E
+on:
+  workflow_dispatch:
+  push:
+    branches: [panda]
+    paths:
+      - "app.js"
+      - "cloud.js"
+      - "data/**"
+      - "styles.css"
+      - "scripts/e2e-static-server.mjs"
+      - "playwright.config.mjs"
+      - "tests/e2e/**"
+      - "package.json"
+      - "package-lock.json"
+      - ".github/workflows/playwright-e2e.yml"
+  pull_request:
+    branches: [panda]
+permissions:
+  contents: read
+jobs:
+  browser:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+      - run: npm ci
+      - run: npx playwright install --with-deps chromium
+      - run: npx playwright test --project=chromium
+      - name: Guardar evidencia Playwright
+        if: ${{ always() }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-e2e-artifacts
+          path: |
+            test-results/
+            playwright-report/
+          if-no-files-found: warn
+          retention-days: 14

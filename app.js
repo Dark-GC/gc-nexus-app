@@ -338,7 +338,8 @@
   function showUrlPreview(info,missing=[]){
     const root=$("urlPreview"),image=imageOK(info.image)?'<img src="'+esc(info.image)+'" alt="Vista previa del producto">':'<div class="product-symbol">◎</div>';
     const verified=[info.store,Number.isFinite(Number(info.price))&&info.currency?priceText(Number(info.price),info.currency):null,info.availability==="in_stock"?"Disponible":info.availability==="out_of_stock"?"Agotado":null].filter(Boolean).join(" · ");
-    root.innerHTML=image+'<div><strong>'+esc(info.title||"Ficha parcial")+'</strong><span>'+esc(verified||"La tienda no publicó precio o disponibilidad verificable.")+'</span>'+(missing.length?'<span>Falta: '+esc(missing.join(", "))+'</span>':"")+'</div>';
+    const identity=/^[A-Z0-9]{10}$/i.test(safeText(info.asin))?'ASIN: '+safeText(info.asin).toUpperCase():null;
+    root.innerHTML=image+'<div><strong>'+esc(info.title||"Ficha parcial")+'</strong><span>'+esc(verified||"La tienda no publicó precio o disponibilidad verificable.")+'</span>'+(identity?'<span>'+esc(identity)+'</span>':"")+(missing.length?'<span>Falta: '+esc(missing.join(", "))+'</span>':"")+'</div>';
     root.classList.remove("hidden");
   }
   async function analyzeProductUrl(){
