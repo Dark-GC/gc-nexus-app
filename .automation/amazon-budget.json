@@ -1,6 +1,6 @@
 {
   "month": "2026-11",
-  "spent": 40,
+  "spent": 55,
   "runs": [
     {
       "day": "2026-11-13",
@@ -34,6 +34,20 @@
         "B09NRDXYP3,B096N8DN2H,B09471X83K,B0BFPDKN6R,B0D62QWN6M",
         "B0CQYH6VLH,B08CCT5W77,B0CMXGG8XX,B0DK5CQPP8,B0FPG8RC3J"
       ]
+    },
+    {
+      "day": "2026-11-16",
+      "status": "completed",
+      "chargedCredits": 15,
+      "checked": 11,
+      "unavailable": 1,
+      "rejected": 0,
+      "completedBatchKeys": [
+        "B09NRDXYP3,B096N8DN2H,B09471X83K,B0BFPDKN6R,B0D62QWN6M",
+        "B0CQYH6VLH,B08CCT5W77,B0CMXGG8XX,B0DK5CQPP8,B0FPG8RC3J",
+        "B0D9VWCHM8"
+      ],
+      "completedAt": "2026-11-16T23:45:49.679Z"
     }
   ]
 }
