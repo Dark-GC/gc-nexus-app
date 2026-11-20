@@ -90,6 +90,15 @@
         "B0D9VWCHM8"
       ],
       "completedAt": "2026-11-19T22:41:21.394Z"
+    },
+    {
+      "day": "2026-11-20",
+      "status": "in_progress",
+      "chargedCredits": 0,
+      "checked": 0,
+      "unavailable": 0,
+      "rejected": 0,
+      "completedBatchKeys": []
     }
   ]
 }
