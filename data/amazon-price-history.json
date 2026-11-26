@@ -113,6 +113,16 @@
         "listPrice": null,
         "seller": "BetterSub",
         "stockStatus": "in_stock"
+      },
+      {
+        "asin": "B09NRDXYP3",
+        "checkedAt": "2026-11-26T23:53:38.729Z",
+        "price": 81.59,
+        "currency": "USD",
+        "priceStatus": "verified",
+        "listPrice": null,
+        "seller": "BetterSub",
+        "stockStatus": "in_stock"
       }
     ],
     "gc-epson": [
@@ -215,6 +225,16 @@
         "listPrice": null,
         "seller": null,
         "stockStatus": "unknown"
+      },
+      {
+        "asin": "B096N8DN2H",
+        "checkedAt": "2026-11-26T23:53:38.729Z",
+        "price": null,
+        "currency": null,
+        "priceStatus": "unavailable",
+        "listPrice": null,
+        "seller": null,
+        "stockStatus": "unknown"
       }
     ],
     "gc-buyounger": [
@@ -311,6 +331,16 @@
       {
         "asin": "B09471X83K",
         "checkedAt": "2026-11-25T23:40:33.057Z",
+        "price": 24.22,
+        "currency": "USD",
+        "priceStatus": "verified",
+        "listPrice": 29.99,
+        "seller": "EVERSEAS TECHNOLOGY CO., LIMITED",
+        "stockStatus": "in_stock"
+      },
+      {
+        "asin": "B09471X83K",
+        "checkedAt": "2026-11-26T23:53:38.729Z",
         "price": 24.22,
         "currency": "USD",
         "priceStatus": "verified",
@@ -429,6 +459,16 @@
         "listPrice": null,
         "seller": "SHENG YUAN HOME TOOLS LIMITED",
         "stockStatus": "in_stock"
+      },
+      {
+        "asin": "B0BFPDKN6R",
+        "checkedAt": "2026-11-26T23:53:38.729Z",
+        "price": 194.9,
+        "currency": "USD",
+        "priceStatus": "verified",
+        "listPrice": null,
+        "seller": "SHENG YUAN HOME TOOLS LIMITED",
+        "stockStatus": "in_stock"
       }
     ],
     "gc-colemoly": [
@@ -531,6 +571,16 @@
         "listPrice": null,
         "seller": "Colemoly",
         "stockStatus": "in_stock"
+      },
+      {
+        "asin": "B0D62QWN6M",
+        "checkedAt": "2026-11-26T23:53:38.729Z",
+        "price": 24.56,
+        "currency": "USD",
+        "priceStatus": "verified",
+        "listPrice": null,
+        "seller": "Colemoly",
+        "stockStatus": "in_stock"
       }
     ],
     "gc-mebmik": [
@@ -627,6 +677,16 @@
       {
         "asin": "B0CQYH6VLH",
         "checkedAt": "2026-11-25T23:40:37.008Z",
+        "price": 7.99,
+        "currency": "USD",
+        "priceStatus": "verified",
+        "listPrice": 9.99,
+        "seller": "HEKALM",
+        "stockStatus": "in_stock"
+      },
+      {
+        "asin": "B0CQYH6VLH",
+        "checkedAt": "2026-11-26T23:53:43.232Z",
         "price": 7.99,
         "currency": "USD",
         "priceStatus": "verified",
@@ -745,6 +805,16 @@
         "listPrice": 13.99,
         "seller": "HONG LIN",
         "stockStatus": "in_stock"
+      },
+      {
+        "asin": "B08CCT5W77",
+        "checkedAt": "2026-11-26T23:53:43.232Z",
+        "price": 11.19,
+        "currency": "USD",
+        "priceStatus": "verified",
+        "listPrice": 13.99,
+        "seller": "HONG LIN",
+        "stockStatus": "in_stock"
       }
     ],
     "gc-caja": [
@@ -857,6 +927,16 @@
         "listPrice": 52.99,
         "seller": "CREALITY FALCON Official",
         "stockStatus": "in_stock"
+      },
+      {
+        "asin": "B0CMXGG8XX",
+        "checkedAt": "2026-11-26T23:53:43.232Z",
+        "price": 43.29,
+        "currency": "USD",
+        "priceStatus": "verified",
+        "listPrice": 52.99,
+        "seller": "CREALITY FALCON Official",
+        "stockStatus": "in_stock"
       }
     ],
     "gc-ptfe": [
@@ -963,6 +1043,16 @@
       {
         "asin": "B0DK5CQPP8",
         "checkedAt": "2026-11-25T23:40:37.008Z",
+        "price": 7.99,
+        "currency": "USD",
+        "priceStatus": "verified",
+        "listPrice": 9.99,
+        "seller": "Transourdream",
+        "stockStatus": "in_stock"
+      },
+      {
+        "asin": "B0DK5CQPP8",
+        "checkedAt": "2026-11-26T23:53:43.232Z",
         "price": 7.99,
         "currency": "USD",
         "priceStatus": "verified",
@@ -1091,6 +1181,16 @@
         "listPrice": 6.19,
         "seller": "COOLTOOLS",
         "stockStatus": "in_stock"
+      },
+      {
+        "asin": "B0FPG8RC3J",
+        "checkedAt": "2026-11-26T23:53:43.232Z",
+        "price": 5.26,
+        "currency": "USD",
+        "priceStatus": "verified",
+        "listPrice": 6.19,
+        "seller": "COOLTOOLS",
+        "stockStatus": "in_stock"
       }
     ],
     "gc-falcon10": [
@@ -1197,6 +1297,16 @@
       {
         "asin": "B0D9VWCHM8",
         "checkedAt": "2026-11-25T23:40:39.004Z",
+        "price": 173.99,
+        "currency": "USD",
+        "priceStatus": "verified",
+        "listPrice": 204.99,
+        "seller": "CREALITY FALCON Official",
+        "stockStatus": "in_stock"
+      },
+      {
+        "asin": "B0D9VWCHM8",
+        "checkedAt": "2026-11-26T23:53:45.330Z",
         "price": 173.99,
         "currency": "USD",
         "priceStatus": "verified",
